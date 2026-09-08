@@ -1,0 +1,21 @@
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Java/Maven
+backend/target/
+backend/*.log
+
+# Flutter/Dart
+frontend/.dart_tool/
+frontend/build/
+frontend/.pub-cache/
+frontend/.packages
+frontend/coverage/
+frontend/*.log
