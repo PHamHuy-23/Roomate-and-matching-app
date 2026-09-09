@@ -1,187 +1,313 @@
-# 📋 BẢNG PHÂN CÔNG NHIỆM VỤ CÁ NHÂN: PHAN TIẾN ĐẠT
+# 📋 BẢNG PHÂN CÔNG NHIỆM VỤ CÁ NHÂN CHI TIẾT: PHAN TIẾN ĐẠT
 
-> **Thành viên**: **Phan Tiến Đạt**  
+> **Họ và tên**: **Phan Tiến Đạt**  
 > **Mã số sinh viên (MSSV)**: **24110195**  
-> **Vai trò trong nhóm**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
+> **Vai trò nòng cốt**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
 > **Mảng Kỹ thuật Phụ trách Đầu mối (Lead)**: **Lead Cơ sở Dữ liệu & Đảm bảo Chất lượng (Database & QA Lead)**  
 > **Dự án**: Nền tảng Tìm bạn cùng thuê trọ và Ghép bạn trọ theo tiêu chí (Roommate Matching Hub)  
-> **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày)  
+> **Công nghệ thực hiện**: Java 21 Spring Boot 3 (Backend) + Flutter Dart (Frontend) + MySQL 8.0  
+> **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày / 2 tuần)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**
 
 ---
 
-## 🎯 1. TỔNG QUAN TRÁCH NHIỆM CHÍNH (KEY RESPONSIBILITIES)
+## 🎯 1. TỔNG QUAN PHẠM VI TRÁCH NHIỆM (SCOPE OF WORK)
 
-1. **Lập trình Backend (Spring Boot 3)**:
-   - Chịu trách nhiệm trực tiếp viết mã nguồn cho **Module Bài đăng Phòng trọ (`RoomPostController`, `RoomPostService`)** (CRUD, tìm kiếm theo quận/giá, quản lý trạng thái bài đăng).
-   - Chịu trách nhiệm trực tiếp viết mã nguồn cho **Module Yêu cầu Ghép đôi & Lịch hẹn Xem trọ (`MatchRequestController`, `AppointmentController`)** (Quy trình Double Opt-in, cấp quyền xem số điện thoại, đặt lịch xem phòng trực tiếp).
-2. **Lập trình Frontend (Flutter)**:
-   - Chịu trách nhiệm trực tiếp xây dựng giao diện và logic cho **Bảng tin Danh sách Phòng trọ (`room_feed_screen.dart`)**, **Chi tiết Phòng trọ (`room_detail_screen.dart`)**, **Form Đăng tin Phòng (`create_room_post_screen.dart`)** và **Màn hình Quản lý Lịch hẹn & Lời mời (`appointment_screen.dart`)**.
-3. **Phụ trách Đầu mối CSDL & QA (Lead Database & QA)**:
-   - Chủ trì thiết kế sơ đồ CSDL quan hệ (ERD), viết các script DDL mở rộng (`viewing_appointments`, `contact_permissions`, `reports`).
-   - Xây dựng Kế hoạch Kiểm thử (Test Plan), Bảng ma trận kiểm thử (Test Matrix) cho 54 yêu cầu chức năng, lập Bug Tracker giám sát lỗi hệ thống.
-   - Chuẩn bị bộ dữ liệu mẫu Demo (Clean Seed Data) sinh động, chân thực cho buổi báo cáo.
-4. **Quy trình Git cá nhân**:
-   - Nhánh làm việc chính: `feature/database-expansion`, `feature/room-post-backend`, `feature/appointment-ui`.
-   - Luôn `git checkout master` và `git pull origin master` trước khi tạo nhánh mới.
-   - Tuân thủ hướng dẫn tại [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md).
+| Phân hệ đảm nhiệm | File / Module cụ thể | Nhiệm vụ chính |
+| :--- | :--- | :--- |
+| **Backend (Spring Boot 3)** | `controller/RoomPostController.java`<br>`service/RoomPostService.java`<br>`repository/RoomPostRepository.java`<br>`service/MatchRequestService.java`<br>`repository/MatchRequestRepository.java`<br>`entity/ViewingAppointment.java`<br>`service/AppointmentService.java` | Lập trình toàn bộ APIs Quản lý Bài đăng Phòng trọ (`RoomPost`) kèm tìm kiếm phân trang/lọc theo quận/giá, Module Lời mời ghép đôi với cơ chế **Double Opt-in** (chỉ mở khóa số điện thoại khi cả hai đồng ý), và Module Đặt lịch hẹn xem phòng trực tiếp (`ViewingAppointment`). |
+| **Frontend (Flutter Client)** | `screens/create_post_screen.dart`<br>`screens/requests_screen.dart`<br>`models/room_post.dart`<br>`models/match_request_item.dart`<br>`services/api_service.dart` | Xây dựng Giao diện Đăng bài tìm bạn ở ghép / cho thuê phòng, Màn hình Quản lý Lời mời ghép đôi (Chấp nhận / Từ chối / Xem liên hệ Zalo-SĐT), và Màn hình Quản lý Lịch hẹn xem trọ trực tiếp. |
+| **Lead Database & QA** | `database/01_schema.sql`<br>`database/02_seed_data.sql`<br>`database/roommate_hub.sql`<br>`docs/TEST_PLAN.md`<br>`docs/BUG_TRACKER.md`<br>`docs/diagrams/classes/` | Quản lý toàn bộ cấu trúc CSDL MySQL, bổ sung 3 bảng mới (`appointments`, `contact_permissions`, `reports`), vẽ Sơ đồ Lớp thực thể (Class Diagram), lập Kế hoạch kiểm thử QA (54 FRs), vận hành Bug Tracker và chuẩn bị bộ Dữ liệu mẫu Demo sạch (Clean Seed Data). |
 
 ---
 
-## 📅 2. LỘ TRÌNH TIẾN ĐỘ & CỘT MỐC DEADLINE CÁ NHÂN
+## 📅 2. BẢNG TIẾN ĐỘ VÀ DEADLINE TỪNG MỐC CỦA TIẾN ĐẠT
 
-| Giai đoạn | Hạng mục công việc chính | Thời gian | Hạn chót (Deadline) | Trạng thái |
-| :---: | :--- | :---: | :---: | :---: |
-| **Giai đoạn 1** | Chuẩn hóa CSDL MySQL: DDL `01_schema.sql` & DML `02_seed_data.sql` | 09/09 - 10/09 | **23:59 10/09/2026** | ✅ **ĐÃ HOÀN THÀNH** |
-| **Giai đoạn 2** | Bổ sung bảng CSDL mở rộng, vẽ Class Diagram, lập Test Plan | 11/09 - 12/09 | **23:59 12/09/2026** | ⏳ **ĐANG LÀM** |
-| **Giai đoạn 3** | Lập trình Backend APIs: `RoomPost` & `MatchRequest / Appointments` | 13/09 - 15/09 | **23:59 15/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 4** | Lập trình Frontend Flutter: Màn hình Room Feed, Đăng tin, Lịch hẹn | 16/09 - 19/09 | **23:59 19/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 5** | Tích hợp E2E Room & Appointment, chạy kiểm thử tự động, Bug Tracker | 20/09 - 22/09 | **23:59 22/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 6** | Nạp Seed Data sạch, kiểm tra chất lượng tổng thể trước nghiệm thu | 23/09/2026 | ⏰ **18:00 23/09/2026** | 🎯 **GỜ BÀN GIAO** |
-
----
-
-## 📝 3. CHI TIẾT TỪNG NHIỆM VỤ VÀ DEADLINE CỤ THỂ
-
-### GIAI ĐOẠN 1: THIẾT KẾ CƠ SỞ DỮ LIỆU CHUẨN (09/09 – 10/09/2026)
-- [x] **Task TD-1.1**: Chuẩn hóa DDL `database/01_schema.sql` (bảng `users`, `user_preferences`, `room_posts`, `match_requests`).  
-  - *Hạn chót*: `18:00 09/09/2026` | *Trạng thái*: ✅ **Xong**
-- [x] **Task TD-1.2**: Xây dựng Seed Data mẫu `database/02_seed_data.sql` và file tổng hợp `database/roommate_hub.sql`.  
-  - *Hạn chót*: `21:00 09/09/2026` | *Trạng thái*: ✅ **Xong**
-- [x] **Task TD-1.3**: Soạn thảo tài liệu hướng dẫn CSDL chi tiết tại `database/README.md`.  
-  - *Hạn chót*: `12:00 10/09/2026` | *Trạng thái*: ✅ **Xong**
+```mermaid
+gantt
+    title TIẾN ĐỘ CÁ NHÂN: PHAN TIẾN ĐẠT (09/09 - 23/09/2026)
+    dateFormat  YYYY-MM-DD
+    section Giai đoạn 1
+    Chuẩn hóa CSDL MySQL & Seed Data DML (Xong)  :done, td1, 2026-09-09, 2026-09-10
+    section Giai đoạn 2
+    Mở rộng CSDL 3 Bảng, Class Diagram & QA Plan :active, td2, 2026-09-11, 2026-09-12
+    section Giai đoạn 3
+    Code Backend RoomPost, Request & Appointment :td3, 2026-09-13, 2026-09-15
+    section Giai đoạn 4
+    Code Flutter Đăng Tin, Requests & Lịch Hẹn   :td4, 2026-09-16, 2026-09-19
+    section Giai đoạn 5
+    Tích hợp E2E Room/Lịch hẹn, Bug Tracker & QA :td5, 2026-09-20, 2026-09-22
+    section Giai đoạn 6
+    Nạp Clean Seed Data Demo & Nghiệm thu QA     :milestone, td6, 2026-09-23, 2026-09-23
+```
 
 ---
 
-### GIAI ĐOẠN 2: MỞ RỘNG CSDL & KẾ HOẠCH KIỂM THỬ QA (11/09 – 12/09/2026)
-*Nhánh Git đề xuất: `feature/database-expansion` & `docs/qa-testplan`*
+## 📝 3. NHIỆM VỤ ĐI SÂU CHI TIẾT TỪNG GIAI ĐOẠN (STEP-BY-STEP DEEP TASKS)
 
-- [ ] **Task TD-2.1: Mở rộng CSDL MySQL (Bổ sung 3 bảng mới)**
-  - *Hạn chót*: ⏰ **18:00 Thứ Sáu, 11/09/2026**
-  - *Mô tả*:
-    - Viết script migration bổ sung 3 bảng phục vụ 54 FRs mở rộng:
-      1. Bảng `viewing_appointments`: Quản lý lịch hẹn xem phòng trực tiếp (id, requester_id, host_id, post_id, appointment_time, status [PENDING/CONFIRMED/CANCELLED], note).
-      2. Bảng `contact_permissions`: Quản lý quyền xem thông tin liên lạc nhạy cảm theo nguyên tắc Double Opt-in (id, user_id, requester_id, is_granted, granted_at).
-      3. Bảng `reports`: Quản lý tố cáo vi phạm bài đăng hoặc tài khoản (id, reporter_id, target_id, target_type, reason, status [PENDING/RESOLVED]).
-    - Cập nhật cả file `database/01_schema.sql` và `database/roommate_hub.sql`.
-  - *Đầu ra*: Script SQL chạy không lỗi, có ràng buộc khóa ngoại rõ ràng.
-  - *Bàn giao*: Bàn giao cấu trúc bảng cho Quốc Huy và Quang Huy để ánh xạ Entity Java.
+---
 
-- [ ] **Task TD-2.2: Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository)**
-  - *Hạn chót*: ⏰ **12:00 Thứ Bảy, 12/09/2026**
-  - *Mô tả*: Vẽ sơ đồ lớp chi tiết thể hiện quan hệ 1-1, 1-nhiều, nhiều-nhiều giữa các Model trong Backend Spring Boot 3.
-  - *Đầu ra*: File ảnh sơ đồ lưu tại `docs/diagrams/classes/`.
+### GIAI ĐOẠN 1: CHUẨN HÓA CƠ SỞ DỮ LIỆU BAN ĐẦU (09/09 – 10/09/2026)
+*Trạng thái: ✅ ĐÃ HOÀN THÀNH XUẤT SẮC*
 
-- [ ] **Task TD-2.3: Xây dựng Kế hoạch Kiểm thử Toàn diện (QA Test Plan)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Bảy, 12/09/2026**
-  - *Mô tả*:
-    - Lập ma trận kiểm thử (Traceability Test Matrix) bao phủ 54 Yêu cầu chức năng (FRs).
-    - Phân chia phạm vi kiểm thử: Kiểm thử Chức năng (Functional), Kiểm thử Bảo mật (Security), Kiểm thử Hiệu năng (Performance).
-  - *Đầu ra*: File tài liệu `docs/TEST_PLAN.md`.
+- [x] **Task TD-1.1: Phân tách và chuẩn hóa file DDL `database/01_schema.sql`**  
+  - *Kết quả*: Tạo các bảng `users`, `user_preferences`, `room_posts`, `match_requests` kèm chỉ mục và ràng buộc khóa ngoại.
+- [x] **Task TD-1.2: Xây dựng bộ dữ liệu mẫu ban đầu `database/02_seed_data.sql`**  
+  - *Kết quả*: Tạo tài khoản Admin mặc định và 3 tài khoản User sinh viên mẫu có mật khẩu mã hóa BCrypt (`123456`).
+- [x] **Task TD-1.3: Soạn tài liệu hướng dẫn vận hành CSDL tại `database/README.md`**  
+  - *Kết quả*: Hướng dẫn chi tiết cách chạy script bằng CLI, DBeaver và Workbench.
+
+---
+
+### GIAI ĐOẠN 2: MỞ RỘNG CSDL MYSQL & KẾ HOẠCH KIỂM THỬ QA (11/09 – 12/09/2026)
+*Mục tiêu giai đoạn: Mở rộng CSDL phục vụ 54 yêu cầu chức năng mở rộng, thiết kế Class Diagram và lập kế hoạch kiểm thử QA.*  
+*Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
+*Nhánh Git thực hiện*: `feature/database-expansion`
+
+#### 📌 Task TD-2.1: Viết Script Mở rộng CSDL MySQL (Bổ sung 3 bảng mới)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026**
+- **Nhiệm vụ kỹ thuật cụ thể**:
+  - Mở file `database/01_schema.sql` và `database/roommate_hub.sql`, bổ sung 3 bảng phục vụ 54 FRs:
+    1. **Bảng `viewing_appointments` (Quản lý Lịch hẹn xem phòng trực tiếp)**:
+       ```sql
+       CREATE TABLE IF NOT EXISTS viewing_appointments (
+           id BIGINT AUTO_INCREMENT PRIMARY KEY,
+           requester_id BIGINT NOT NULL,
+           host_id BIGINT NOT NULL,
+           room_post_id BIGINT NOT NULL,
+           appointment_time DATETIME NOT NULL,
+           status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
+           note TEXT NULL,
+           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+           FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+           FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE,
+           FOREIGN KEY (room_post_id) REFERENCES room_posts(id) ON DELETE CASCADE
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+       ```
+    2. **Bảng `contact_permissions` (Cơ chế Double Opt-in bảo vệ quyền riêng tư)**:
+       ```sql
+       CREATE TABLE IF NOT EXISTS contact_permissions (
+           id BIGINT AUTO_INCREMENT PRIMARY KEY,
+           user_id BIGINT NOT NULL,          -- Người cho phép xem
+           granted_to_id BIGINT NOT NULL,    -- Người được phép xem SĐT
+           match_request_id BIGINT NOT NULL,
+           granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+           FOREIGN KEY (granted_to_id) REFERENCES users(id) ON DELETE CASCADE,
+           FOREIGN KEY (match_request_id) REFERENCES match_requests(id) ON DELETE CASCADE,
+           UNIQUE KEY uq_contact_grant (user_id, granted_to_id)
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+       ```
+    3. **Bảng `reports` (Quản lý Báo cáo Tố cáo vi phạm)**:
+       ```sql
+       CREATE TABLE IF NOT EXISTS reports (
+           id BIGINT AUTO_INCREMENT PRIMARY KEY,
+           reporter_id BIGINT NOT NULL,
+           target_id BIGINT NOT NULL,
+           target_type VARCHAR(20) NOT NULL, -- 'USER' hoặc 'ROOM_POST'
+           reason TEXT NOT NULL,
+           status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, RESOLVED, DISMISSED
+           action_note TEXT NULL,
+           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+           FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+       ```
+  - Bổ sung các chỉ mục (Indexes) để tăng tốc độ truy vấn:
+    `CREATE INDEX idx_room_posts_district ON room_posts(district);`
+    `CREATE INDEX idx_room_posts_price ON room_posts(price);`
+- **Đầu ra**: Cập nhật hoàn tất `database/01_schema.sql`, `database/02_seed_data.sql` và `database/roommate_hub.sql`.
+- **Bàn giao chéo**: Gửi thông báo cho Quốc Huy và Quang Huy để ánh xạ Entity Java tương ứng.
+
+#### 📌 Task TD-2.2: Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository)
+- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Vẽ Sơ đồ Lớp (Class Diagram) bằng Draw.io / PlantUML thể hiện đầy đủ cấu trúc hướng đối tượng của Backend Spring Boot:
+    - Các Entity: `User`, `UserPreference`, `RoomPost`, `MatchRequest`, `ViewingAppointment`, `ContactPermission`, `Report`.
+    - Thể hiện quan hệ: `1 - 1` giữa `User` và `UserPreference`; `1 - n` giữa `User` và `RoomPost`; `1 - n` giữa `User` và `MatchRequest`.
+    - Liệt kê các Interface Repository kế thừa `JpaRepository`.
+- **Đầu ra**: File ảnh `docs/diagrams/classes/class_diagram.png` và bàn giao cho Quốc Huy chèn vào báo cáo học thuật.
+
+#### 📌 Task TD-2.3: Xây dựng Kế hoạch Kiểm thử Toàn diện (QA Test Plan)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Soạn file tài liệu `docs/TEST_PLAN.md` bao phủ trọn vẹn 54 Yêu cầu chức năng (FRs):
+    - Mục tiêu kiểm thử, phạm vi kiểm thử (In-scope / Out-of-scope).
+    - Ma trận truy xuất nguồn gốc yêu cầu (Traceability Matrix): Mã FR -> Kịch bản kiểm thử tương ứng.
+    - Tiêu chuẩn chấp nhận lỗi (Bug Severity Matrix):
+      - *Critical (Nghiêm trọng)*: Hệ thống sập, rò rỉ mật khẩu, không thể đăng ký/đăng nhập.
+      - *Major (Lớn)*: Lời mời không gửi được, tính sai % Matching, sai lệch giá phòng.
+      - *Minor (Nhỏ)*: Lỗi lệch font, sai vị trí nút bấm, chưa dịch tiếng Việt.
+- **Đầu ra**: File `docs/TEST_PLAN.md` chuẩn mực làm kim chỉ nam cho kiểm thử ở Giai đoạn 5.
 
 ---
 
 ### GIAI ĐOẠN 3: LẬP TRÌNH BACKEND SPRING BOOT 3 (13/09 – 15/09/2026)
-*Nhánh Git đề xuất: `feature/room-post-backend` & `feature/appointment-backend`*
+*Mục tiêu giai đoạn: Xây dựng toàn bộ APIs Bài đăng phòng trọ, Lời mời ghép đôi Double Opt-in và Lịch hẹn xem trọ.*  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Hai, 15/09/2026***  
+*Nhánh Git thực hiện*: `feature/room-appointment-backend`
 
-- [ ] **Task TD-3.1: Lập trình Backend Module Bài đăng Phòng trọ (`RoomPost`)**
-  - *Hạn chót*: ⏰ **18:00 Chủ Nhật, 14/09/2026**
-  - *Mô tả*:
-    - Xây dựng Entity: `RoomPost.java` và quan hệ `@ManyToOne` với `User`.
-    - Viết DTOs: `RoomPostCreateDto`, `RoomPostResponseDto`, `RoomFilterDto`.
-    - Viết `RoomPostRepository`: Hỗ trợ Spring Data JPA Specification để lọc đa tiêu chí (theo khoảng giá, quận huyện, diện tích).
-    - Viết `RoomPostController.java`:
-      - `POST /api/v1/posts`: Đăng tin tìm bạn ở ghép / cho thuê phòng.
-      - `GET /api/v1/posts`: Lấy danh sách tin đăng có phân trang (`Pageable`) và bộ lọc.
-      - `GET /api/v1/posts/{id}`: Xem chi tiết tin đăng (tự động tăng view counter).
-      - `PUT /api/v1/posts/{id}`: Chỉnh sửa tin đăng của chính mình.
-      - `DELETE /api/v1/posts/{id}`: Ẩn hoặc xóa bài đăng.
-  - *Đầu ra*: Code Backend hoàn chỉnh, test thành công qua Postman.
+#### 📌 Task TD-3.1: Lập trình Backend Module Bài đăng Phòng trọ (`RoomPostController` & `Service`)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 14/09/2026**
+- **Các file cần chỉnh sửa / tạo mới**:
+  - `backend/src/main/java/com/roommate/hub/repository/RoomPostRepository.java`:
+    - Viết truy vấn phân trang kèm bộ lọc đa tiêu chí:
+      `Page<RoomPost> findByDistrictAndPriceBetween(String district, Double minPrice, Double maxPrice, Pageable pageable);`
+  - `backend/src/main/java/com/roommate/hub/service/RoomPostService.java`:
+    - Hàm `createPost(Long userId, CreateRoomPostDTO dto)`: Kiểm tra thông tin hợp lệ -> Gán `user` làm chủ bài -> Lưu trạng thái `APPROVED` (hoặc `PENDING` nếu bật duyệt tin).
+    - Hàm `getPostDetail(Long postId)`: Lấy chi tiết bài đăng và tự động tăng số lượt xem (`viewCount = viewCount + 1`).
+    - Hàm `updatePost(Long userId, Long postId, CreateRoomPostDTO dto)`: Chỉ cho phép chủ bài sửa tin của mình.
+    - Hàm `deletePost(Long userId, Long postId)`: Xóa hoặc chuyển trạng thái sang `INACTIVE`.
+  - `backend/src/main/java/com/roommate/hub/controller/RoomPostController.java`:
+    - `POST /api/v1/posts`: Tạo tin mới.
+    - `GET /api/v1/posts`: Lấy danh sách tin có phân trang (`?page=0&size=10&district=Bình Thạnh&minPrice=2000000`).
+    - `GET /api/v1/posts/{id}`: Xem chi tiết.
+    - `PUT /api/v1/posts/{id}`: Sửa tin.
+    - `DELETE /api/v1/posts/{id}`: Xóa tin.
+- **Tiêu chí nghiệm thu (DoD)**:
+  - Gọi `GET /api/v1/posts` trả về đúng định dạng JSON có phân trang (`totalPages`, `totalElements`, `content`).
 
-- [ ] **Task TD-3.2: Lập trình Backend Module Lời mời Ghép trọ & Đặt lịch hẹn**
-  - *Hạn chót*: ⏰ **18:00 Thứ Hai, 15/09/2026**
-  - *Mô tả*:
-    - Viết Controller & Service cho `MatchRequest` (Lời mời ghép trọ):
-      - `POST /api/v1/match-requests/send`: Gửi lời mời.
-      - `PUT /api/v1/match-requests/{id}/respond`: Phản hồi Đồng ý (ACCEPT) hoặc Từ chối (REJECT).
-      - Cơ chế Double Opt-in: Khi cả 2 đồng ý, tự động cấp quyền mở khóa số điện thoại (`ContactPermission`).
-    - Viết Controller & Service cho `ViewingAppointment` (Lịch hẹn xem phòng):
-      - `POST /api/v1/appointments`: Đặt lịch xem phòng.
-      - `PUT /api/v1/appointments/{id}/status`: Chủ phòng Xác nhận / Hủy lịch.
-      - `GET /api/v1/appointments/my`: Xem danh sách lịch hẹn của tôi.
-  - *Đầu ra*: Logic nghiệp vụ chặt chẽ, kiểm tra xung đột thời gian hẹn.
+#### 📌 Task TD-3.2: Lập trình Backend Lời mời Ghép đôi Double Opt-in & Đặt lịch hẹn
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 15/09/2026**
+- **Các file cần chỉnh sửa / tạo mới**:
+  - `backend/src/main/java/com/roommate/hub/service/MatchRequestService.java`:
+    - Hàm `sendMatchRequest(Long senderId, Long receiverId, String message)`:
+      - Kiểm tra: Không được gửi lời mời cho chính mình.
+      - Kiểm tra: Không được gửi trùng lặp nếu đã có lời mời đang `PENDING`.
+      - Khởi tạo `MatchRequest` trạng thái `PENDING`.
+    - Hàm `respondMatchRequest(Long receiverId, Long requestId, String status)`:
+      - Nếu `status = "ACCEPTED"`: Cập nhật lời mời thành công, đồng thời tự động chèn bản ghi vào bảng `contact_permissions` để cả hai bên được phép nhìn thấy SĐT/Zalo của nhau (Double Opt-in).
+      - Nếu `status = "REJECTED"`: Cập nhật trạng thái từ chối lịch sự.
+  - Tạo mới `backend/src/main/java/com/roommate/hub/entity/ViewingAppointment.java` và `AppointmentService.java`:
+    - Hàm `createAppointment(Long requesterId, Long postId, LocalDateTime appointmentTime, String note)`.
+    - Hàm `updateAppointmentStatus(Long hostId, Long appointmentId, String status)` (CONFIRMED / CANCELLED).
+    - Hàm `getMyAppointments(Long userId)`: Lấy các lịch hẹn mà user là người đặt hoặc là chủ phòng.
+- **Tiêu chí nghiệm thu (DoD)**:
+  - Khi một bên từ chối: Số điện thoại tuyệt đối không được trả về trong DTO.
+  - Khi cả hai đồng ý: DTO trả về số điện thoại và email liên hệ rõ ràng.
 
-- [ ] **Task TD-3.3: Viết Unit Tests & Integration Tests cho Room & Appointment**
-  - *Hạn chót*: ⏰ **23:59 Thứ Hai, 15/09/2026**
-  - *Mô tả*: Sử dụng Mockito & MockMvc kiểm tra luồng tạo bài đăng và quy trình phê duyệt lịch hẹn.
-  - *Đầu ra*: Test cases chạy pass 100%.
+#### 📌 Task TD-3.3: Viết Bộ Unit Tests cho RoomPost & MatchRequest
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 15/09/2026**
+- **File tạo mới**:
+  - `backend/src/test/java/com/roommate/hub/service/RoomPostServiceTest.java`:
+    - Test tạo bài đăng hợp lệ.
+    - Test ném ngoại lệ khi user này cố tình sửa/xóa bài đăng của user khác (`AccessDeniedException`).
+  - `backend/src/test/java/com/roommate/hub/service/MatchRequestServiceTest.java`:
+    - Test quy trình gửi lời mời và chấp nhận lời mời mở khóa thông tin liên lạc.
+    - Test chặn gửi lời mời cho chính mình.
+- **Lệnh thực thi**:
+  ```bash
+  cd backend
+  .\mvnw.cmd test -Dtest=RoomPostServiceTest,MatchRequestServiceTest
+  ```
 
 ---
 
 ### GIAI ĐOẠN 4: LẬP TRÌNH FRONTEND FLUTTER CLIENT (16/09 – 19/09/2026)
-*Nhánh Git đề xuất: `feature/room-appointment-ui`*
+*Mục tiêu giai đoạn: Xây dựng màn hình Đăng tin phòng, Bảng tin phòng trọ và Màn hình quản lý Lời mời & Lịch hẹn.*  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Sáu, 19/09/2026***  
+*Nhánh Git thực hiện*: `feature/room-requests-flutter`
 
-- [ ] **Task TD-4.1: Xây dựng Giao diện Bảng tin Phòng trọ (Room Feed Screen)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Tư, 17/09/2026**
-  - *Mô tả*:
-    - Tạo `room_feed_screen.dart`:
-      - Danh sách bài đăng dạng Card với ảnh đại diện phòng, tiêu đề, địa chỉ, giá thuê/tháng, số người đang cần ghép.
-      - Thanh tìm kiếm và bộ lọc nhanh (Lọc theo quận, mức giá, tiện ích: máy lạnh, máy giặt, giờ tự do).
-    - Hỗ trợ cuộn vô tận (Infinite Scroll / Phân trang).
-  - *Đầu ra*: Màn hình hiển thị mượt mà, load ảnh tối ưu.
+#### 📌 Task TD-4.1: Xây dựng Giao diện Đăng tin Phòng trọ (`create_post_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 17/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Mở file `frontend/lib/screens/create_post_screen.dart`:
+    - Tiêu đề AppBar: "Đăng tin tìm bạn ở ghép / Cho thuê phòng".
+    - Nhập tiêu đề bài đăng: `TextFormField` (Tối thiểu 10 ký tự, ví dụ: "Tìm 1 bạn nam ở ghép phòng trọ gần ĐH Sư Phạm Kỹ Thuật").
+    - Giá thuê phòng/tháng: `TextFormField` nhập số tiền kèm định dạng tự động thêm dấu chấm phân cách hàng nghìn (ví dụ: `3.500.000 đ`).
+    - Tiền cọc & Tiền điện/nước: Nhập rõ ràng để minh bạch chi phí.
+    - Địa chỉ cụ thể: Dropdown chọn Quận/Huyện (Bình Thạnh, Quận 9, Thủ Đức...) + Nhập số nhà, tên đường.
+    - Diện tích phòng ($m^2$) & Số lượng người hiện tại / Số lượng người cần tìm thêm.
+    - Danh sách tiện ích có sẵn: `CheckboxListTile` hoặc `Wrap` của các Chip chọn:
+      - 📶 Wifi tốc độ cao
+      - ❄️ Máy lạnh / Điều hòa
+      - 🚿 Máy nước nóng lạnh
+      - 🧺 Máy giặt riêng
+      - 🛵 Chỗ để xe an toàn
+      - 🔑 Giờ giấc tự do, không chung chủ
+    - Nút ElevatedButton "Đăng bài ngay": Gọi API Backend, bắt lỗi không để trống thông tin bắt buộc.
 
-- [ ] **Task TD-4.2: Xây dựng Màn hình Chi tiết Phòng trọ & Form Đăng tin**
-  - *Hạn chót*: ⏰ **23:59 Thứ Năm, 18/09/2026**
-  - *Mô tả*:
-    - File `room_detail_screen.dart`: Carousel lướt ảnh phòng, thông tin chủ trọ, danh sách tiện ích, bản đồ vị trí, nút "Đặt lịch xem phòng" và "Nhắn tin trao đổi".
-    - File `create_room_post_screen.dart`: Form nhập tiêu đề, giá phòng, tiền cọc, địa chỉ chi tiết, tải ảnh mô tả, chọn tiện ích kèm theo.
-  - *Đầu ra*: Giao diện hiện đại, validate dữ liệu kỹ lưỡng.
+#### 📌 Task TD-4.2: Xây dựng Giao diện Bảng tin Danh sách Phòng trọ (Room Feed)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 18/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Nâng cấp màn hình danh sách bài đăng:
+    - Thẻ bài đăng dạng Card hiện đại:
+      - Ảnh đại diện phòng trọ (Placeholder ảnh đẹp, hỗ trợ hiển thị tỷ lệ 16:9).
+      - Huy hiệu Quận nổi bật trên ảnh (ví dụ: `📍 Bình Thạnh`).
+      - Tiêu đề in đậm, giá tiền màu cam đỏ nổi bật (ví dụ: `2.800.000 đ/người`).
+      - Hàng icon tiện ích thu nhỏ (Wifi, Máy lạnh, Giờ tự do).
+      - Tên người đăng và thời gian đăng (ví dụ: "Đăng 2 giờ trước").
+    - Thanh tìm kiếm và bộ lọc nhanh:
+      - Thanh tìm kiếm theo từ khóa tên đường/trường học.
+      - Nút BottomSheet lọc theo khoảng giá và tiện ích mong muốn.
 
-- [ ] **Task TD-4.3: Xây dựng Màn hình Quản lý Lịch hẹn & Lời mời ghép trọ**
-  - *Hạn chót*: ⏰ **23:59 Thứ Sáu, 19/09/2026**
-  - *Mô tả*:
-    - Tạo `appointment_screen.dart`: Danh sách lịch hẹn đã đặt / được mời với Tab: "Chờ xác nhận", "Đã xác nhận", "Đã hoàn thành", "Đã hủy".
-    - Cho phép chủ trọ bấm "Xác nhận" hoặc "Đề xuất giờ khác".
-    - Hiển thị số điện thoại liên hệ sau khi đã được cấp quyền (Double Opt-in).
-  - *Đầu ra*: Màn hình quản lý tương tác hai chiều rõ ràng.
-
----
-
-### GIAI ĐOẠN 5: TÍCH HỢP E2E, THI CÔNG QA & BUG TRACKER (20/09 – 22/09/2026)
-*Nhánh Git đề xuất: `integration/room-qa`*
-
-- [ ] **Task TD-5.1: Tích hợp Frontend RoomPost & Lịch hẹn với Backend**
-  - *Hạn chót*: ⏰ **18:00 Chủ Nhật, 20/09/2026**
-  - *Mô tả*: Kết nối toàn bộ luồng đăng tin, tìm kiếm và đặt lịch hẹn xem phòng với cơ sở dữ liệu MySQL thật.
-- [ ] **Task TD-5.2: Khởi tạo và Quản trị Bảng theo dõi Lỗi (Bug Tracker)**
-  - *Hạn chót*: ⏰ **18:00 Thứ Hai, 21/09/2026**
-  - *Mô tả*:
-    - Lập file theo dõi lỗi `docs/BUG_TRACKER.md`.
-    - Phân loại lỗi theo mức độ nghiêm trọng: Critical (Chặn luồng chính), Major (Lỗi logic), Minor (Lỗi hiển thị UI).
-    - Phân công lỗi cho người phụ trách mảng tương ứng sửa triệt để.
-- [ ] **Task TD-5.3: Chạy Kiểm thử Toàn diện Hệ thống (Automated & Regression Testing)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Ba, 22/09/2026**
-  - *Mô tả*: Kiểm thử luồng tích hợp giữa cả 3 bạn (Auth -> Survey -> Matching -> Đăng phòng -> Lịch hẹn).
-
----
-
-### GIAI ĐOẠN 6: DỮ LIỆU DEMO SẠCH & NGHIỆM THU (23/09/2026)
-*Hạn chót toàn dự án: ⏰ **18:00 Thứ Tư, 23/09/2026***
-
-- [ ] **Task TD-6.1: Nạp Bộ Dữ liệu Mẫu Thử nghiệm Hoàn chỉnh (Clean Seed Data)**
-  - *Hạn chót*: ⏰ **12:00 Thứ Tư, 23/09/2026**
-  - *Mô tả*: Cập nhật `database/02_seed_data.sql` với ít nhất 10 người dùng sinh viên có ảnh đại diện đẹp, tiêu chí thực tế, 8 bài đăng phòng trọ thật tại TP.HCM kèm hình ảnh chất lượng.
-- [ ] **Task TD-6.2: Nghiệm thu QA lần cuối và bàn giao dự án cho PM Leader**
-  - *Hạn chót*: ⏰ **18:00 Thứ Tư, 23/09/2026**
-  - *Mô tả*: Xác nhận 0 lỗi Critical, 0 lỗi Major trước khi chính thức chốt mã nguồn.
+#### 📌 Task TD-4.3: Xây dựng Màn hình Quản lý Lời mời & Lịch hẹn xem phòng (`requests_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 19/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Mở file `frontend/lib/screens/requests_screen.dart`:
+    - Sử dụng `TabBar` chia làm 2 phân hệ rõ ràng:
+      1. *Tab 1 - Lời mời ghép đôi*:
+         - Mục "Lời mời đã nhận": Hiển thị ứng viên muốn ghép đôi với bạn. Nút xanh "Đồng ý ghép" và Nút xám "Từ chối".
+         - Khi nhấn "Đồng ý ghép": Hệ thống tự động chuyển sang trạng thái `ACCEPTED` và hiển thị khung liên hệ: "🎉 Bạn đã ghép đôi thành công! Số điện thoại: 0987.xxx.xxx - Bấm để mở Zalo".
+         - Mục "Lời mời đã gửi": Trạng thái Đang chờ duyệt (`PENDING`) hoặc Đã được chấp nhận.
+      2. *Tab 2 - Lịch hẹn xem phòng*:
+         - Hiển thị danh sách lịch hẹn xem trọ trực tiếp.
+         - Thông tin thẻ hẹn: Tên phòng, Địa chỉ, Ngày & Giờ hẹn (VD: `15:30 Thứ Bảy, 19/09`), Ghi chú.
+         - Thẻ trạng thái: `Chờ chủ nhà xác nhận` (Màu vàng), `Đã xác nhận lịch` (Màu xanh), `Đã xong` (Màu xanh dương).
+         - Nút cho Chủ phòng: "Xác nhận lịch hẹn" hoặc "Hủy lịch hẹn".
+- **Tiêu chí nghiệm thu**: Thao tác chấp nhận/từ chối phản hồi tức thì trên UI và cập nhật ngay vào MySQL.
 
 ---
 
-## 🔍 4. BẢNG TỰ KIỂM TRA CHẤT LƯỢNG (SELF-CHECKLIST TRƯỚC KHI TẠO PR)
+### GIAI ĐOẠN 5: TÍCH HỢP E2E, THI CÔNG QA & QUẢN LÝ BUG TRACKER (20/09 – 22/09/2026)
+*Mục tiêu giai đoạn: Kết nối thông suốt luồng Đăng phòng -> Đặt lịch hẹn -> Double Opt-in, quản lý triệt để bảng lỗi.*  
+*Hạn chót toàn giai đoạn 5: ⏰ **23:59 Thứ Ba, 22/09/2026***  
+*Nhánh Git thực hiện*: `integration/room-qa`
 
-Trước khi tạo Pull Request vào nhánh `master`, Tiến Đạt tự kiểm tra các tiêu chí sau:
-- [ ] Các câu lệnh SQL có chỉ mục (Index) trên các cột thường xuyên tìm kiếm (`district`, `price`, `status`).
-- [ ] Khóa ngoại được định nghĩa đúng kiểu dữ liệu và có `ON DELETE CASCADE` phù hợp.
-- [ ] APIs lọc bài đăng có phân trang (`page`, `size`), không trả về toàn bộ dữ liệu làm tràn RAM.
-- [ ] Form đăng bài có bắt lỗi giá tiền âm, diện tích bằng 0, thiếu số điện thoại.
-- [ ] Đã chạy `git pull origin master` trước khi đẩy mã nguồn.
+#### 📌 Task TD-5.1: Tích hợp Luồng Đăng phòng & Lời mời Ghép trọ End-to-End
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 20/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Dùng tài khoản `nam@gmail.com` đăng tin phòng trọ mới -> Kiểm tra xuất hiện ngay trên Bảng tin phòng trọ của tài khoản `huy@gmail.com`.
+  - `huy@gmail.com` nhấn nút "Gửi lời mời ghép đôi" kèm lời nhắn -> `nam@gmail.com` nhận thông báo trong tab Lời mời -> Bấm "Đồng ý" -> Cả hai bên đều nhìn thấy số điện thoại của nhau.
+
+#### 📌 Task TD-5.2: Khởi tạo và Quản trị Bảng theo dõi Lỗi Hệ thống (`docs/BUG_TRACKER.md`)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 21/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Tạo file Markdown `docs/BUG_TRACKER.md` cấu trúc bảng:
+    | Bug ID | Tên lỗi & Mô tả | Mức độ | Người phụ trách | Các bước tái hiện lỗi | Trạng thái (Open/Fixed/Closed) |
+    | :---: | :--- | :---: | :---: | :--- | :---: |
+    | `BUG-01` | Lỗi tràn viền BottomSheet trên màn hình nhỏ | Minor | Trần Quang Huy | Mở modal so sánh trên màn hình 320px | ✅ Closed |
+    | `BUG-02` | Không gửi được tin đăng khi giá tiền có dấu chấm | Major | Phan Tiến Đạt | Nhập giá `3.500.000` bị lỗi parse số | ✅ Closed |
+  - Chủ trì việc phân loại và giám sát các thành viên sửa dứt điểm toàn bộ lỗi trước khi sang Giai đoạn 6.
+
+#### 📌 Task TD-5.3: Chạy Bộ Kiểm thử Hồi quy Tự động (Regression Testing)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 22/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Chạy toàn bộ test suite của Backend: `.\mvnw.cmd clean test`.
+  - Đảm bảo 100% tests chạy thành công, không có bất kỳ regression bug nào ảnh hưởng đến mã nguồn của các bạn khác.
+
+---
+
+### GIAI ĐOẠN 6: BỘ DỮ LIỆU MẪU DEMO CHUẨN & NGHIỆM THU QA (23/09/2026)
+*Mục tiêu giai đoạn: Nạp dữ liệu thực tế đẹp mắt, kiểm duyệt chất lượng lần cuối trước khi bàn giao.*  
+*HẠN CHÓT BÀN GIAO TOÀN DỰ ÁN: ⏰ **18:00 Thứ Tư, 23/09/2026***
+
+- [ ] **Task TD-6.1: Nạp Bộ Dữ liệu Mẫu Demo Hoàn chỉnh (`database/02_seed_data.sql`)**
+  - *Thời hạn*: ⏰ **12:00 Thứ Tư, 23/09/2026**
+  - *Nhiệm vụ cụ thể*:
+    - Cung cấp ít nhất 8 tài khoản sinh viên thật (có ảnh đại diện Unsplash đẹp, mô tả tính cách thực tế, trường ĐH Bách Khoa, Sư Phạm Kỹ Thuật, Kinh Tế...).
+    - Cung cấp 6 bài đăng phòng trọ thật tại các quận sinh viên (Bình Thạnh, TP. Thủ Đức, Quận 10) kèm giá tiền thực tế và đầy đủ tiện ích.
+    - Có sẵn 2 cặp đôi đã ghép đôi thành công (`ACCEPTED`) và 2 lịch hẹn xem phòng để chuẩn bị cho phần demo trực quan.
+- [ ] **Task TD-6.2: Nghiệm thu QA Tổng thể và Ký biên bản Bàn giao cùng PM Leader**
+  - *Thời hạn*: ⏰ **18:00 Thứ Tư, 23/09/2026**
+  - *Nhiệm vụ*: Xác nhận toàn bộ hệ thống đạt tiêu chuẩn: **0 Critical Bugs, 0 Major Bugs**, sẵn sàng trình chiếu trước Hội đồng chấm thi.
+
+---
+
+## 🔍 4. CHECKLIST TỰ RÀ SOÁT CHẤT LƯỢNG CỦA TIẾN ĐẠT (BEFORE PR)
+
+- [ ] Các bảng CSDL mới trong file SQL đều có `ENGINE=InnoDB` và `DEFAULT CHARSET=utf8mb4`.
+- [ ] Khóa ngoại được cấu hình đúng `ON DELETE CASCADE` tránh lỗi mồ côi dữ liệu (orphan records).
+- [ ] API lấy danh sách bài đăng bắt buộc phải có phân trang, không được `findAll()` gây cạn kiệt bộ nhớ.
+- [ ] Dữ liệu giá tiền và số điện thoại được validate chặt chẽ trên cả Backend và Frontend Flutter.
+- [ ] Đã chạy `git pull origin master` trước khi gửi PR.

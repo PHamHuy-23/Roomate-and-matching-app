@@ -1,205 +1,286 @@
-# 📋 BẢNG PHÂN CÔNG NHIỆM VỤ CÁ NHÂN: PHẠM QUỐC HUY
+# 📋 BẢNG PHÂN CÔNG NHIỆM VỤ CÁ NHÂN CHI TIẾT: PHẠM QUỐC HUY
 
-> **Thành viên**: **Phạm Quốc Huy**  
+> **Họ và tên**: **Phạm Quốc Huy**  
 > **Mã số sinh viên (MSSV)**: **24110226**  
-> **Vai trò trong nhóm**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
+> **Vai trò nòng cốt**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
 > **Mảng Kỹ thuật Phụ trách Đầu mối (Lead)**: **Lead BA & Báo cáo Học thuật (Requirements & Documentation Lead)**  
 > **Dự án**: Nền tảng Tìm bạn cùng thuê trọ và Ghép bạn trọ theo tiêu chí (Roommate Matching Hub)  
-> **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày)  
+> **Công nghệ thực hiện**: Java 21 Spring Boot 3 (Backend) + Flutter Dart (Frontend) + MySQL 8.0  
+> **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày / 2 tuần)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**
 
 ---
 
-## 🎯 1. TỔNG QUAN TRÁCH NHIỆM CHÍNH (KEY RESPONSIBILITIES)
+## 🎯 1. TỔNG QUAN PHẠM VI TRÁCH NHIỆM (SCOPE OF WORK)
 
-1. **Lập trình Backend (Spring Boot 3)**:
-   - Chịu trách nhiệm trực tiếp viết mã nguồn cho **Module Khảo sát Tiêu chí 5 chiều (`UserPreference`)** và **Module Quản trị Admin (`AdminController`, `AdminService`)**.
-2. **Lập trình Frontend (Flutter)**:
-   - Chịu trách nhiệm trực tiếp xây dựng giao diện và logic cho **Form Khảo sát Tiêu chí Đa bước (Survey Screen)** và **Trang Thông tin Cá nhân & Cài đặt (Profile Screen)**.
-3. **Phụ trách Đầu mối BA & Tài liệu Học thuật (Lead BA & Docs)**:
-   - Chủ trì xây dựng và cập nhật tài liệu đặc tả 54 yêu cầu chức năng ([`Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx)).
-   - Thiết kế hệ thống 6 Lược đồ Use Case, Sequence Diagram luồng Khảo sát, biên soạn Slide thuyết trình cuối kỳ.
-4. **Quy trình Git cá nhân**:
-   - Nhánh làm việc chính: `feature/user-preference`, `feature/admin-management`, `docs/system-design`.
-   - Luôn `git checkout master` và `git pull origin master` trước khi tạo nhánh mới.
-   - Tuân thủ hướng dẫn tại [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md).
+| Phân hệ đảm nhiệm | File / Module cụ thể | Nhiệm vụ chính |
+| :--- | :--- | :--- |
+| **Backend (Spring Boot 3)** | `controller/ProfileController.java`<br>`service/ProfileService.java`<br>`repository/UserPreferenceRepository.java`<br>`dto/UserPreferenceDTO.java`<br>`controller/AdminController.java`<br>`service/AdminService.java` | Lập trình toàn bộ APIs khảo sát tiêu chí 5 chiều (`UserPreference`), xem/cập nhật hồ sơ cá nhân (`Profile`), và các APIs quản trị hệ thống của Admin (khóa/mở user, duyệt bài đăng, xử lý báo cáo). |
+| **Frontend (Flutter Client)** | `screens/survey_screen.dart`<br>`screens/profile_screen.dart`<br>`screens/admin_screen.dart`<br>`services/api_service.dart` | Thiết kế giao diện đa bước Form khảo sát 5 chiều (Stepper/PageView), Màn hình hồ sơ cá nhân & chỉnh sửa tiêu chí, và Màn hình bảng điều khiển Quản trị viên (Admin Dashboard). |
+| **Lead BA & Tài liệu** | `docs/Nhom13_Mohinhhoayeucau.docx`<br>`docs/diagrams/use_cases/`<br>`docs/diagrams/sequences/`<br>`docs/SLIDE_PRESENTATION.pptx` | Chủ trì xây dựng 54 yêu cầu chức năng (FRs), vẽ 6 Lược đồ Use Case, Sequence Diagram luồng Khảo sát & Admin, biên soạn Slide báo cáo bảo vệ cuối kỳ. |
 
 ---
 
-## 📅 2. LỘ TRÌNH TIẾN ĐỘ & CỘT MỐC DEADLINE CÁ NHÂN
+## 📅 2. BẢNG TIẾN ĐỘ VÀ DEADLINE TỪNG MỐC CỦA QUỐC HUY
 
-| Giai đoạn | Hạng mục công việc chính | Thời gian | Hạn chót (Deadline) | Trạng thái |
-| :---: | :--- | :---: | :---: | :---: |
-| **Giai đoạn 1** | Khảo sát yêu cầu, biên soạn 54 FRs, tài liệu Word đặc tả | 09/09 - 10/09 | **23:59 10/09/2026** | ✅ **ĐÃ HOÀN THÀNH** |
-| **Giai đoạn 2** | Vẽ 6 sơ đồ Use Case, thiết kế giao diện Form khảo sát & Admin | 11/09 - 12/09 | **23:59 12/09/2026** | ⏳ **ĐANG LÀM** |
-| **Giai đoạn 3** | Lập trình Backend APIs: `UserPreference` & `Admin` | 13/09 - 15/09 | **23:59 15/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 4** | Lập trình Frontend Flutter: Màn hình Survey 5 chiều & Profile | 16/09 - 19/09 | **23:59 19/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 5** | Tích hợp E2E Survey, viết tài liệu kiểm thử UAT & Slide báo cáo | 20/09 - 22/09 | **23:59 22/09/2026** | ⏳ Hàng đợi |
-| **Giai đoạn 6** | Tổng duyệt kịch bản Demo, đóng gói báo cáo hoàn thiện | 23/09/2026 | ⏰ **18:00 23/09/2026** | 🎯 **GỜ BÀN GIAO** |
+```mermaid
+gantt
+    title TIẾN ĐỘ CÁ NHÂN: PHẠM QUỐC HUY (09/09 - 23/09/2026)
+    dateFormat  YYYY-MM-DD
+    section Giai đoạn 1
+    54 FRs & Báo cáo Word Hoàn chỉnh (Xong)    :done, qh1, 2026-09-09, 2026-09-10
+    section Giai đoạn 2
+    Vẽ 6 Use Case, Sequence & Spec 5 Chiều     :active, qh2, 2026-09-11, 2026-09-12
+    section Giai đoạn 3
+    Code Backend Preference & Admin APIs       :qh3, 2026-09-13, 2026-09-15
+    section Giai đoạn 4
+    Code Flutter Survey, Profile & Admin Screen:qh4, 2026-09-16, 2026-09-19
+    section Giai đoạn 5
+    Tích hợp E2E Survey, UAT Test & Slide PPT  :qh5, 2026-09-20, 2026-09-22
+    section Giai đoạn 6
+    Tổng duyệt Demo Luồng Khảo sát & Giao bài  :milestone, qh6, 2026-09-23, 2026-09-23
+```
 
 ---
 
-## 📝 3. CHI TIẾT TỪNG NHIỆM VỤ VÀ DEADLINE CỤ THỂ
+## 📝 3. NHIỆM VỤ ĐI SÂU CHI TIẾT TỪNG GIAI ĐOẠN (STEP-BY-STEP DEEP TASKS)
+
+---
 
 ### GIAI ĐOẠN 1: KHẢO SÁT & MÔ HÌNH HÓA YÊU CẦU (09/09 – 10/09/2026)
-- [x] **Task QH-1.1**: Nghiên cứu hiện trạng và đối chiếu 4 mẫu tài liệu của Giảng viên.  
-  - *Hạn chót*: `18:00 09/09/2026` | *Trạng thái*: ✅ **Xong**
-- [x] **Task QH-1.2**: Xây dựng danh sách 54 Yêu cầu chức năng (FRs), 5 biểu mẫu nghiệp vụ, 7 Use Case đặc tả chi tiết.  
-  - *Hạn chót*: `22:00 09/09/2026` | *Trạng thái*: ✅ **Xong**  
-  - *Sản phẩm*: [`docs/Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx)
-- [x] **Task QH-1.3**: Phối hợp cùng Tiến Đạt kiểm tra tính khớp nối giữa 54 FRs và cấu trúc bảng CSDL `database/01_schema.sql`.  
-  - *Hạn chót*: `12:00 10/09/2026` | *Trạng thái*: ✅ **Xong**
+*Trạng thái: ✅ ĐÃ HOÀN THÀNH XUẤT SẮC*
+
+- [x] **Task QH-1.1: Khảo sát hiện trạng & Đối chiếu 4 mẫu báo cáo của Giảng viên**  
+  - *Kết quả*: Hoàn thành khảo sát nhu cầu tìm bạn ở ghép, giải quyết vấn đề bất tương thích lối sống của sinh viên.
+- [x] **Task QH-1.2: Biên soạn tài liệu học thuật `Nhom13_Mohinhhoayeucau.docx`**  
+  - *Kết quả*: 155 đoạn văn, 29 bảng, trang bìa chuẩn, mục lục tự động, danh mục 54 Yêu cầu chức năng (FRs), 5 biểu mẫu giao diện và 7 đặc tả Use Case chi tiết.
+- [x] **Task QH-1.3: Đồng bộ danh mục thực thể với bảng CSDL MySQL**  
+  - *Kết quả*: Kiểm tra tính khớp nối giữa 54 FRs và file DDL `database/01_schema.sql`.
 
 ---
 
-### GIAI ĐOẠN 2: THIẾT KẾ HỆ THỐNG & ĐẶC TẢ CHI TIẾT (11/09 – 12/09/2026)
-*Nhánh Git đề xuất: `docs/system-design`*
+### GIAI ĐOẠN 2: THIẾT KẾ KIẾN TRÚC HỆ THỐNG & ĐẶC TẢ CHI TIẾT (11/09 – 12/09/2026)
+*Mục tiêu giai đoạn: Hoàn tất 100% sơ đồ Use Case, Sequence Diagram và bộ tiêu chí 5 chiều để làm tiền đề cho việc code.*  
+*Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
+*Nhánh Git thực hiện*: `docs/use-case-design`
 
-- [ ] **Task QH-2.1: Vẽ 6 Lược đồ Use Case phân hệ**
-  - *Hạn chót*: ⏰ **17:00 Thứ Sáu, 11/09/2026**
-  - *Mô tả*: Vẽ 6 sơ đồ Use Case bằng công cụ StarUML / Draw.io / PlantUML gồm:
-    1. Phân hệ Xác thực & Người dùng (Actor: Sinh viên/Người dùng).
-    2. Phân hệ Khảo sát & Quản lý Tiêu chí cá nhân (Actor: Sinh viên).
-    3. Phân hệ Tìm kiếm & Lọc bạn trọ (Actor: Sinh viên).
-    4. Phân hệ Ghép đôi & Lời mời ghép trọ (Actor: Sinh viên).
-    5. Phân hệ Đăng tin phòng & Lịch hẹn xem trọ (Actor: Sinh viên, Chủ phòng).
-    6. Phân hệ Quản trị hệ thống & Kiểm duyệt (Actor: Admin).
-  - *Đầu ra*: Xuất file ảnh PNG/SVG chất lượng cao vào thư mục `docs/diagrams/use_cases/`.
-  - *Bàn giao*: Gửi file sơ đồ cho Quang Huy và Tiến Đạt để đối chiếu Class Diagram.
+#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết
+- **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Dùng Draw.io / StarUML / PlantUML vẽ 6 sơ đồ Use Case bao phủ trọn vẹn 54 FRs:
+    1. *Use Case Phân hệ 1 - Xác thực & Quản lý Tài khoản*: Đăng ký sinh viên, Xác thực email OTP, Đăng nhập, Đổi mật khẩu, Quên mật khẩu.
+    2. *Use Case Phân hệ 2 - Khảo sát & Quản lý Tiêu chí cá nhân*: Điền khảo sát 5 chiều, Chỉnh sửa ngân sách, Cập nhật thói quen, Chọn tag sở thích.
+    3. *Use Case Phân hệ 3 - Tìm kiếm & Gợi ý Ghép đôi*: Xem danh sách gợi ý bạn trọ (% Match), Lọc theo quận/giá, Xem chi tiết đối chiếu tiêu chí.
+    4. *Use Case Phân hệ 4 - Lời mời ghép đôi & Phê duyệt (Double Opt-in)*: Gửi lời mời ghép đôi, Chấp nhận lời mời, Từ chối lời mời, Mở khóa liên hệ Zalo/SĐT.
+    5. *Use Case Phân hệ 5 - Đăng tin phòng trọ & Đặt lịch hẹn xem phòng*: Đăng tin tìm người ghép, Lọc phòng trọ, Đặt lịch hẹn xem trọ, Xác nhận lịch hẹn.
+    6. *Use Case Phân hệ 6 - Quản trị hệ thống (Admin)*: Khóa/mở tài khoản vi phạm, Duyệt bài đăng phòng trọ, Xử lý báo cáo tố cáo (Report).
+  - Sử dụng đúng các quan hệ `<<include>>` (ví dụ: Gửi lời mời `<<include>>` Đăng nhập) và `<<extend>>` (ví dụ: Chấp nhận lời mời `<<extend>>` Cấp quyền xem SĐT).
+- **Đầu ra (Deliverables)**: 6 file ảnh định dạng PNG/SVG lưu tại `docs/diagrams/use_cases/` (`uc_auth.png`, `uc_preference.png`, `uc_matching.png`, `uc_invitation.png`, `uc_room.png`, `uc_admin.png`).
+- **Lệnh Git thực hiện**:
+  ```bash
+  git checkout master
+  git pull origin master
+  git checkout -b docs/use-case-design
+  # Thêm ảnh vào docs/diagrams/use_cases/
+  git add docs/diagrams/use_cases/
+  git commit -m "docs: bo sung 6 so do use case chi tiet cho 54 FRs"
+  git push origin docs/use-case-design
+  ```
+- **Bàn giao chéo**: Gửi sơ đồ cho Quang Huy và Tiến Đạt để đối chiếu với API Contract và Class Diagram.
 
-- [ ] **Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin**
-  - *Hạn chót*: ⏰ **12:00 Thứ Bảy, 12/09/2026**
-  - *Mô tả*: Vẽ sơ đồ tuần tự thể hiện tương tác giữa Mobile Client -> Spring Controller -> Service -> Repository -> MySQL:
-    1. Luồng Người dùng cập nhật bảng khảo sát 5 chiều (`UserPreference`).
-    2. Luồng Admin khóa tài khoản vi phạm hoặc duyệt bài đăng phòng trọ.
-  - *Đầu ra*: File thiết kế tuần tự lưu tại `docs/diagrams/sequences/`.
+#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin
+- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Vẽ Sơ đồ tuần tự (Sequence Diagram) thể hiện chính xác các bước giao tiếp giữa các tầng: `Flutter Client` ⇄ `ProfileController` ⇄ `ProfileService` ⇄ `UserPreferenceRepository` ⇄ `MySQL`:
+    1. *Luồng Người dùng lưu/cập nhật Form khảo sát 5 chiều*: Kiểm tra Token hợp lệ -> Validate giá trị đầu vào (ngân sách > 0, thói quen hợp lệ) -> `save()` vào bảng `user_preferences` -> Trả về DTO cập nhật thành công.
+    2. *Luồng Admin phê duyệt bài đăng / Khóa tài khoản*: Client Admin gửi request -> Spring Security lọc quyền `ROLE_ADMIN` -> Cập nhật trạng thái trong DB -> Gửi phản hồi 200 OK.
+- **Đầu ra**: 2 sơ đồ tuần tự định dạng PNG lưu tại `docs/diagrams/sequences/` (`seq_survey.png`, `seq_admin.png`).
 
-- [ ] **Task QH-2.3: Viết tài liệu đặc tả User Stories & Bộ tiêu chí khảo sát 5 chiều**
-  - *Hạn chót*: ⏰ **23:59 Thứ Bảy, 12/09/2026**
-  - *Mô tả*: Đặc tả rõ thang đo, trọng số và giải thuật mapping cho 5 nhóm tiêu chí:
-    1. Ngân sách thuê phòng (Min - Max giá, kỳ hạn thanh toán).
-    2. Khu vực địa lý (Quận/Huyện, bán kính km quanh trường học/chỗ làm).
-    3. Lối sống & Sinh hoạt (Giờ giấc ngủ nghỉ, nấu ăn, tụ tập bạn bè).
-    4. Thói quen cá nhân (Hút thuốc, nuôi thú cưng, giữ vệ sinh, ngăn nắp).
-    5. Tính cách & Sở thích (Mức độ hướng nội/hướng ngoại, sở thích chung).
-  - *Đầu ra*: Markdown spec bàn giao cho Quang Huy (code Matching Engine) và Tiến Đạt (cập nhật DB).
+#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Soạn thảo tài liệu đặc tả chi tiết 5 nhóm thuộc tính của bảng `user_preferences`:
+    - *Chiều 1 - Ngân sách (Budget)*: `min_price`, `max_price` (VNĐ/tháng). Thang đo: 1.000.000 đến 15.000.000 VNĐ.
+    - *Chiều 2 - Khu vực địa lý (Location)*: `preferred_district` (danh sách Quận tại TP.HCM: Quận 1, Quận 7, Bình Thạnh, TP. Thủ Đức...).
+    - *Chiều 3 - Lối sống (Lifestyle)*: `sleep_habit` (EARLY_BIRD / NIGHT_OWL), `cooking_habit` (COOK_DAILY / EAT_OUT / FLEXIBLE).
+    - *Chiều 4 - Thói quen (Habits)*: `cleanliness_level` (1 đến 5 sao), `smoking` (true/false), `pet_friendly` (true/false).
+    - *Chiều 5 - Tính cách & Sở thích (Personality & Interests)*: `personality_type` (INTROVERT / EXTROVERT / AMBIVERT), `interests` (Chuỗi JSON hoặc tags: Đọc sách, Thể thao, Game, Âm nhạc...).
+- **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.md` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
 
 ---
 
 ### GIAI ĐOẠN 3: LẬP TRÌNH BACKEND SPRING BOOT 3 (13/09 – 15/09/2026)
-*Nhánh Git đề xuất: `feature/user-preference` & `feature/admin-backend`*
+*Mục tiêu giai đoạn: Hoàn thiện 100% mã nguồn Java Spring Boot cho module Profile, Preference và Admin, viết Unit Test đạt độ phủ tốt.*  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Hai, 15/09/2026***  
+*Nhánh Git thực hiện*: `feature/preference-admin-backend`
 
-- [ ] **Task QH-3.1: Lập trình Backend Module `UserPreference`**
-  - *Hạn chót*: ⏰ **18:00 Chủ Nhật, 14/09/2026**
-  - *Mô tả*:
-    - Xây dựng Entity: `UserPreference.java` ánh xạ bảng `user_preferences`.
-    - Viết DTOs: `PreferenceRequest.java`, `PreferenceResponse.java`.
-    - Viết Service & Repository: Xử lý logic lưu mới và cập nhật khảo sát theo `userId`.
-    - Xây dựng REST API Controller `UserPreferenceController.java`:
-      - `POST /api/v1/preferences`: Lưu kết quả khảo sát lần đầu.
-      - `PUT /api/v1/preferences`: Cập nhật tiêu chí hiện tại.
-      - `GET /api/v1/preferences/me`: Lấy thông tin tiêu chí của user đang đăng nhập.
-      - `GET /api/v1/preferences/user/{userId}`: Xem tiêu chí công khai của ứng viên.
-  - *Đầu ra*: Code sạch, chạy pass trên Postman, đã push lên Git.
-  - *Bàn giao*: Cung cấp API endpoint cho Quang Huy để tích hợp vào Matching Engine.
+#### 📌 Task QH-3.1: Lập trình Backend Module `UserPreference` & `Profile`
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 14/09/2026**
+- **Các file cần chỉnh sửa / tạo mới**:
+  - `backend/src/main/java/com/roommate/hub/dto/UserPreferenceDTO.java`:
+    - Khai báo đầy đủ các trường: `minBudget`, `maxBudget`, `preferredLocation`, `sleepHabit`, `cookingHabit`, `cleanlinessLevel`, `smoking`, `petFriendly`, `personalityType`, `interests`.
+    - Thêm Bean Validation: `@NotNull`, `@Min(0)`, `@Max(5)` cho các trường tương ứng.
+  - `backend/src/main/java/com/roommate/hub/repository/UserPreferenceRepository.java`:
+    - Bổ sung query method: `Optional<UserPreference> findByUserId(Long userId);`
+    - `boolean existsByUserId(Long userId);`
+  - `backend/src/main/java/com/roommate/hub/service/ProfileService.java`:
+    - Viết logic hàm `saveOrUpdatePreference(Long userId, UserPreferenceDTO dto)`: Nếu đã tồn tại bản ghi của user thì update các trường, nếu chưa thì khởi tạo mới và gán `user`.
+    - Viết logic hàm `getPreferenceByUserId(Long userId)`: Lấy dữ liệu trả về `UserPreferenceDTO`.
+    - Viết hàm `getUserProfile(Long userId)` và `updateUserProfile(Long userId, ProfileUpdateDTO dto)`.
+  - `backend/src/main/java/com/roommate/hub/controller/ProfileController.java`:
+    - `POST /api/v1/profile/preferences`: Lưu kết quả khảo sát.
+    - `GET /api/v1/profile/preferences/me`: Lấy tiêu chí của user hiện tại từ `@AuthenticationPrincipal`.
+    - `PUT /api/v1/profile/preferences`: Cập nhật tiêu chí khảo sát.
+    - `GET /api/v1/profile/user/{id}`: Xem thông tin công khai của ứng viên.
+- **Tiêu chí nghiệm thu (Definition of Done)**:
+  - Test request thành công qua Postman với token Bearer hợp lệ: HTTP 200/201.
+  - Test dữ liệu sai (ngân sách âm): Trả về HTTP 400 Bad Request kèm message rõ ràng.
 
-- [ ] **Task QH-3.2: Lập trình Backend Module Quản trị `Admin`**
-  - *Hạn chót*: ⏰ **18:00 Thứ Hai, 15/09/2026**
-  - *Mô tả*:
-    - Viết Controller `AdminController.java` phân quyền `@PreAuthorize("hasRole('ADMIN')")`:
-      - `GET /api/v1/admin/users`: Danh sách tất cả người dùng kèm trạng thái `ACTIVE`/`BLOCKED`.
-      - `PUT /api/v1/admin/users/{id}/status`: Khóa hoặc kích hoạt lại tài khoản.
-      - `GET /api/v1/admin/reports`: Danh sách các tố cáo vi phạm từ người dùng.
-      - `PUT /api/v1/admin/posts/{id}/approve`: Duyệt hoặc từ chối bài đăng phòng trọ.
-  - *Đầu ra*: Code Backend quản trị hoàn chỉnh, có xử lý lỗi và bắt exception rõ ràng.
+#### 📌 Task QH-3.2: Lập trình Backend Module Quản trị viên (`AdminController` & `AdminService`)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 15/09/2026**
+- **Các file cần chỉnh sửa / tạo mới**:
+  - `backend/src/main/java/com/roommate/hub/service/AdminService.java`:
+    - Hàm `getAllUsers(Pageable pageable, String status)`: Lấy danh sách người dùng kèm phân trang.
+    - Hàm `toggleUserStatus(Long userId, String newStatus)`: Đổi trạng thái giữa `ACTIVE` và `BLOCKED`.
+    - Hàm `approveRoomPost(Long postId, boolean isApproved, String reason)`: Duyệt hoặc từ chối bài đăng phòng trọ.
+    - Hàm `resolveReport(Long reportId, String actionNote)`: Đánh dấu đã giải quyết tố cáo.
+  - `backend/src/main/java/com/roommate/hub/controller/AdminController.java`:
+    - Cấu hình bảo mật `@PreAuthorize("hasRole('ADMIN')")` trên toàn bộ controller.
+    - `GET /api/v1/admin/users`: Trả về danh sách user có phân trang.
+    - `PUT /api/v1/admin/users/{id}/status`: Cập nhật trạng thái tài khoản.
+    - `PUT /api/v1/admin/posts/{id}/approve`: Duyệt tin đăng phòng trọ.
+- **Tiêu chí nghiệm thu (DoD)**:
+  - Tài khoản User thông thường gọi API Admin: Trả về HTTP 403 Forbidden.
+  - Tài khoản Admin gọi API: Trả về dữ liệu đúng 100%.
 
-- [ ] **Task QH-3.3: Viết Unit Test cho Preference & Admin Service**
-  - *Hạn chót*: ⏰ **23:59 Thứ Hai, 15/09/2026**
-  - *Mô tả*: Sử dụng JUnit 5 & Mockito viết ít nhất 6 test cases:
-    - Test lưu tiêu chí hợp lệ và test validate dữ liệu âm/sai định dạng.
-    - Test kiểm tra quyền Admin khi gọi API quản trị.
-  - *Đầu ra*: Lệnh `mvn test` chạy xanh 100% không có lỗi.
+#### 📌 Task QH-3.3: Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 15/09/2026**
+- **File tạo mới**:
+  - `backend/src/test/java/com/roommate/hub/service/ProfileServiceTest.java`:
+    - Test 1: Lưu tiêu chí mới thành công (Happy path).
+    - Test 2: Cập nhật tiêu chí khi đã có bản ghi cũ.
+    - Test 3: Ném ngoại lệ `ResourceNotFoundException` khi không tìm thấy `userId`.
+  - `backend/src/test/java/com/roommate/hub/service/AdminServiceTest.java`:
+    - Test 1: Khóa tài khoản thành công đổi trạng thái sang `BLOCKED`.
+    - Test 2: Duyệt bài đăng thành công đổi status sang `APPROVED`.
+- **Lệnh thực thi & kiểm tra**:
+  ```bash
+  cd backend
+  .\mvnw.cmd test -Dtest=ProfileServiceTest,AdminServiceTest
+  ```
+  *(Yêu cầu: Toàn bộ tests chạy pass màu xanh, không có Failure hoặc Error).*
 
 ---
 
 ### GIAI ĐOẠN 4: LẬP TRÌNH FRONTEND FLUTTER CLIENT (16/09 – 19/09/2026)
-*Nhánh Git đề xuất: `feature/survey-profile-ui`*
+*Mục tiêu giai đoạn: Xây dựng giao diện khảo sát tiêu chí mượt mà, màn hình hồ sơ cá nhân và trang quản trị Admin trực quan.*  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Sáu, 19/09/2026***  
+*Nhánh Git thực hiện*: `feature/survey-profile-flutter`
 
-- [ ] **Task QH-4.1: Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (Survey Screen)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Tư, 17/09/2026**
-  - *Mô tả*:
-    - Tạo màn hình `survey_screen.dart` dạng Multi-step Wizard hoặc Tab Page:
-      - Bước 1: Chọn tầm giá (RangeSlider trực quan) & Quận/Vị trí mong muốn.
-      - Bước 2: Thói quen sinh hoạt (Cú đêm / Dậy sớm, Nấu ăn ở nhà / Ăn ngoài).
-      - Bước 3: Thói quen lối sống (Hút thuốc: Có/Không, Thú cưng: Thích/Dị ứng, Độ ngăn nắp: 1-5 sao).
-      - Bước 4: Tính cách & Sở thích (FilterChips chọn tag: Đọc sách, Thể thao, Chơi game, Yên tĩnh...).
-      - Bước 5: Màn hình tóm tắt & Nút "Lưu & Bắt đầu tìm bạn trọ".
-    - Validate dữ liệu đầu vào không để trống các mục bắt buộc.
-  - *Đầu ra*: Giao diện hiện đại, mượt mà, hỗ trợ cả Mobile và Web.
+#### 📌 Task QH-4.1: Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 17/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Mở file `frontend/lib/screens/survey_screen.dart`, nâng cấp thành giao diện **Multi-step Stepper** gồm 5 bước:
+    - *Bước 1: Ngân sách & Khu vực*:
+      - `RangeSlider` chọn giá từ 1M đến 15M VNĐ (hiển thị Text nhãn giá tiền format VNĐ: ví dụ `2.500.000 đ - 5.000.000 đ`).
+      - `DropdownButtonFormField` hoặc `ChoiceChip` chọn Quận/Huyện TP.HCM.
+    - *Bước 2: Lối sống sinh hoạt*:
+      - Radio/SegmentedButton chọn Thói quen ngủ: "Dậy sớm (Early Bird)" vs "Cú đêm (Night Owl)".
+      - SegmentedButton chọn Nấu ăn: "Tự nấu ở nhà" vs "Ăn ngoài / Tiện lợi".
+    - *Bước 3: Thói quen cá nhân*:
+      - Đánh giá mức độ sạch sẽ/ngăn nắp: Rating Bar 1-5 sao.
+      - SwitchListTile hoặc Chip chọn: "Hút thuốc (Có/Không)", "Thú cưng (Thích/Dị ứng/Không nuôi)".
+    - *Bước 4: Tính cách & Sở thích*:
+      - SegmentedButton: Hướng nội / Hướng ngoại / Linh hoạt.
+      - `Wrap` chứa các `FilterChip` đa lựa chọn (Thể thao, Đọc sách, Chơi game, Xem phim, Du lịch, Âm nhạc...).
+    - *Bước 5: Tổng quan & Xác nhận*:
+      - Hiển thị Card tóm tắt toàn bộ tiêu chí đã chọn.
+      - Nút ElevatedButton "Lưu tiêu chí & Tìm bạn trọ ngay".
+  - Bắt lỗi Form (Validation): Nếu người dùng chưa chọn bước bắt buộc, hiển thị `SnackBar` cảnh báo.
 
-- [ ] **Task QH-4.2: Xây dựng Màn hình Hồ sơ Cá nhân (Profile Screen)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Năm, 18/09/2026**
-  - *Mô tả*:
-    - File `profile_screen.dart`: Hiển thị Avatar, Tên, Trường học, Giới tính, Giới thiệu bản thân.
-    - Nút "Chỉnh sửa tiêu chí ghép trọ": Cho phép mở lại form khảo sát để cập nhật.
-    - Hiển thị Huy hiệu Xác thực sinh viên (Student Verified Badge).
-    - Màn hình Đổi mật khẩu & Cài đặt thông báo.
-  - *Đầu ra*: Màn hình Profile hoạt động trơn tru với dữ liệu Mock và State.
+#### 📌 Task QH-4.2: Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 18/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Mở file `frontend/lib/screens/profile_screen.dart`:
+    - Header: `CircleAvatar` hiển thị ảnh đại diện, Tên hiển thị, Email sinh viên, Trường ĐH.
+    - Huy hiệu Xác thực: Badge xanh lá "Đã xác thực thẻ sinh viên" (Student Verified).
+    - Section "Tiêu chí ghép trọ hiện tại": Hiển thị các Chip tóm tắt (Giá: 2-4tr, Quận: Bình Thạnh, Không hút thuốc...).
+    - Nút Action "Cập nhật tiêu chí": Nhấn vào sẽ điều hướng mở lại `survey_screen.dart` và tự động fill lại các giá trị cũ.
+    - Section Cài đặt: Nút "Đổi mật khẩu" (mở Dialog nhập mật khẩu cũ/mới), Nút "Đăng xuất" (Xóa token trong `SharedPreferences` và chuyển về `login_screen.dart`).
 
-- [ ] **Task QH-4.3: Xây dựng Giao diện Quản trị viên (Admin Dashboard)**
-  - *Hạn chót*: ⏰ **23:59 Thứ Sáu, 19/09/2026**
-  - *Mô tả*:
-    - Xây dựng màn hình `admin_dashboard_screen.dart`:
-      - Thống kê tổng quan: Số người dùng, Số bài đăng, Số cặp đã ghép.
-      - Bảng danh sách tài khoản: Nút Khóa / Mở khóa tài khoản.
-      - Danh sách bài đăng chờ duyệt: Nút Duyệt / Từ chối.
-  - *Đầu ra*: Giao diện Admin quản trị trực quan.
+#### 📌 Task QH-4.3: Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 19/09/2026**
+- **Chi tiết giao diện & Widget kỹ thuật**:
+  - Mở file `frontend/lib/screens/admin_screen.dart`:
+    - Cấu trúc `DefaultTabController` với 3 Tabs:
+      1. *Tab 1 - Quản lý Người dùng*: `ListView.builder` hiển thị thẻ người dùng, status chip (ACTIVE: xanh, BLOCKED: đỏ), nút chuyển đổi Khóa / Mở khóa tài khoản kèm hộp thoại xác nhận (`showDialog`).
+      2. *Tab 2 - Kiểm duyệt Bài đăng*: Hiển thị danh sách tin đăng phòng trọ đang chờ duyệt (`PENDING`), nút "Duyệt" (xanh lá) và nút "Từ chối" (đỏ kèm ô nhập lý do từ chối).
+      3. *Tab 3 - Xử lý Tố cáo (Reports)*: Danh sách tố cáo vi phạm từ sinh viên kèm nội dung lý do, nút "Đã xử lý".
+- **Tiêu chí nghiệm thu**: Giao diện hiển thị chuẩn responsive, chạy mượt mà trên cả trình duyệt Web (Chrome/Edge) và Mobile.
 
 ---
 
-### GIAI ĐOẠN 5: TÍCH HỢP E2E, KIỂM THỬ VÀ BÁO CÁO (20/09 – 22/09/2026)
-*Nhánh Git đề xuất: `integration/survey-profile` & `docs/final-report`*
+### GIAI ĐOẠN 5: TÍCH HỢP E2E, KIỂM THỬ UAT & HOÀN THIỆN BÁO CÁO (20/09 – 22/09/2026)
+*Mục tiêu giai đoạn: Kết nối giao diện gọi API thật, kiểm thử chấp nhận người dùng và hoàn thiện slide báo cáo đồ án.*  
+*Hạn chót toàn giai đoạn 5: ⏰ **23:59 Thứ Ba, 22/09/2026***  
+*Nhánh Git thực hiện*: `integration/survey-profile` & `docs/final-slide`
 
-- [ ] **Task QH-5.1: Tích hợp Frontend Survey & Profile với Backend API**
-  - *Hạn chót*: ⏰ **18:00 Chủ Nhật, 20/09/2026**
-  - *Mô tả*:
-    - Kết nối màn hình `survey_screen.dart` gọi API `POST /api/v1/preferences` lưu vào MySQL thật.
-    - Hiển thị Toast thông báo thành công và chuyển hướng thông minh đến trang Khám phá bạn trọ.
-  - *Đầu ra*: Luồng khảo sát hoạt động trọn vẹn End-to-End từ giao diện xuống cơ sở dữ liệu.
+#### 📌 Task QH-5.1: Tích hợp Frontend Survey & Profile với API Backend
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 20/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Cập nhật file `frontend/lib/services/api_service.dart`:
+    - Viết hàm `Future<bool> savePreferences(Map<String, dynamic> data)`
+    - Viết hàm `Future<Map<String, dynamic>?> getMyPreferences()`
+    - Viết hàm `Future<List<dynamic>> getAdminUsers()`
+    - Viết hàm `Future<bool> toggleUserStatus(int userId, String status)`
+  - Kết nối `survey_screen.dart`: Khi bấm "Lưu tiêu chí", hiển thị vòng quay `CircularProgressIndicator`, gọi API, nếu thành công thì hiển thị Toast thông báo và chuyển hướng sang trang Discovery của Quang Huy.
+- **Tiêu chí nghiệm thu**: Dữ liệu khảo sát từ giao diện Flutter được lưu chính xác vào bảng `user_preferences` trong MySQL.
 
-- [ ] **Task QH-5.2: Viết Kịch bản Kiểm thử Chấp nhận Người dùng (UAT Test Cases)**
-  - *Hạn chót*: ⏰ **18:00 Thứ Hai, 21/09/2026**
-  - *Mô tả*:
-    - Soạn thảo 15 kịch bản UAT tương ứng với các FRs về khảo sát tiêu chí và quản trị tài khoản.
-    - Chạy thử nghiệm thực tế và ghi nhận kết quả Pass/Fail.
-  - *Đầu ra*: File biên bản kiểm thử UAT gửi cho Lead QA Tiến Đạt.
+#### 📌 Task QH-5.2: Soạn thảo Bộ Kịch bản Kiểm thử Chấp nhận Người dùng (UAT Test Cases)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 21/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Soạn file `docs/UAT_SURVEY_ADMIN.md` gồm 12 kịch bản kiểm thử chi tiết:
+    - Kịch bản UAT-01: Đăng nhập -> Vào form khảo sát -> Điền đủ 5 bước -> Bấm lưu -> Kiểm tra DB và xem giao diện cập nhật.
+    - Kịch bản UAT-02: Để trống trường ngân sách -> Bấm tiếp tục -> Hệ thống hiển thị thông báo chặn và yêu cầu nhập.
+    - Kịch bản UAT-03: Đăng nhập quyền Admin -> Vào màn hình Admin -> Bấm khóa tài khoản user -> Thử dùng user đó đăng nhập lại -> Kiểm tra bị chặn.
+  - Bàn giao tài liệu cho QA Lead Tiến Đạt để đưa vào biên bản nghiệm thu chung.
 
-- [ ] **Task QH-5.3: Hoàn thiện Slide Báo cáo & Bổ sung Tài liệu Tổng kết Đồ án**
-  - *Hạn chót*: ⏰ **23:59 Thứ Ba, 22/09/2026**
-  - *Mô tả*:
-    - Thiết kế bộ Slide thuyết trình (PowerPoint / Canva) 15-20 trang gồm: Đặt vấn đề, Giải pháp, Kiến trúc hệ thống, Demo kết quả và Bài học kinh nghiệm.
-    - Rà soát toàn bộ file Word [`Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx) đảm bảo định dạng học thuật chuẩn chỉ.
-  - *Đầu ra*: File Slide `.pptx` / PDF và tài liệu báo cáo hoàn chỉnh.
+#### 📌 Task QH-5.3: Hoàn thiện Slide Báo cáo & Bổ sung Tài liệu Word Đồ án
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 22/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Thiết kế bộ Slide thuyết trình chính thức (`docs/SLIDE_PRESENTATION.pptx`):
+    - Slide 1-3: Giới thiệu đề tài Roommate Hub, thành viên nhóm và phân công vai trò.
+    - Slide 4-6: Khảo sát hiện trạng, 54 Yêu cầu chức năng và 6 Lược đồ Use Case.
+    - Slide 7-9: Kiến trúc hệ thống Fullstack (Spring Boot + Flutter + MySQL).
+    - Slide 10-12: Thuật toán Matching 5 chiều và Quy trình Double Opt-in.
+    - Slide 13-15: Kịch bản Demo trực tiếp và Kết quả đạt được.
+  - Cập nhật toàn bộ ảnh chụp giao diện và sơ đồ mới vào file Word [`docs/Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx).
 
 ---
 
 ### GIAI ĐOẠN 6: TỔNG DUYỆT DEMO & BÀN GIAO TOÀN DIỆN (23/09/2026)
-*Hạn chót toàn dự án: ⏰ **18:00 Thứ Tư, 23/09/2026***
+*Mục tiêu giai đoạn: Diễn tập kịch bản demo trơn tru, bàn giao toàn bộ sản phẩm hoàn chỉnh trước giờ G.*  
+*HẠN CHÓT BÀN GIAO TOÀN DỰ ÁN: ⏰ **18:00 Thứ Tư, 23/09/2026***
 
-- [ ] **Task QH-6.1: Tổng duyệt Kịch bản Demo luồng Khảo sát & Admin**
-  - *Hạn chót*: ⏰ **12:00 Thứ Tư, 23/09/2026**
-  - *Mô tả*: Cùng Quang Huy và Tiến Đạt chạy thử kịch bản demo: Tạo tài khoản mới -> Làm bài khảo sát tiêu chí -> Xem gợi ý bạn trọ -> Admin kiểm duyệt.
-- [ ] **Task QH-6.2: Bàn giao toàn bộ tài liệu báo cáo và slide chính thức**
-  - *Hạn chót*: ⏰ **18:00 Thứ Tư, 23/09/2026**
-  - *Mô tả*: Đóng gói toàn bộ file báo cáo Word, PDF, sơ đồ và Slide vào thư mục `docs/` và bàn giao cho PM Leader.
+- [ ] **Task QH-6.1: Diễn tập Kịch bản Thuyết trình & Demo Luồng Khảo sát / Admin**
+  - *Thời hạn*: ⏰ **12:00 Thứ Tư, 23/09/2026**
+  - *Nhiệm vụ*: Phối hợp cùng Quang Huy và Tiến Đạt chạy thử kịch bản thuyết trình:
+    1. Trình bày đặt vấn đề và kiến trúc phân hệ.
+    2. Demo trực tiếp luồng một bạn sinh viên mới điền khảo sát tiêu chí 5 chiều.
+    3. Demo luồng Admin khóa tài khoản vi phạm và duyệt bài đăng phòng.
+- [ ] **Task QH-6.2: Đóng gói và Nộp toàn bộ Sản phẩm Báo cáo**
+  - *Thời hạn*: ⏰ **18:00 Thứ Tư, 23/09/2026**
+  - *Nhiệm vụ*: Đảm bảo các file tài liệu sau đã có bản hoàn thiện trong Git:
+    - [`docs/Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx)
+    - `docs/SLIDE_PRESENTATION.pptx` (hoặc PDF)
+    - Toàn bộ sơ đồ trong `docs/diagrams/`
 
 ---
 
-## 🔍 4. BẢNG TỰ KIỂM TRA CHẤT LƯỢNG (SELF-CHECKLIST TRƯỚC KHI TẠO PR)
+## 🔍 4. CHECKLIST TỰ RÀ SOÁT CHẤT LƯỢNG CỦA QUỐC HUY (BEFORE PR)
 
-Trước khi tạo Pull Request vào nhánh `master`, Quốc Huy tự kiểm tra các tiêu chí sau:
-- [ ] Code tuân thủ quy tắc đặt tên Java / Dart (CamelCase).
-- [ ] Không có warning hoặc lỗi cú pháp biên dịch.
-- [ ] Các API Backend đã được test cẩn thận trên Postman.
-- [ ] Giao diện Flutter hiển thị đúng trên cả kích thước màn hình điện thoại và web.
-- [ ] Đã chạy `git pull origin master` để giải quyết conflict trước khi đẩy code.
+- [ ] Các class Java tuân thủ đúng package `com.roommate.hub`.
+- [ ] Các API Controller có đầy đủ mã phản hồi chuẩn (`200 OK`, `201 Created`, `400 Bad Request`, `403 Forbidden`, `404 Not Found`).
+- [ ] Form khảo sát Flutter có bộ điều khiển giá trị (TextEditingController / State) và validate kỹ càng, không gây crash ứng dụng.
+- [ ] Tài liệu Word không bị nhảy trang hay vỡ khung viền trang bìa.
+- [ ] Đã chạy `git pull origin master` giải quyết xung đột trước khi gửi PR cho PM Leader.
