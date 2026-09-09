@@ -40,16 +40,18 @@ gantt
 
 ## 👥 2. CƠ CẤU NHÂN SỰ & TRÁCH NHIỆM ĐẦU MỐI (LEAD ROLES)
 
-| Thành viên | MSSV | Vai trò chính | Mảng Kỹ Thuật Lead (Chịu trách nhiệm đầu mối) | Trách nhiệm lập trình trực tiếp |
-| :--- | :---: | :--- | :--- | :--- |
-| **PM Leader (AI Lead)** | — | **Quản lý dự án & Kiến trúc** | Lập kế hoạch tiến độ đến 23/9, giao task trực tiếp qua Markdown, review code/docs, đồng bộ mã nguồn GitHub. | Điều phối chất lượng & quản lý rủi ro kỹ thuật. |
-| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Developer** | **Lead BA & Tài liệu (Requirements & Docs Lead)** | **Backend**: Module UserPreference & Admin.<br>**Frontend**: UI Khảo sát 5 chiều & Profile.<br>**Docs**: 54 FRs, UML Use Case, Báo cáo & Slide. |
-| **Trần Quang Huy** | **24110228** | **Main Fullstack Developer** | **Lead Kiến trúc kỹ thuật & Prototype (Technical Lead)** | **Backend**: Module Auth/JWT & Lõi Matching Engine.<br>**Frontend**: Kiến trúc Flutter, UI Auth & UI Khám phá bạn trọ.<br>**DevOps**: Build release & Fix lỗi môi trường. |
-| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Developer** | **Lead Cơ sở dữ liệu & QA (Database & QA Lead)** | **Backend**: Module RoomPost & MatchRequest/Lịch hẹn.<br>**Frontend**: UI Room Feed, Chi tiết phòng & Lịch hẹn xem trọ.<br>**QA/DB**: Schema MySQL & Kịch bản Test tự động. |
+| Thành viên | MSSV | Vai trò chính | Mảng Kỹ Thuật Lead (Chịu trách nhiệm đầu mối) | Trách nhiệm lập trình trực tiếp | Bảng Task Cá Nhân |
+| :--- | :---: | :--- | :--- | :--- | :---: |
+| **PM Leader (AI Lead)** | — | **Quản lý dự án & Kiến trúc** | Lập kế hoạch tiến độ đến 23/9, giao task trực tiếp qua Markdown, review code/docs, đồng bộ mã nguồn GitHub. | Điều phối chất lượng & quản lý rủi ro kỹ thuật. | — |
+| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Developer** | **Lead BA & Tài liệu (Requirements & Docs Lead)** | **Backend**: Module UserPreference & Admin.<br>**Frontend**: UI Khảo sát 5 chiều & Profile.<br>**Docs**: 54 FRs, UML Use Case, Báo cáo & Slide. | 👉 [**TASKS_QUOC_HUY.md**](TASKS_QUOC_HUY.md) |
+| **Trần Quang Huy** | **24110228** | **Main Fullstack Developer** | **Lead Kiến trúc kỹ thuật & Prototype (Technical Lead)** | **Backend**: Module Auth/JWT & Lõi Matching Engine.<br>**Frontend**: Kiến trúc Flutter, UI Auth & UI Khám phá bạn trọ.<br>**DevOps**: Build release & Fix lỗi môi trường. | 👉 [**TASKS_QUANG_HUY.md**](TASKS_QUANG_HUY.md) |
+| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Developer** | **Lead Cơ sở dữ liệu & QA (Database & QA Lead)** | **Backend**: Module RoomPost & MatchRequest/Lịch hẹn.<br>**Frontend**: UI Room Feed, Chi tiết phòng & Lịch hẹn xem trọ.<br>**QA/DB**: Schema MySQL & Kịch bản Test tự động. | 👉 [**TASKS_TIEN_DAT.md**](TASKS_TIEN_DAT.md) |
+
+> 💡 **Lưu ý dành cho thành viên**: Mỗi thành viên theo dõi bảng task cá nhân riêng của mình để cập nhật tiến độ, deadline từng giờ và tự tick vào checkbox `[x]` khi hoàn thành nhiệm vụ!
 
 ---
 
-## 📋 3. BẢNG PHÂN CÔNG CÔNG VIỆC CHI TIẾT & DEADLINE TỪNG TASK
+## 📋 3. BẢNG PHÂN CÔNG CÔNG VIỆC TỔNG HỢP THEO GIAI ĐOẠN
 
 ---
 

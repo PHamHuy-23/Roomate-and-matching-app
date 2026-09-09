@@ -121,12 +121,12 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
 
 Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả thành viên đều là **Lập trình viên chính (Main Developers)**, trực tiếp tham gia viết mã nguồn và thực hiện mọi công đoạn theo **Vòng đời phát triển phần mềm (SDLC)**. Mỗi bạn đảm nhận vai trò Lead (chịu trách nhiệm đầu mối) cho một mảng chuyên môn và cùng chia sẻ các task lập trình cụ thể:
 
-| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án |
-| :--- | :---: | :--- | :--- |
-| **PM Leader (AI Lead)** | — | Quản lý dự án & Kiến trúc | Lập kế hoạch SDLC, giao task trực tiếp vào Markdown, review code/docs, đồng bộ mã nguồn GitHub. |
-| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Dev**<br>*(Lead BA & Tài liệu)* | Lead phân tích 54 yêu cầu (FRs) & báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)); trực tiếp code Backend UserPreference/Admin và UI Khảo sát tiêu chí/Profile. |
-| **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. |
-| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL MySQL & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. |
+| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án | Bảng Task Cá Nhân |
+| :--- | :---: | :--- | :--- | :---: |
+| **PM Leader (AI Lead)** | — | Quản lý dự án & Kiến trúc | Lập kế hoạch SDLC, giao task trực tiếp vào Markdown, review code/docs, đồng bộ mã nguồn GitHub. | — |
+| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Dev**<br>*(Lead BA & Tài liệu)* | Lead phân tích 54 yêu cầu (FRs) & báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)); trực tiếp code Backend UserPreference/Admin và UI Khảo sát tiêu chí/Profile. | [**TASKS_QUOC_HUY.md**](TASKS_QUOC_HUY.md) |
+| **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. | [**TASKS_QUANG_HUY.md**](TASKS_QUANG_HUY.md) |
+| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL MySQL & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. | [**TASKS_TIEN_DAT.md**](TASKS_TIEN_DAT.md) |
 
 > 📌 Toàn bộ bảng phân công chi tiết theo 6 giai đoạn (Yêu cầu -> CSDL & Thiết kế -> Backend -> Frontend -> Tích hợp/QA -> Release), cùng lộ trình Master Schedule (Hạn chót toàn diện: **18:00 ngày 23/09/2026**) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.  
 > 📖 Hướng dẫn phối hợp nhóm qua Git & quy trình giải quyết xung đột (Conflict resolution): **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)**.
