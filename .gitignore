@@ -19,3 +19,7 @@ frontend/.pub-cache/
 frontend/.packages
 frontend/coverage/
 frontend/*.log
+
+# AI Memory
+PROJECT_MEMORY.md
+.ai/
