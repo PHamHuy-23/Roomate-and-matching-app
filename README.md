@@ -117,8 +117,24 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
 
 ---
 
+## 👥 Tổ chức Dự án & Phân công Nhiệm vụ (Team Organization & Roles)
+
+Dự án được quản lý và phát triển cộng tác theo mô hình **Vòng đời phát triển phần mềm (SDLC)**, chia thành các giai đoạn: *Mô hình hóa yêu cầu -> Thiết kế hệ thống & CSDL -> Phát triển Backend -> Phát triển Frontend -> Tích hợp & Kiểm thử*.
+
+| Vai trò | Thành viên | Trách nhiệm chính |
+| :--- | :--- | :--- |
+| **PM Leader (AI Lead)** | Hệ thống quản lý | Lập kế hoạch, giao task trực tiếp qua file Markdown ([TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)), review kỹ thuật và đồng bộ mã nguồn GitHub. |
+| **Docs & BA Lead** | **Phạm Quốc Huy** (24110226) | Phụ trách toàn bộ tài liệu dự án: Khảo sát hiện trạng, đặc tả 54 yêu cầu chức năng (FRs), thiết kế biểu mẫu, viết báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)). |
+| **Prototype & Dev Lead** | **Trần Quang Huy** (24110228) | Phụ trách xây dựng và hoàn thiện mã nguồn mẫu thử (Prototype): Cấu hình môi trường Java 21, Spring Boot 3, ứng dụng di động/web Flutter. |
+| **Database & QA Lead** | **Phan Tiến Đạt** (24110195) | Phụ trách mô hình hóa và tối ưu hóa CSDL MySQL, thiết kế kịch bản kiểm thử (Test Cases) và đối soát luồng dữ liệu hệ thống. |
+
+> 📌 Chi tiết tiến độ từng task và lộ trình từng giai đoạn được cập nhật minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.
+
+---
+
 ## 📌 Các lưu ý quan trọng khi phát triển (Troubleshooting)
 
 - **Tránh lỗi .NET khi mở dự án trên VS Code**: Nếu bạn đã cài đặt extension **C# Dev Kit**, extension này có thể quét nhầm các file solution C++ do Flutter Windows build sinh ra. Dự án đã bổ sung cấu hình trong `.vscode/settings.json` để ngăn ngừa tình trạng này. Bạn cũng có thể nhấn chuột phải vào extension *C# Dev Kit* và chọn *Disable (Workspace)*.
 - **CORS & Authentication**: Backend đã cấu hình sẵn Spring Security và CORS Filter, cho phép Web Frontend gửi request kèm JWT token mà không bị block.
 - **Tự động đồng bộ Schema**: Thuộc tính `spring.jpa.hibernate.ddl-auto=update` được bật để tự động đồng bộ thêm cột hoặc bảng mới khi Entity trong Java thay đổi.
+
