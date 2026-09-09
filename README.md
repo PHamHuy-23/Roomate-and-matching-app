@@ -117,18 +117,18 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
 
 ---
 
-## 👥 Tổ chức Dự án & Phân công Nhiệm vụ (Team Organization & Roles)
+## 👥 Tổ chức Dự án & Phân công Nhiệm vụ (All-Dev Core Team)
 
-Dự án được quản lý và phát triển cộng tác theo mô hình **Vòng đời phát triển phần mềm (SDLC)**, chia thành các giai đoạn: *Mô hình hóa yêu cầu -> Thiết kế hệ thống & CSDL -> Phát triển Backend -> Phát triển Frontend -> Tích hợp & Kiểm thử*.
+Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả thành viên đều là **Lập trình viên chính (Main Developers)**, trực tiếp tham gia viết mã nguồn và thực hiện mọi công đoạn theo **Vòng đời phát triển phần mềm (SDLC)**. Mỗi bạn đảm nhận vai trò Lead (chịu trách nhiệm đầu mối) cho một mảng chuyên môn và cùng chia sẻ các task lập trình cụ thể:
 
-| Vai trò | Thành viên | Trách nhiệm chính |
-| :--- | :--- | :--- |
-| **PM Leader (AI Lead)** | Hệ thống quản lý | Lập kế hoạch, giao task trực tiếp qua file Markdown ([TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)), review kỹ thuật và đồng bộ mã nguồn GitHub. |
-| **Docs & BA Lead** | **Phạm Quốc Huy** (24110226) | Phụ trách toàn bộ tài liệu dự án: Khảo sát hiện trạng, đặc tả 54 yêu cầu chức năng (FRs), thiết kế biểu mẫu, viết báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)). |
-| **Prototype & Dev Lead** | **Trần Quang Huy** (24110228) | Phụ trách xây dựng và hoàn thiện mã nguồn mẫu thử (Prototype): Cấu hình môi trường Java 21, Spring Boot 3, ứng dụng di động/web Flutter. |
-| **Database & QA Lead** | **Phan Tiến Đạt** (24110195) | Phụ trách mô hình hóa và tối ưu hóa CSDL MySQL, thiết kế kịch bản kiểm thử (Test Cases) và đối soát luồng dữ liệu hệ thống. |
+| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án |
+| :--- | :---: | :--- | :--- |
+| **PM Leader (AI Lead)** | — | Quản lý dự án & Kiến trúc | Lập kế hoạch SDLC, giao task trực tiếp vào Markdown, review code/docs, đồng bộ mã nguồn GitHub. |
+| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Dev**<br>*(Lead BA & Tài liệu)* | Lead phân tích 54 yêu cầu (FRs) & báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)); trực tiếp code Backend UserPreference/Admin và UI Khảo sát tiêu chí/Profile. |
+| **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. |
+| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL MySQL & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. |
 
-> 📌 Chi tiết tiến độ từng task và lộ trình từng giai đoạn được cập nhật minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.
+> 📌 Toàn bộ bảng phân công chi tiết theo 5 giai đoạn (CSDL -> Thiết kế -> Backend -> Frontend -> Kiểm thử) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.
 
 ---
 
