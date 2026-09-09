@@ -1,5 +1,9 @@
 # Roommate Hub Project
 
+> ⚠️ **TRẠNG THÁI DỰ ÁN: PROTOTYPE (BẢN MẪU THỬ NGHIỆM - WORK IN PROGRESS)**
+>
+> Dự án hiện đang trong giai đoạn **Prototype / Thử nghiệm kỹ thuật**, phục vụ mục đích nghiên cứu và phát triển tính năng tìm bạn ở ghép phòng trọ. Các phân hệ Backend và Frontend đang tiếp tục được hoàn thiện và tích hợp.
+
 Ứng dụng kết nối và tìm bạn ở ghép phòng trọ thông minh dành cho sinh viên và người đi làm.
 Hệ thống được thiết kế theo kiến trúc chuẩn gồm **Frontend (Flutter)** và **Backend (Java Spring Boot REST API)**, kết hợp cơ sở dữ liệu **MySQL**.
 

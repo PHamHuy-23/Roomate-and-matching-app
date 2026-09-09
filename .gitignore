@@ -20,6 +20,11 @@ frontend/.packages
 frontend/coverage/
 frontend/*.log
 
-# AI Memory
-PROJECT_MEMORY.md
+# AI & Memory Bank (Do not push to GitHub)
 .ai/
+PROJECT_MEMORY.md
+MEMORY.md
+.gemini/
+.claude/
+.cursor/
+.copilot/
