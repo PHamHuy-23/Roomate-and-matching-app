@@ -128,8 +128,8 @@ Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả 
 | **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. |
 | **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL MySQL & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. |
 
-> 📌 Toàn bộ bảng phân công chi tiết theo 5 giai đoạn (CSDL -> Thiết kế -> Backend -> Frontend -> Kiểm thử) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.  
-> 📖 Hướng dẫn phối hợp nhóm qua Git & cách giải quyết xung đột (Conflict): **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)**.
+> 📌 Toàn bộ bảng phân công chi tiết theo 6 giai đoạn (Yêu cầu -> CSDL & Thiết kế -> Backend -> Frontend -> Tích hợp/QA -> Release), cùng lộ trình Master Schedule (Hạn chót toàn diện: **18:00 ngày 23/09/2026**) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.  
+> 📖 Hướng dẫn phối hợp nhóm qua Git & quy trình giải quyết xung đột (Conflict resolution): **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)**.
 
 ---
 
