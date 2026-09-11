@@ -1,0 +1,114 @@
+@startuml
+autonumber
+
+title sd Admin Management Flow - Phê duyệt Bài đăng & Khóa Tài khoản
+
+actor "Admin Client (Flutter)" as admin
+participant "JwtAuthenticationFilter" as jwtFilter
+participant "SecurityContextHolder" as secContext
+participant "AdminController" as adminCtrl
+participant "AdminService" as adminSvc
+participant "RoomPostRepository" as postRepo
+participant "UserRepository" as userRepo
+database "MySQL Database" as db
+
+note over jwtFilter, secContext
+  <b>Spring Security RBAC:</b>
+  Kiểm tra JWT Token hợp lệ và
+  lọc quyền <b>ROLE_ADMIN</b> trước khi
+  cho phép truy cập các API /api/v1/admin/**
+end note
+
+== Phân hệ 1: Admin phê duyệt / từ chối bài đăng phòng trọ ==
+admin -> jwtFilter : PUT /api/v1/admin/posts/{postId}/moderate?status=APPROVED\nAuthorization: Bearer <JWT>
+activate jwtFilter
+
+jwtFilter -> jwtFilter : validateToken(token)
+jwtFilter -> secContext : getAuthentication() / getAuthorities()
+activate secContext
+secContext --> jwtFilter : Authorities (ROLE_ADMIN)
+deactivate secContext
+
+alt Không có quyền ROLE_ADMIN
+    jwtFilter --> admin : 403 Forbidden (Access Denied)
+else Quyền ROLE_ADMIN hợp lệ
+    jwtFilter -> adminCtrl : moderatePost(postId, "APPROVED")
+    activate adminCtrl
+
+    adminCtrl -> adminSvc : moderatePost(postId, "APPROVED")
+    activate adminSvc
+
+    adminSvc -> postRepo : findById(postId)
+    activate postRepo
+    postRepo -> db : SELECT * FROM room_posts WHERE id = ?
+    activate db
+    db --> postRepo : RoomPost (status: PENDING)
+    deactivate db
+    postRepo --> adminSvc : Optional<RoomPost>
+    deactivate postRepo
+
+    adminSvc -> adminSvc : post.setStatus(APPROVED)
+    adminSvc -> postRepo : save(post)
+    activate postRepo
+    postRepo -> db : UPDATE room_posts SET status = 'APPROVED' WHERE id = ?
+    activate db
+    db --> postRepo : Record updated
+    deactivate db
+    postRepo --> adminSvc : saved RoomPost
+    deactivate postRepo
+
+    adminSvc --> adminCtrl : RoomPost (APPROVED)
+    deactivate adminSvc
+
+    adminCtrl --> admin : 200 OK (Đã phê duyệt bài đăng thành công)
+    deactivate adminCtrl
+end
+deactivate jwtFilter
+
+== Phân hệ 2: Admin khóa / mở khóa tài khoản người dùng vi phạm ==
+admin -> jwtFilter : PUT /api/v1/admin/users/{userId}/toggle-status\nAuthorization: Bearer <JWT>
+activate jwtFilter
+
+jwtFilter -> jwtFilter : validateToken(token)
+jwtFilter -> secContext : getAuthentication() / getAuthorities()
+activate secContext
+secContext --> jwtFilter : Authorities (ROLE_ADMIN)
+deactivate secContext
+
+alt Không có quyền ROLE_ADMIN
+    jwtFilter --> admin : 403 Forbidden (Access Denied)
+else Quyền ROLE_ADMIN hợp lệ
+    jwtFilter -> adminCtrl : toggleUserStatus(userId)
+    activate adminCtrl
+
+    adminCtrl -> adminSvc : toggleUserStatus(userId)
+    activate adminSvc
+
+    adminSvc -> userRepo : findById(userId)
+    activate userRepo
+    userRepo -> db : SELECT * FROM users WHERE id = ?
+    activate db
+    db --> userRepo : User (status: ACTIVE)
+    deactivate db
+    userRepo --> adminSvc : Optional<User>
+    deactivate userRepo
+
+    adminSvc -> adminSvc : newStatus = (status == "ACTIVE") ? "LOCKED" : "ACTIVE"
+    adminSvc -> userRepo : save(user)
+    activate userRepo
+    userRepo -> db : UPDATE users SET status = 'LOCKED' WHERE id = ?
+    activate db
+    db --> userRepo : Record updated
+    deactivate db
+    userRepo --> adminSvc : saved User (status: LOCKED)
+    deactivate userRepo
+
+    adminSvc --> adminCtrl : Map {userId: 123, status: "LOCKED"}
+    deactivate adminSvc
+
+    adminCtrl --> admin : 200 OK (Map {userId: 123, status: "LOCKED"})
+    deactivate adminCtrl
+end
+deactivate jwtFilter
+
+@enduml

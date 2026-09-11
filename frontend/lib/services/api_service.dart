@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
@@ -25,7 +26,7 @@ class ApiService {
     if (res.statusCode == 200) {
       return true;
     } else {
-      print('Lỗi gửi kết nối: ${res.statusCode} - ${res.body}');
+      debugPrint('Lỗi gửi kết nối: ${res.statusCode} - ${res.body}');
       return false;
     }
   }
@@ -106,7 +107,7 @@ class ApiService {
       final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((json) => MatchRequestItem.fromJson(json)).toList();
     }
-    print('Lỗi getReceivedRequests: ${res.statusCode} - ${res.body}');
+    debugPrint('Lỗi getReceivedRequests: ${res.statusCode} - ${res.body}');
     return [];
   }
 
@@ -117,7 +118,7 @@ class ApiService {
       final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
       return data.map((json) => MatchRequestItem.fromJson(json)).toList();
     }
-    print('Lỗi getSentRequests: ${res.statusCode} - ${res.body}');
+    debugPrint('Lỗi getSentRequests: ${res.statusCode} - ${res.body}');
     return [];
   }
 

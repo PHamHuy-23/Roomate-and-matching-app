@@ -64,8 +64,8 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/use-case-design`
 
-#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết
-- **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026**
+#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026** — *Hoàn thành & format trực tiếp vào `docs/Nhom13_Mohinhhoayeucau.docx`!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / StarUML / PlantUML vẽ 6 sơ đồ Use Case bao phủ trọn vẹn 54 FRs:
     1. *Use Case Phân hệ 1 - Xác thực & Quản lý Tài khoản*: Đăng ký sinh viên, Xác thực email OTP, Đăng nhập, Đổi mật khẩu, Quên mật khẩu.
@@ -88,8 +88,8 @@ gantt
   ```
 - **Bàn giao chéo**: Gửi sơ đồ cho Quang Huy và Tiến Đạt để đối chiếu với API Contract và Class Diagram.
 
-#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin
-- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
+#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026** — *Hoàn thành trước hạn!*
 - **Nhiệm vụ cụ thể**:
   - Vẽ Sơ đồ tuần tự (Sequence Diagram) thể hiện chính xác các bước giao tiếp giữa các tầng: `Flutter Client` ⇄ `ProfileController` ⇄ `ProfileService` ⇄ `UserPreferenceRepository` ⇄ `MySQL`:
     1. *Luồng Người dùng lưu/cập nhật Form khảo sát 5 chiều*: Kiểm tra Token hợp lệ -> Validate giá trị đầu vào (ngân sách > 0, thói quen hợp lệ) -> `save()` vào bảng `user_preferences` -> Trả về DTO cập nhật thành công.

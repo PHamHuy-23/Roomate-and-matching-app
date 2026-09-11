@@ -64,8 +64,8 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/architecture-specs`
 
-#### 📌 Task QH2-2.1: Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026**
+#### 📌 Task QH2-2.1: Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026** — *Hoàn thành đúng hạn!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / PlantUML thiết kế 2 sơ đồ tuần tự (Sequence Diagram) cấp hệ thống:
     1. *Sơ đồ 1 - Chu trình Xác thực Token JWT*:

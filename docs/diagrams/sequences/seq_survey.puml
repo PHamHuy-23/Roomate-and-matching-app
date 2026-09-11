@@ -1,0 +1,85 @@
+@startuml
+autonumber
+
+title sd Survey Preferences Flow - Khảo sát & Cập nhật Tiêu chí 5 Chiều
+
+actor "Flutter Client" as client
+participant "JwtAuthenticationFilter" as jwtFilter
+participant "ProfileController" as controller
+participant "ProfileService" as service
+participant "UserRepository" as userRepo
+participant "UserPreferenceRepository" as prefRepo
+database "MySQL Database" as db
+
+note over controller, service
+  <b>Bộ tiêu chí phong cách sống 5 chiều (5D):</b>
+  1. targetDistrict: Khu vực mong muốn
+  2. budgetAmount: Ngân sách (> 0, tối thiểu 500.000 VNĐ)
+  3. sleepHabit: Giờ giấc sinh hoạt (1: Sớm, 2: Bình thường, 3: Cú đêm)
+  4. cleanlinessLevel: Mức độ sạch sẽ (1 - 5)
+  5. isSmoking & allowPets: Lối sống (Hút thuốc, Thú cưng)
+end note
+
+== 1. Người dùng gửi dữ liệu khảo sát 5 chiều ==
+client -> jwtFilter : PUT /api/v1/profile/preferences/{userId}\nAuthorization: Bearer <JWT>\nBody: UserPreferenceDTO
+activate jwtFilter
+
+jwtFilter -> jwtFilter : validateToken(token)\nextractUsername()
+
+alt token không hợp lệ / hết hạn
+    jwtFilter --> client : 401 Unauthorized (Token invalid/expired)
+else token hợp lệ
+    jwtFilter -> controller : doFilter(request, response)
+    activate controller
+
+    == 2. Kiểm tra tính hợp lệ dữ liệu (Validation) ==
+    controller -> controller : @Valid validate(UserPreferenceDTO)\n(ngân sách > 0, thói quen hợp lệ 1-3, v.v.)
+
+    alt dữ liệu không hợp lệ (Validation failed: budget <= 0 hoặc thiếu trường bắt buộc)
+        controller --> client : 400 Bad Request\n(Lỗi: Ngân sách tối thiểu 500k, thói quen không để trống)
+    else dữ liệu hợp lệ
+        == 3. Lưu / Cập nhật vào CSDL ==
+        controller -> service : saveOrUpdatePreferences(userId, dto)
+        activate service
+
+        service -> userRepo : findById(userId)
+        activate userRepo
+        userRepo -> db : SELECT * FROM users WHERE id = ?
+        activate db
+        db --> userRepo : User entity
+        deactivate db
+        userRepo --> service : Optional<User>
+        deactivate userRepo
+
+        service -> prefRepo : findByUserId(userId)
+        activate prefRepo
+        prefRepo -> db : SELECT * FROM user_preferences WHERE user_id = ?
+        activate db
+        db --> prefRepo : UserPreference entity (hoặc null)
+        deactivate db
+        prefRepo --> service : Optional<UserPreference>
+        deactivate prefRepo
+
+        service -> service : mapDtoToEntity(dto, pref)\n(Cập nhật 5 chiều tiêu chí lối sống)
+
+        service -> prefRepo : save(pref)
+        activate prefRepo
+        prefRepo -> db : INSERT INTO / UPDATE user_preferences\nSET target_district, budget_amount, sleep_habit, ...
+        activate db
+        db --> prefRepo : Record persisted
+        deactivate db
+        prefRepo --> service : saved UserPreference
+        deactivate prefRepo
+
+        service --> controller : UserPreferenceDTO
+        deactivate service
+
+        controller --> client : 200 OK (UserPreferenceDTO cập nhật thành công)
+        deactivate controller
+
+        client -> client : Hiển thị "Cập nhật tiêu chí thành công!"\nKích hoạt tính toán lại gợi ý bạn trọ
+    end
+end
+deactivate jwtFilter
+
+@enduml

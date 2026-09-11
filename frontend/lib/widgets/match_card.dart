@@ -74,7 +74,7 @@ class MatchCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getScoreColor(item.totalScore).withOpacity(0.12),
+                    color: _getScoreColor(item.totalScore).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: _getScoreColor(item.totalScore)),
                   ),

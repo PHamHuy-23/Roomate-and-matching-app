@@ -1,6 +1,5 @@
 package com.roommate.hub.dto;
 
-import com.roommate.hub.entity.MatchRequest;
 import lombok.*;
 import java.time.LocalDateTime;
 

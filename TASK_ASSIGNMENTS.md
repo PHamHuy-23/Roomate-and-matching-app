@@ -73,12 +73,12 @@ gantt
 
 | Mã Task | Tên công việc chi tiết | Phân công | Deadline | Trạng thái | Sản phẩm bàn giao |
 | :---: | :--- | :---: | :---: | :---: | :--- |
-| **T2.1** | Vẽ 6 Lược đồ Use Case phân hệ trên Enterprise Architect / StarUML | **Phạm Quốc Huy (Lead)** | 12/09/2026 | ⏳ Đang làm | File ảnh sơ đồ xuất ra thư mục `docs/` |
-| **T2.2** | Thiết kế Sơ đồ Tuần tự (Sequence Diagram) luồng Đăng nhập JWT & Thuật toán Matching | **Trần Quang Huy** | 12/09/2026 | ⏳ Đang làm | File sơ đồ tuần tự chi tiết |
+| **T2.1** | Vẽ 6 Lược đồ Use Case phân hệ trên Enterprise Architect / StarUML | **Phạm Quốc Huy (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | Nhúng trực tiếp vào `docs/Nhom13_Mohinhhoayeucau.docx` & trích xuất `docs/diagrams/use_cases/` |
+| **T2.2** | Thiết kế Sơ đồ Tuần tự (Sequence Diagram) luồng Đăng nhập JWT & Thuật toán Matching | **Trần Quang Huy** | 12/09/2026 | ✅ **ĐÃ XONG** | `docs/seq_jwt_auth.png` & `docs/seq_matching_engine.png` |
 | **T2.3** | Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository, Service, Controller) | **Phan Tiến Đạt** | 12/09/2026 | ⏳ Đang làm | File sơ đồ lớp kiến trúc |
 | **T2.4** | Bổ sung bảng CSDL mới: `viewing_appointments`, `contact_permissions`, `reports` | **Phan Tiến Đạt (Lead)** | 12/09/2026 | ⏳ Đang làm | File SQL cập nhật trong `database/` |
 | **T2.5** | Đặc tả tài liệu danh sách REST APIs (Swagger / OpenAPI specifications) | **Trần Quang Huy (Lead)** | 12/09/2026 | ⏳ Đang làm | Tài liệu API contract |
-| **T2.6** | Cập nhật các bản vẽ thiết kế vào tài liệu báo cáo giai đoạn 2 | **Phạm Quốc Huy** | 12/09/2026 | ⏳ Đang làm | File tài liệu thiết kế hệ thống |
+| **T2.6** | Cập nhật các bản vẽ thiết kế vào tài liệu báo cáo giai đoạn 2 | **Phạm Quốc Huy & PM** | 12/09/2026 | ✅ **ĐÃ XONG** | Nhúng 6 Use Case + 4 Sequence Diagrams vào `docs/Nhom13_Mohinhhoayeucau.docx` |
 | **T2.7** | Review kỹ thuật và kiểm tra tính tương thích giữa CSDL và Backend Entity | **PM Leader** | 12/09/2026 | ⏳ Đang làm | Biên bản kiểm duyệt thiết kế |
 
 ---
