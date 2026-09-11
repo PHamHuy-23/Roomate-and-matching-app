@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- ROOMMATE HUB - FULL DATABASE SETUP SCRIPT (SCHEMA + SEED DATA)
 -- Database: MySQL 8.0+ / utf8mb4
 -- =============================================================================
@@ -117,5 +117,77 @@ INSERT INTO `match_requests` (`id`, `sender_id`, `receiver_id`, `match_score`, `
 (1, 1, 2, 85.2, 'ACCEPTED', '2026-09-06 13:10:37.840143'),
 (2, 2, 3, 38.0, 'PENDING', '2026-09-06 13:48:41.172132')
 ON DUPLICATE KEY UPDATE id=id;
+
+-- -------------------------------------------------------------
+-- 5. Table: viewing_appointments
+-- Quản lý Lịch hẹn xem phòng trực tiếp
+-- -------------------------------------------------------------
+DROP TABLE IF EXISTS `viewing_appointments`;
+CREATE TABLE `viewing_appointments` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `requester_id` BIGINT NOT NULL,
+    `host_id` BIGINT NOT NULL,
+    `room_post_id` BIGINT NOT NULL,
+    `appointment_time` DATETIME NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
+    `note` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `FK_viewing_appointments_requester` FOREIGN KEY (`requester_id`) 
+        REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `FK_viewing_appointments_host` FOREIGN KEY (`host_id`) 
+        REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `FK_viewing_appointments_room_post` FOREIGN KEY (`room_post_id`) 
+        REFERENCES `room_posts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------
+-- 6. Table: contact_permissions
+-- Cơ chế Double Opt-in bảo vệ quyền riêng tư (chỉ cho xem SĐT khi 2 bên đồng ý)
+-- -------------------------------------------------------------
+DROP TABLE IF EXISTS `contact_permissions`;
+CREATE TABLE `contact_permissions` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT NOT NULL,          -- Người cho phép xem
+    `granted_to_id` BIGINT NOT NULL,    -- Người được phép xem SĐT
+    `match_request_id` BIGINT NOT NULL,
+    `granted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `FK_contact_permissions_user` FOREIGN KEY (`user_id`) 
+        REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `FK_contact_permissions_granted_to` FOREIGN KEY (`granted_to_id`) 
+        REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `FK_contact_permissions_match_request` FOREIGN KEY (`match_request_id`) 
+        REFERENCES `match_requests` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uq_contact_grant` (`user_id`, `granted_to_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------
+-- 7. Table: reports
+-- Quản lý Báo cáo Tố cáo vi phạm
+-- -------------------------------------------------------------
+DROP TABLE IF EXISTS `reports`;
+CREATE TABLE `reports` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `reporter_id` BIGINT NOT NULL,
+    `target_id` BIGINT NOT NULL,
+    `target_type` VARCHAR(20) NOT NULL, -- 'USER' hoặc 'ROOM_POST'
+    `reason` TEXT NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, RESOLVED, DISMISSED
+    `action_note` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `FK_reports_reporter` FOREIGN KEY (`reporter_id`) 
+        REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------
+-- 8. Indexes (Chỉ mục) giúp tăng tốc độ tìm kiếm
+-- -------------------------------------------------------------
+-- Giả sử bảng room_posts có các cột district và price (trong schema cũ có address và price)
+-- Nếu bảng chưa có cột district thì bạn có thể lập index trên cột address thay thế.
+CREATE INDEX `idx_room_posts_price` ON `room_posts`(`price`);
+-- Lưu ý: Index cho address có thể cần chỉ định độ dài nếu dùng VARCHAR dài
+-- CREATE INDEX `idx_room_posts_address` ON `room_posts`(`address`(100));
+
 
 SET FOREIGN_KEY_CHECKS = 1;
