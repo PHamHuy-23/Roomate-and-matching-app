@@ -96,7 +96,7 @@ gantt
     2. *Luồng Admin phê duyệt bài đăng / Khóa tài khoản*: Client Admin gửi request -> Spring Security lọc quyền `ROLE_ADMIN` -> Cập nhật trạng thái trong DB -> Gửi phản hồi 200 OK.
 - **Đầu ra**: 2 sơ đồ tuần tự định dạng PNG lưu tại `docs/diagrams/sequences/` (`seq_survey.png`, `seq_admin.png`).
 
-#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec)
+#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn thảo tài liệu đặc tả chi tiết 5 nhóm thuộc tính của bảng `user_preferences`:
@@ -105,9 +105,9 @@ gantt
     - *Chiều 3 - Lối sống (Lifestyle)*: `sleep_habit` (EARLY_BIRD / NIGHT_OWL), `cooking_habit` (COOK_DAILY / EAT_OUT / FLEXIBLE).
     - *Chiều 4 - Thói quen (Habits)*: `cleanliness_level` (1 đến 5 sao), `smoking` (true/false), `pet_friendly` (true/false).
     - *Chiều 5 - Tính cách & Sở thích (Personality & Interests)*: `personality_type` (INTROVERT / EXTROVERT / AMBIVERT), `interests` (Chuỗi JSON hoặc tags: Đọc sách, Thể thao, Game, Âm nhạc...).
-- **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.md` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
+- **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.docx` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
 
-#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung)
+#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Chủ Nhật, 13/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Dựa trên file mẫu đã có trong `docs/BaoCaoMau_ThietKeCSDL va ThietKeGiaoDien (1).docx` (nhánh `fix/setup-and-tests`), soạn thảo báo cáo phần Thiết kế dữ liệu.
