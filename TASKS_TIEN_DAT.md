@@ -30,9 +30,9 @@ gantt
     section Giai đoạn 1
     Chuẩn hóa CSDL MySQL & Seed Data DML (Xong)  :done, td1, 2026-09-09, 2026-09-10
     section Giai đoạn 2
-    Mở rộng CSDL 3 Bảng, Class Diagram & QA Plan :active, td2, 2026-09-11, 2026-09-12
+    Mở rộng CSDL 3 Bảng, Class Diagram & QA Plan :done, td2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend RoomPost, Request & Appointment :td3, 2026-09-13, 2026-09-15
+    Code Backend RoomPost, Request & Appointment :active, td3, 2026-09-13, 2026-09-15
     section Giai đoạn 4
     Code Flutter Đăng Tin, Requests & Lịch Hẹn   :td4, 2026-09-16, 2026-09-19
     section Giai đoạn 5
@@ -65,6 +65,7 @@ gantt
 *Nhánh Git thực hiện*: `feature/database-expansion`
 
 #### 📌 Task TD-2.1: Viết Script Mở rộng CSDL MySQL (Bổ sung 3 bảng mới)
+- [x] **Trạng thái**: Đã hoàn thành trên nhánh `feature/database-expansion`
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026**
 - **Nhiệm vụ kỹ thuật cụ thể**:
   - Mở file `database/01_schema.sql` và `database/roommate_hub.sql`, bổ sung 3 bảng phục vụ 54 FRs:
@@ -120,6 +121,7 @@ gantt
 - **Bàn giao chéo**: Gửi thông báo cho Quốc Huy và Quang Huy để ánh xạ Entity Java tương ứng.
 
 #### 📌 Task TD-2.2: Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository)
+- [x] **Trạng thái**: Đã hoàn thành (File png đính kèm trong nhánh `feature/database-expansion`)
 - **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Vẽ Sơ đồ Lớp (Class Diagram) bằng Draw.io / PlantUML thể hiện đầy đủ cấu trúc hướng đối tượng của Backend Spring Boot:
@@ -129,6 +131,7 @@ gantt
 - **Đầu ra**: File ảnh `docs/diagrams/classes/class_diagram.png` và bàn giao cho Quốc Huy chèn vào báo cáo học thuật.
 
 #### 📌 Task TD-2.3: Xây dựng Kế hoạch Kiểm thử Toàn diện (QA Test Plan)
+- [x] **Trạng thái**: Đã hoàn thành (`docs/TEST_PLAN.md`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn file tài liệu `docs/TEST_PLAN.md` bao phủ trọn vẹn 54 Yêu cầu chức năng (FRs):
