@@ -107,6 +107,14 @@ gantt
     - *Chiều 5 - Tính cách & Sở thích (Personality & Interests)*: `personality_type` (INTROVERT / EXTROVERT / AMBIVERT), `interests` (Chuỗi JSON hoặc tags: Đọc sách, Thể thao, Game, Âm nhạc...).
 - **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.md` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
 
+#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Chủ Nhật, 13/09/2026**
+- **Nhiệm vụ cụ thể**:
+  - Dựa trên file mẫu đã có trong `docs/BaoCaoMau_ThietKeCSDL va ThietKeGiaoDien (1).docx` (nhánh `fix/setup-and-tests`), soạn thảo báo cáo phần Thiết kế dữ liệu.
+  - Đảm bảo gom toàn bộ nội dung từ đầu báo cáo cho đến hết phần Thiết kế dữ liệu.
+  - Lưu ý sử dụng sơ đồ Class Diagram và schema CSDL mà Tiến Đạt đã thiết kế ở Giai đoạn 2.
+- **Đầu ra**: File tài liệu `docs/Nhom13_ThietKeDuLieu.docx`.
+
 ---
 
 ### GIAI ĐOẠN 3: LẬP TRÌNH BACKEND SPRING BOOT 3 (13/09 – 15/09/2026)
