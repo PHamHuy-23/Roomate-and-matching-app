@@ -53,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () {
+              _api.clearAuthToken();
               Navigator.pop(ctx);
               Navigator.pushAndRemoveUntil(
                 context,

@@ -1,20 +1,14 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:roommate_hub_mobile/main.dart';
 
 void main() {
-  testWidgets('RoommateHubApp smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Ứng dụng khởi động tại màn hình đăng nhập', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const RoommateHubApp());
 
-    // Verify that RoommateHubApp renders
-    expect(find.byType(RoommateHubApp), findsOneWidget);
+    expect(find.text('Đăng Nhập Roommate Hub'), findsOneWidget);
+    expect(find.text('ĐĂNG NHẬP'), findsOneWidget);
   });
 }
