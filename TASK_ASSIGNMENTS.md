@@ -77,7 +77,7 @@ gantt
 | **T2.2** | Thiết kế Sơ đồ Tuần tự (Sequence Diagram) luồng Đăng nhập JWT & Thuật toán Matching | **Trần Quang Huy** | 12/09/2026 | ✅ **ĐÃ XONG** | `docs/seq_jwt_auth.png` & `docs/seq_matching_engine.png` |
 | **T2.3** | Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository, Service, Controller) | **Phan Tiến Đạt** | 12/09/2026 | ✅ **ĐÃ XONG** | File sơ đồ lớp kiến trúc |
 | **T2.4** | Bổ sung bảng CSDL mới: `viewing_appointments`, `contact_permissions`, `reports` | **Phan Tiến Đạt (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | File SQL cập nhật trong `database/` |
-| **T2.5** | Đặc tả tài liệu danh sách REST APIs (Swagger / OpenAPI specifications) | **Trần Quang Huy (Lead)** | 12/09/2026 | ⏳ Đang làm | Tài liệu API contract |
+| **T2.5** | Đặc tả tài liệu danh sách REST APIs (Swagger / OpenAPI specifications) | **Trần Quang Huy (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | Tài liệu API contract |
 | **T2.6** | Cập nhật các bản vẽ thiết kế vào tài liệu báo cáo giai đoạn 2 | **Phạm Quốc Huy & PM** | 12/09/2026 | ✅ **ĐÃ XONG** | Nhúng 6 Use Case + 4 Sequence Diagrams vào `docs/Nhom13_Mohinhhoayeucau.docx` |
 | **T2.7** | Review kỹ thuật và kiểm tra tính tương thích giữa CSDL và Backend Entity | **PM Leader** | 12/09/2026 | ✅ **ĐÃ XONG** | Biên bản kiểm duyệt thiết kế |
 
@@ -106,7 +106,7 @@ gantt
 
 | Mã Task | Phân hệ Giao diện Flutter | Phân công trực tiếp | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
-| **T3.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 13/09/2026 | ⏳ Đang làm |
+| **T3.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 13/09/2026 | ✅ **ĐÃ XONG** |
 | **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | ⏳ Hàng đợi |
 | **T3.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 16/09/2026 | ⏳ Hàng đợi |
 | **T3.4** | UI Form khảo sát tiêu chí lối sống 5 chiều (Sliders, Chips, Validation) | **Phạm Quốc Huy** | 14/09/2026 | ⏳ Đang làm |
