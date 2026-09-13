@@ -30,9 +30,9 @@ gantt
     section Giai đoạn 1
     Khởi tạo Prototype Spring Boot & Flutter (Xong):done, qh1, 2026-09-09, 2026-09-10
     section Giai đoạn 2
-    Sequence Diagram Auth & API Specs Contract :active, qh2, 2026-09-11, 2026-09-12
+    Sequence Diagram Auth & API Specs Contract :done, qh2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend Auth JWT & Matching Engine API:qh3, 2026-09-13, 2026-09-15
+    Code Backend Auth JWT & Matching Engine API:active, qh3, 2026-09-13, 2026-09-15
     section Giai đoạn 4
     Code Flutter Login, Register & Discovery UI:qh4, 2026-09-16, 2026-09-19
     section Giai đoạn 5
@@ -60,6 +60,7 @@ gantt
 ---
 
 ### GIAI ĐOẠN 2: THIẾT KẾ KIẾN TRÚC & CHUẨN HÓA API CONTRACTS (11/09 – 12/09/2026)
+*Trạng thái: ✅ ĐÃ HOÀN THÀNH TOÀN BỘ GIAI ĐOẠN 2*
 *Mục tiêu giai đoạn: Thiết kế luồng xử lý JWT, kiến trúc thuật toán Matching và ban hành tài liệu đặc tả API dùng chung.*  
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/architecture-specs`
@@ -84,7 +85,7 @@ gantt
 - **Đầu ra**: 2 file ảnh PNG lưu tại `docs/diagrams/sequences/` (`seq_jwt_auth.png`, `seq_matching_engine.png`).
 - **Bàn giao chéo**: Gửi cho Quốc Huy để chèn vào báo cáo học thuật [`Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx).
 
-#### 📌 Task QH2-2.2: Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract)
+#### 📌 Task QH2-2.2: Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract) [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn file tài liệu Markdown `docs/API_SPECIFICATION.md` định nghĩa toàn bộ 25+ endpoints của dự án:
@@ -105,7 +106,7 @@ gantt
   - Định nghĩa chi tiết Schema Request/Response cho nhóm Auth và Matching.
 - **Đầu ra**: File `docs/API_SPECIFICATION.md`. Bàn giao trực tiếp cho Quốc Huy và Tiến Đạt để code Backend khớp 100% với Frontend.
 
-#### 📌 Task QH2-2.3: Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter
+#### 📌 Task QH2-2.3: Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Mở file `frontend/lib/services/api_service.dart`:
