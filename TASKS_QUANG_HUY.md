@@ -30,9 +30,9 @@ gantt
     section Giai đoạn 1
     Khởi tạo Prototype Spring Boot & Flutter (Xong):done, qh1, 2026-09-09, 2026-09-10
     section Giai đoạn 2
-    Sequence Diagram Auth & API Specs Contract :active, qh2, 2026-09-11, 2026-09-12
+    Sequence Diagram Auth & API Specs Contract :done, qh2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend Auth JWT & Matching Engine API:qh3, 2026-09-13, 2026-09-15
+    Code Backend Auth JWT & Matching Engine API:active, qh3, 2026-09-13, 2026-09-15
     section Giai đoạn 4
     Code Flutter Login, Register & Discovery UI:qh4, 2026-09-16, 2026-09-19
     section Giai đoạn 5
@@ -60,12 +60,13 @@ gantt
 ---
 
 ### GIAI ĐOẠN 2: THIẾT KẾ KIẾN TRÚC & CHUẨN HÓA API CONTRACTS (11/09 – 12/09/2026)
+*Trạng thái: ✅ ĐÃ HOÀN THÀNH TOÀN BỘ GIAI ĐOẠN 2*
 *Mục tiêu giai đoạn: Thiết kế luồng xử lý JWT, kiến trúc thuật toán Matching và ban hành tài liệu đặc tả API dùng chung.*  
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/architecture-specs`
 
-#### 📌 Task QH2-2.1: Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026**
+#### 📌 Task QH2-2.1: Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026** — *Hoàn thành đúng hạn!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / PlantUML thiết kế 2 sơ đồ tuần tự (Sequence Diagram) cấp hệ thống:
     1. *Sơ đồ 1 - Chu trình Xác thực Token JWT*:
@@ -84,7 +85,7 @@ gantt
 - **Đầu ra**: 2 file ảnh PNG lưu tại `docs/diagrams/sequences/` (`seq_jwt_auth.png`, `seq_matching_engine.png`).
 - **Bàn giao chéo**: Gửi cho Quốc Huy để chèn vào báo cáo học thuật [`Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx).
 
-#### 📌 Task QH2-2.2: Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract)
+#### 📌 Task QH2-2.2: Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract) [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn file tài liệu Markdown `docs/API_SPECIFICATION.md` định nghĩa toàn bộ 25+ endpoints của dự án:
@@ -105,7 +106,7 @@ gantt
   - Định nghĩa chi tiết Schema Request/Response cho nhóm Auth và Matching.
 - **Đầu ra**: File `docs/API_SPECIFICATION.md`. Bàn giao trực tiếp cho Quốc Huy và Tiến Đạt để code Backend khớp 100% với Frontend.
 
-#### 📌 Task QH2-2.3: Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter
+#### 📌 Task QH2-2.3: Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Mở file `frontend/lib/services/api_service.dart`:
@@ -117,13 +118,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH BACKEND SPRING BOOT 3 (13/09 – 15/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 3 (17/09 – 19/09/2026)
 *Mục tiêu giai đoạn: Hoàn thiện bảo mật Spring Security 6 với JWT và cài đặt thuật toán tính điểm tương thích Matching.*  
-*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Hai, 15/09/2026***  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
 *Nhánh Git thực hiện*: `feature/auth-matching-backend`
 
 #### 📌 Task QH2-3.1: Lập trình Module Bảo mật Xác thực JWT (`AuthController` & `SecurityConfig`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 14/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/config/SecurityConfig.java`:
     - Cấu hình `SecurityFilterChain`:
@@ -148,7 +149,7 @@ gantt
   - Đăng nhập đúng email/pass -> trả về chuỗi JWT token dài. Đăng nhập sai pass -> trả về HTTP 401.
 
 #### 📌 Task QH2-3.2: Lập trình Lõi Thuật toán Matching Engine (`MatchingService`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/MatchingService.java`:
     - Xây dựng thuật toán tính độ tương thích $S \in [0, 100]\%$ giữa người tìm kiếm $A$ và ứng viên $B$:
@@ -175,7 +176,7 @@ gantt
 - **Tiêu chí nghiệm thu**: Thời gian tính toán cho 100 ứng viên dưới 200ms, không có lỗi chia cho 0 (`ArithmeticException`).
 
 #### 📌 Task QH2-3.3: Viết Bộ Unit Tests tự động cho `AuthService` & `MatchingService`
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/AuthServiceTest.java`:
     - Test đăng ký tài khoản thành công.
@@ -192,13 +193,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH FRONTEND FLUTTER CLIENT (16/09 – 19/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 13/09/2026)
 *Mục tiêu giai đoạn: Xây dựng màn hình Đăng nhập/Đăng ký chuyên nghiệp và màn hình Khám phá bạn trọ hiển thị % tương thích trực quan.*  
-*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Sáu, 19/09/2026***  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/auth-discovery-flutter`
 
 #### 📌 Task QH2-4.1: Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 17/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/login_screen.dart`:
     - Thiết kế giao diện hiện đại với Logo Roommate Hub, tông màu chủ đạo Indigo/Blue.
@@ -214,7 +215,7 @@ gantt
   - Hiển thị thông báo lỗi bằng `SnackBar` màu đỏ nếu tài khoản/mật khẩu không chính xác.
 
 #### 📌 Task QH2-4.2: Xây dựng Giao diện Khám phá Bạn trọ (`home_screen.dart` / Discovery Feed)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 18/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/home_screen.dart`:
     - Thanh tìm kiếm & lọc nhanh trên AppBar: Nút Lọc theo % tương thích tối thiểu (ví dụ: chỉ hiện người trên 70% Match), lọc theo Quận mong muốn.
@@ -232,7 +233,7 @@ gantt
     2. Nút ElevatedButton "Gửi lời mời ghép đôi" (kết nối trực tiếp với API của Tiến Đạt).
 
 #### 📌 Task QH2-4.3: Xây dựng Modal / BottomSheet Đối chiếu Chi tiết 5 Tiêu chí
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 19/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Khi bấm "Xem chi tiết đối chiếu", mở `showModalBottomSheet`:
     - Hiển thị 5 thanh tiến trình `LinearProgressIndicator` thể hiện điểm số tương thích của 5 chiều:

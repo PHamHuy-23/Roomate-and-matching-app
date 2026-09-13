@@ -55,7 +55,7 @@ class _AdminScreenState extends State<AdminScreen> {
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bg.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(color: bg.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
       child: Text(label, style: TextStyle(color: bg, fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }

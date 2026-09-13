@@ -24,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   late Future<List<MatchRecommendation>> _matchesFuture;
-  late Future<List<RoomPost>> _postsFuture;
   late int _currentUserId;
 
   // Trạng thái cho bộ lọc phòng trọ
@@ -163,21 +162,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 return ListView.builder(
                   itemCount: list.length,
-                  itemBuilder: (context, i) {
+                  itemBuilder: (_, i) {
                     final item = list[i];
                     return MatchCard(
                       item: item,
                       onConnect: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         final ok = await _api.sendMatchRequest(_currentUserId, item.userId, item.totalScore);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(ok
-                                  ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
-                                  : 'Gửi kết nối thất bại!'),
-                            ),
-                          );
-                        }
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(ok
+                                ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
+                                : 'Gửi kết nối thất bại!'),
+                          ),
+                        );
                       },
                     );
                   },

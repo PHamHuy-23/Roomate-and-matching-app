@@ -64,8 +64,8 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/use-case-design`
 
-#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết
-- **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026**
+#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026** — *Hoàn thành & format trực tiếp vào `docs/Nhom13_Mohinhhoayeucau.docx`!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / StarUML / PlantUML vẽ 6 sơ đồ Use Case bao phủ trọn vẹn 54 FRs:
     1. *Use Case Phân hệ 1 - Xác thực & Quản lý Tài khoản*: Đăng ký sinh viên, Xác thực email OTP, Đăng nhập, Đổi mật khẩu, Quên mật khẩu.
@@ -88,15 +88,15 @@ gantt
   ```
 - **Bàn giao chéo**: Gửi sơ đồ cho Quang Huy và Tiến Đạt để đối chiếu với API Contract và Class Diagram.
 
-#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin
-- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
+#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026** — *Hoàn thành trước hạn!*
 - **Nhiệm vụ cụ thể**:
   - Vẽ Sơ đồ tuần tự (Sequence Diagram) thể hiện chính xác các bước giao tiếp giữa các tầng: `Flutter Client` ⇄ `ProfileController` ⇄ `ProfileService` ⇄ `UserPreferenceRepository` ⇄ `MySQL`:
     1. *Luồng Người dùng lưu/cập nhật Form khảo sát 5 chiều*: Kiểm tra Token hợp lệ -> Validate giá trị đầu vào (ngân sách > 0, thói quen hợp lệ) -> `save()` vào bảng `user_preferences` -> Trả về DTO cập nhật thành công.
     2. *Luồng Admin phê duyệt bài đăng / Khóa tài khoản*: Client Admin gửi request -> Spring Security lọc quyền `ROLE_ADMIN` -> Cập nhật trạng thái trong DB -> Gửi phản hồi 200 OK.
 - **Đầu ra**: 2 sơ đồ tuần tự định dạng PNG lưu tại `docs/diagrams/sequences/` (`seq_survey.png`, `seq_admin.png`).
 
-#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec)
+#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn thảo tài liệu đặc tả chi tiết 5 nhóm thuộc tính của bảng `user_preferences`:
@@ -105,9 +105,9 @@ gantt
     - *Chiều 3 - Lối sống (Lifestyle)*: `sleep_habit` (EARLY_BIRD / NIGHT_OWL), `cooking_habit` (COOK_DAILY / EAT_OUT / FLEXIBLE).
     - *Chiều 4 - Thói quen (Habits)*: `cleanliness_level` (1 đến 5 sao), `smoking` (true/false), `pet_friendly` (true/false).
     - *Chiều 5 - Tính cách & Sở thích (Personality & Interests)*: `personality_type` (INTROVERT / EXTROVERT / AMBIVERT), `interests` (Chuỗi JSON hoặc tags: Đọc sách, Thể thao, Game, Âm nhạc...).
-- **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.md` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
+- **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.docx` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
 
-#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung)
+#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Chủ Nhật, 13/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Dựa trên file mẫu đã có trong `docs/BaoCaoMau_ThietKeCSDL va ThietKeGiaoDien (1).docx` (nhánh `fix/setup-and-tests`), soạn thảo báo cáo phần Thiết kế dữ liệu.
@@ -117,13 +117,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH BACKEND SPRING BOOT 3 (13/09 – 15/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 3 (17/09 – 19/09/2026)
 *Mục tiêu giai đoạn: Hoàn thiện 100% mã nguồn Java Spring Boot cho module Profile, Preference và Admin, viết Unit Test đạt độ phủ tốt.*  
-*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Hai, 15/09/2026***  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
 *Nhánh Git thực hiện*: `feature/preference-admin-backend`
 
 #### 📌 Task QH-3.1: Lập trình Backend Module `UserPreference` & `Profile`
-- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 14/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/dto/UserPreferenceDTO.java`:
     - Khai báo đầy đủ các trường: `minBudget`, `maxBudget`, `preferredLocation`, `sleepHabit`, `cookingHabit`, `cleanlinessLevel`, `smoking`, `petFriendly`, `personalityType`, `interests`.
@@ -145,7 +145,7 @@ gantt
   - Test dữ liệu sai (ngân sách âm): Trả về HTTP 400 Bad Request kèm message rõ ràng.
 
 #### 📌 Task QH-3.2: Lập trình Backend Module Quản trị viên (`AdminController` & `AdminService`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/AdminService.java`:
     - Hàm `getAllUsers(Pageable pageable, String status)`: Lấy danh sách người dùng kèm phân trang.
@@ -162,7 +162,7 @@ gantt
   - Tài khoản Admin gọi API: Trả về dữ liệu đúng 100%.
 
 #### 📌 Task QH-3.3: Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/ProfileServiceTest.java`:
     - Test 1: Lưu tiêu chí mới thành công (Happy path).
@@ -180,13 +180,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH FRONTEND FLUTTER CLIENT (16/09 – 19/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 13/09/2026)
 *Mục tiêu giai đoạn: Xây dựng giao diện khảo sát tiêu chí mượt mà, màn hình hồ sơ cá nhân và trang quản trị Admin trực quan.*  
-*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Sáu, 19/09/2026***  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/survey-profile-flutter`
 
 #### 📌 Task QH-4.1: Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 17/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/survey_screen.dart`, nâng cấp thành giao diện **Multi-step Stepper** gồm 5 bước:
     - *Bước 1: Ngân sách & Khu vực*:
@@ -207,7 +207,7 @@ gantt
   - Bắt lỗi Form (Validation): Nếu người dùng chưa chọn bước bắt buộc, hiển thị `SnackBar` cảnh báo.
 
 #### 📌 Task QH-4.2: Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 18/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/profile_screen.dart`:
     - Header: `CircleAvatar` hiển thị ảnh đại diện, Tên hiển thị, Email sinh viên, Trường ĐH.
@@ -217,7 +217,7 @@ gantt
     - Section Cài đặt: Nút "Đổi mật khẩu" (mở Dialog nhập mật khẩu cũ/mới), Nút "Đăng xuất" (Xóa token trong `SharedPreferences` và chuyển về `login_screen.dart`).
 
 #### 📌 Task QH-4.3: Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 19/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/admin_screen.dart`:
     - Cấu trúc `DefaultTabController` với 3 Tabs:

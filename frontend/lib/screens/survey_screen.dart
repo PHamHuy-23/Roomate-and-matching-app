@@ -117,7 +117,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 const Text('Khu vực mong muốn:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
-                  value: _district,
+                  initialValue: _district,
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                   items: _districts
                       .map((d) => DropdownMenuItem(value: d, child: Text(d)))
@@ -146,33 +146,33 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
                 // 3. GIỜ GIẤC SINH HOẠT
                 const Text('Giờ giấc sinh hoạt:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: RadioListTile<int>(
-                        title: const Text('Ngủ sớm', style: TextStyle(fontSize: 13)),
-                        value: 1,
-                        groupValue: _sleepHabit,
-                        onChanged: (val) => setState(() => _sleepHabit = val!),
+                RadioGroup<int>(
+                  groupValue: _sleepHabit,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _sleepHabit = val);
+                  },
+                  child: const Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<int>(
+                          title: Text('Ngủ sớm', style: TextStyle(fontSize: 13)),
+                          value: 1,
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<int>(
-                        title: const Text('Bình thường', style: TextStyle(fontSize: 13)),
-                        value: 2,
-                        groupValue: _sleepHabit,
-                        onChanged: (val) => setState(() => _sleepHabit = val!),
+                      Expanded(
+                        child: RadioListTile<int>(
+                          title: Text('Bình thường', style: TextStyle(fontSize: 13)),
+                          value: 2,
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<int>(
-                        title: const Text('Cú đêm', style: TextStyle(fontSize: 13)),
-                        value: 3,
-                        groupValue: _sleepHabit,
-                        onChanged: (val) => setState(() => _sleepHabit = val!),
+                      Expanded(
+                        child: RadioListTile<int>(
+                          title: Text('Cú đêm', style: TextStyle(fontSize: 13)),
+                          value: 3,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
 
