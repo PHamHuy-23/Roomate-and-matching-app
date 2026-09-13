@@ -16,13 +16,20 @@ class AuthUser {
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
+    final nestedUser = json['user'];
+    final user = nestedUser is Map<String, dynamic> ? nestedUser : json;
+    final tokenValue = json['accessToken'] ?? json['token'];
+    if (tokenValue is! String || tokenValue.isEmpty) {
+      throw const FormatException('Auth response không chứa access token');
+    }
+
     return AuthUser(
-      token: json['token'] as String,
-      userId: json['userId'] as int,
-      email: json['email'] as String,
-      fullName: json['fullName'] as String,
-      gender: json['gender'] as String,
-      role: json['role'] as String,
+      token: tokenValue,
+      userId: (user['id'] ?? user['userId']) as int,
+      email: user['email'] as String,
+      fullName: user['fullName'] as String,
+      gender: user['gender'] as String,
+      role: user['role'] as String,
     );
   }
 }
