@@ -18,9 +18,9 @@ gantt
     section Giai đoạn 2
     Thiết kế Kiến trúc Hệ thống & ERD Mở rộng   :active, p2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Lập trình Backend Spring Boot 3 API        :p3, 2026-09-13, 2026-09-15
+    Lập trình Frontend Flutter Client          :p3, 2026-09-13, 2026-09-16
     section Giai đoạn 4
-    Lập trình Frontend Flutter Client          :p4, 2026-09-16, 2026-09-19
+    Lập trình Backend Spring Boot 3 API        :p4, 2026-09-17, 2026-09-19
     section Giai đoạn 5
     Tích hợp End-to-End, Kiểm thử QA & Sửa lỗi :p5, 2026-09-20, 2026-09-22
     section Bàn giao
@@ -31,8 +31,8 @@ gantt
 | :---: | :--- | :---: | :---: | :--- | :---: |
 | **Mốc 1** | **Giai đoạn 1: CSDL & Báo cáo Yêu cầu** | 09/09/2026 | **23:59 10/09/2026** | File Word `Nhom13_Mohinhhoayeucau.docx` (54 FRs), CSDL `database/`, Prototype framework. | ✅ **HOÀN THÀNH** |
 | **Mốc 2** | **Giai đoạn 2: Thiết kế Hệ thống & ERD** | 11/09/2026 | **23:59 12/09/2026** | 6 Lược đồ Use Case, Sequence Diagram, Class Diagram, Bổ sung Schema CSDL (`appointments`, `reports`). | ⏳ **Đang tiến hành** |
-| **Mốc 3** | **Giai đoạn 3: Lập trình Backend API** | 13/09/2026 | **23:59 15/09/2026** | REST APIs Spring Boot: Auth/JWT, Matching Engine, Double Opt-in, RoomPost, Lịch hẹn, Unit Tests. | ⏳ Hàng đợi |
-| **Mốc 4** | **Giai đoạn 4: Lập trình Frontend Flutter** | 16/09/2026 | **23:59 19/09/2026** | Ứng dụng Flutter: UI Auth, Form khảo sát 5 chiều, Gợi ý % Matching, Quản lý bài đăng, Lịch hẹn xem trọ. | ⏳ Hàng đợi |
+| **Mốc 3** | **Giai đoạn 3: Lập trình Frontend Flutter** | 13/09/2026 | **23:59 16/09/2026** | Ứng dụng Flutter: UI Auth, Form khảo sát 5 chiều, Gợi ý % Matching, Quản lý bài đăng, Lịch hẹn xem trọ. | ⏳ Hàng đợi |
+| **Mốc 4** | **Giai đoạn 4: Lập trình Backend API** | 17/09/2026 | **23:59 19/09/2026** | REST APIs Spring Boot: Auth/JWT, Matching Engine, Double Opt-in, RoomPost, Lịch hẹn, Unit Tests. | ⏳ Hàng đợi |
 | **Mốc 5** | **Giai đoạn 5: Tích hợp E2E & Kiểm thử QA** | 20/09/2026 | **23:59 22/09/2026** | Tích hợp Frontend gọi Backend lưu MySQL, kiểm thử ngoại lệ, sửa lỗi toàn diện, nạp dữ liệu demo. | ⏳ Hàng đợi |
 | **Mốc 6** | **Tổng duyệt & Đóng gói Hoàn thiện** | 23/09/2026 | ⏰ **18:00 23/09/2026** | Tổng duyệt demo luồng hoàn chỉnh, build APK/Web release, hoàn thiện Slide & Báo cáo đồ án. | 🎯 **HẠN CHÓT BÀN GIAO** |
 
@@ -83,37 +83,37 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH HOÀN THIỆN BACKEND SPRING BOOT (13/09 - 15/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH HOÀN THIỆN BACKEND SPRING BOOT (17/09 - 19/09/2026)
 *Mục tiêu: Hoàn thành 100% các REST APIs Backend có bảo mật JWT và Unit Test.*  
-*Deadline Giai đoạn 3: ⏰ **23:59 Thứ Hai, 15/09/2026***
+*Deadline Giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
 
 | Mã Task | Phân hệ Backend phân công | Phân công trực tiếp | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
-| **T3.1** | **Auth, User & Security**: Đăng ký, đăng nhập JWT, đổi mật khẩu, OTP email | **Trần Quang Huy (Lead)** | 14/09/2026 | ⏳ Hàng đợi |
-| **T3.2** | **Lõi Matching Engine**: Thuật toán tính % tương thích có trọng số đa tiêu chí | **Trần Quang Huy** | 15/09/2026 | ⏳ Hàng đợi |
-| **T3.3** | **Khảo sát Tiêu chí**: APIs lưu và cập nhật `UserPreference` 5 chiều | **Phạm Quốc Huy** | 14/09/2026 | ⏳ Hàng đợi |
-| **T3.4** | **Quản trị Admin**: APIs quản lý tài khoản (khóa/mở) và duyệt bài đăng phòng | **Phạm Quốc Huy** | 15/09/2026 | ⏳ Hàng đợi |
-| **T3.5** | **Bài đăng phòng trọ**: APIs tạo bài, duyệt bài, lọc tìm phòng, xem chi tiết | **Phan Tiến Đạt** | 14/09/2026 | ⏳ Hàng đợi |
-| **T3.6** | **Ghép đôi & Lịch hẹn xem phòng**: Double Opt-in (Accept/Reject), đặt lịch hẹn xem trọ | **Phan Tiến Đạt** | 15/09/2026 | ⏳ Hàng đợi |
-| **T3.7** | **Viết Unit Tests (JUnit 5 & Mockito)**: Kiểm thử tự động tính đúng đắn của Matching | **Phan Tiến Đạt (Lead QA)** | 15/09/2026 | ⏳ Hàng đợi |
-| **T3.8** | **Kiểm thử tích hợp Postman & nghiệm thu Backend Milestone 3** | **PM Leader** | 15/09/2026 | ⏳ Hàng đợi |
+| **T4.1** | **Auth, User & Security**: Đăng ký, đăng nhập JWT, đổi mật khẩu, OTP email | **Trần Quang Huy (Lead)** | 18/09/2026 | ⏳ Hàng đợi |
+| **T4.2** | **Lõi Matching Engine**: Thuật toán tính % tương thích có trọng số đa tiêu chí | **Trần Quang Huy** | 19/09/2026 | ⏳ Hàng đợi |
+| **T4.3** | **Khảo sát Tiêu chí**: APIs lưu và cập nhật `UserPreference` 5 chiều | **Phạm Quốc Huy** | 18/09/2026 | ⏳ Hàng đợi |
+| **T4.4** | **Quản trị Admin**: APIs quản lý tài khoản (khóa/mở) và duyệt bài đăng phòng | **Phạm Quốc Huy** | 19/09/2026 | ⏳ Hàng đợi |
+| **T4.5** | **Bài đăng phòng trọ**: APIs tạo bài, duyệt bài, lọc tìm phòng, xem chi tiết | **Phan Tiến Đạt** | 18/09/2026 | ⏳ Hàng đợi |
+| **T4.6** | **Ghép đôi & Lịch hẹn xem phòng**: Double Opt-in (Accept/Reject), đặt lịch hẹn xem trọ | **Phan Tiến Đạt** | 19/09/2026 | ⏳ Hàng đợi |
+| **T4.7** | **Viết Unit Tests (JUnit 5 & Mockito)**: Kiểm thử tự động tính đúng đắn của Matching | **Phan Tiến Đạt (Lead QA)** | 19/09/2026 | ⏳ Hàng đợi |
+| **T4.8** | **Kiểm thử tích hợp Postman & nghiệm thu Backend Milestone 4** | **PM Leader** | 19/09/2026 | ⏳ Hàng đợi |
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH FRONTEND FLUTTER CLIENT (16/09 - 19/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 - 16/09/2026)
 *Mục tiêu: Hoàn thành toàn bộ giao diện ứng dụng di động & web Flutter mượt mà, trực quan.*  
-*Deadline Giai đoạn 4: ⏰ **23:59 Thứ Sáu, 19/09/2026***
+*Deadline Giai đoạn 3: ⏰ **23:59 Thứ Tư, 16/09/2026***
 
 | Mã Task | Phân hệ Giao diện Flutter | Phân công trực tiếp | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
-| **T4.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 16/09/2026 | ⏳ Hàng đợi |
-| **T4.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 18/09/2026 | ⏳ Hàng đợi |
-| **T4.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.4** | UI Form khảo sát tiêu chí lối sống 5 chiều (Sliders, Chips, Validation) | **Phạm Quốc Huy** | 17/09/2026 | ⏳ Hàng đợi |
-| **T4.5** | UI Xem/Chỉnh sửa Profile cá nhân & Màn hình Dashboard Admin quản trị | **Phạm Quốc Huy** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.6** | UI Feed Bài đăng phòng trọ, Màn hình Chi tiết phòng trọ & Form Đăng tin phòng | **Phan Tiến Đạt** | 18/09/2026 | ⏳ Hàng đợi |
-| **T4.7** | UI Quản lý Yêu cầu ghép đôi (Tab Đã gửi / Đã nhận) & Quản lý lịch hẹn xem phòng | **Phan Tiến Đạt** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.8** | Kiểm thử giao diện trên Android Emulator và Web, tối ưu trải nghiệm người dùng | **Tiến Đạt & PM Leader** | 19/09/2026 | ⏳ Hàng đợi |
+| **T3.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 13/09/2026 | ⏳ Hàng đợi |
+| **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | ⏳ Hàng đợi |
+| **T3.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 16/09/2026 | ⏳ Hàng đợi |
+| **T3.4** | UI Form khảo sát tiêu chí lối sống 5 chiều (Sliders, Chips, Validation) | **Phạm Quốc Huy** | 14/09/2026 | ⏳ Hàng đợi |
+| **T3.5** | UI Xem/Chỉnh sửa Profile cá nhân & Màn hình Dashboard Admin quản trị | **Phạm Quốc Huy** | 16/09/2026 | ⏳ Hàng đợi |
+| **T3.6** | UI Feed Bài đăng phòng trọ, Màn hình Chi tiết phòng trọ & Form Đăng tin phòng | **Phan Tiến Đạt** | 15/09/2026 | ⏳ Hàng đợi |
+| **T3.7** | UI Quản lý Yêu cầu ghép đôi (Tab Đã gửi / Đã nhận) & Quản lý lịch hẹn xem phòng | **Phan Tiến Đạt** | 16/09/2026 | ⏳ Hàng đợi |
+| **T3.8** | Kiểm thử giao diện trên Android Emulator và Web, tối ưu trải nghiệm người dùng | **Tiến Đạt & PM Leader** | 16/09/2026 | ⏳ Hàng đợi |
 
 ---
 
