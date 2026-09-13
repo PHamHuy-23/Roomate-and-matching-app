@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../models/auth_user.dart';
+import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
-import 'login_screen.dart';
+import '../state/auth_session.dart';
 
 class ProfileScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -37,7 +40,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Cập nhật thông tin thành công!' : 'Cập nhật thất bại!')),
+        SnackBar(
+          content: Text(
+            ok ? 'Cập nhật thông tin thành công!' : 'Cập nhật thất bại!',
+          ),
+        ),
       );
     }
   }
@@ -49,15 +56,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Xác nhận đăng xuất'),
         content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
-              _api.clearAuthToken();
+              context.read<AuthSession>().signOut();
               Navigator.pop(ctx);
-              Navigator.pushAndRemoveUntil(
+              Navigator.pushNamedAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                AppRoutes.login,
                 (route) => false,
               );
             },
@@ -86,7 +99,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 4))
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: Column(
@@ -96,8 +113,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   radius: 42,
                   backgroundColor: Colors.indigo.shade100,
                   child: Text(
-                    widget.currentUser.fullName.isNotEmpty ? widget.currentUser.fullName[0] : 'U',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo.shade800),
+                    widget.currentUser.fullName.isNotEmpty
+                        ? widget.currentUser.fullName[0]
+                        : 'U',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo.shade800,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -109,17 +132,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Divider(height: 32),
                 TextField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Họ và tên', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person)),
+                  decoration: const InputDecoration(
+                    labelText: 'Họ và tên',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _phoneCtrl,
-                  decoration: const InputDecoration(labelText: 'Số điện thoại', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone), hintText: 'Nhập số điện thoại mới'),
+                  decoration: const InputDecoration(
+                    labelText: 'Số điện thoại',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone),
+                    hintText: 'Nhập số điện thoại mới',
+                  ),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   initialValue: _gender,
-                  decoration: const InputDecoration(labelText: 'Giới tính', border: OutlineInputBorder(), prefixIcon: Icon(Icons.wc)),
+                  decoration: const InputDecoration(
+                    labelText: 'Giới tính',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.wc),
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'MALE', child: Text('Nam')),
                     DropdownMenuItem(value: 'FEMALE', child: Text('Nữ')),
@@ -141,7 +177,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 OutlinedButton.icon(
                   onPressed: _handleLogout,
                   icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('Đăng Xuất', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Đăng Xuất',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.red),
                     padding: const EdgeInsets.symmetric(vertical: 14),

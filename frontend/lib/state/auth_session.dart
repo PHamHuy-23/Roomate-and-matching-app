@@ -1,0 +1,41 @@
+import 'package:flutter/foundation.dart';
+
+import '../models/auth_user.dart';
+import '../services/api_service.dart';
+
+/// Trạng thái đăng nhập dùng chung cho toàn bộ cây widget.
+class AuthSession extends ChangeNotifier {
+  AuthSession({ApiService? apiService}) : _api = apiService ?? ApiService();
+
+  final ApiService _api;
+  AuthUser? _user;
+
+  AuthUser? get user => _user;
+  bool get isAuthenticated => _user != null && _api.hasAuthToken;
+
+  Future<AuthUser> login(String email, String password) async {
+    final user = await _api.login(email, password);
+    _user = user;
+    notifyListeners();
+    return user;
+  }
+
+  Future<AuthUser> register(
+    String email,
+    String password,
+    String fullName,
+    String gender,
+    String phone,
+  ) async {
+    final user = await _api.register(email, password, fullName, gender, phone);
+    _user = user;
+    notifyListeners();
+    return user;
+  }
+
+  void signOut() {
+    _api.clearAuthToken();
+    _user = null;
+    notifyListeners();
+  }
+}

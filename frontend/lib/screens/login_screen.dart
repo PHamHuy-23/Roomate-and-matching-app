@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../models/auth_user.dart';
-import 'home_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../navigation/app_routes.dart';
+import '../state/auth_session.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +12,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final ApiService _api = ApiService();
   bool _isLogin = true;
   bool _isLoading = false;
 
@@ -40,11 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      AuthUser user;
+      final session = context.read<AuthSession>();
       if (_isLogin) {
-        user = await _api.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
+        await session.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
       } else {
-        user = await _api.register(
+        await session.register(
           _emailCtrl.text.trim(),
           _passCtrl.text.trim(),
           _nameCtrl.text.trim(),
@@ -54,10 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => HomeScreen(currentUser: user)),
-        );
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
     } catch (e) {
       if (mounted) {
@@ -84,19 +81,30 @@ class _LoginScreenState extends State<LoginScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.home_work_rounded, size: 56, color: Colors.indigo.shade700),
+                Icon(
+                  Icons.home_work_rounded,
+                  size: 56,
+                  color: Colors.indigo.shade700,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   _isLogin ? 'Đăng Nhập Roommate Hub' : 'Đăng Ký Tài Khoản',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -163,16 +171,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(_isLogin ? 'ĐĂNG NHẬP' : 'TẠO TÀI KHOẢN', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          _isLogin ? 'ĐĂNG NHẬP' : 'TẠO TÀI KHOẢN',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => setState(() => _isLogin = !_isLogin),
-                  child: Text(_isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'),
+                  child: Text(
+                    _isLogin
+                        ? 'Chưa có tài khoản? Đăng ký ngay'
+                        : 'Đã có tài khoản? Đăng nhập',
+                  ),
                 ),
               ],
             ),

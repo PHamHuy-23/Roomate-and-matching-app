@@ -3,13 +3,9 @@ import 'package:intl/intl.dart';
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/room_post.dart';
+import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../widgets/match_card.dart';
-import 'admin_screen.dart';
-import 'create_post_screen.dart';
-import 'profile_screen.dart';
-import 'requests_screen.dart';
-import 'survey_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -46,25 +42,29 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingPosts = true;
     });
 
-    _api.getRoomPosts().then((posts) {
-      if (mounted) {
-        setState(() {
-          _allPosts = posts;
-          _applyPostFilters();
-          _isLoadingPosts = false;
+    _api
+        .getRoomPosts()
+        .then((posts) {
+          if (mounted) {
+            setState(() {
+              _allPosts = posts;
+              _applyPostFilters();
+              _isLoadingPosts = false;
+            });
+          }
+        })
+        .catchError((err) {
+          if (mounted) {
+            setState(() => _isLoadingPosts = false);
+          }
         });
-      }
-    }).catchError((err) {
-      if (mounted) {
-        setState(() => _isLoadingPosts = false);
-      }
-    });
   }
 
   void _applyPostFilters() {
     setState(() {
       _filteredPosts = _allPosts.where((p) {
-        final matchAddress = p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
+        final matchAddress =
+            p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
             p.title.toLowerCase().contains(_searchKeyword.toLowerCase());
         final matchPrice = p.price <= _maxPriceFilter;
         return matchAddress && matchPrice;
@@ -78,43 +78,37 @@ class _HomeScreenState extends State<HomeScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Roommate Hub', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Roommate Hub',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
           centerTitle: true,
           actions: [
-            if (widget.currentUser.role == 'ROLE_ADMIN' || widget.currentUser.role == 'ADMIN')
+            if (widget.currentUser.role == 'ROLE_ADMIN' ||
+                widget.currentUser.role == 'ADMIN')
               IconButton(
                 tooltip: 'Trang Quản Trị Viên',
                 icon: const Icon(Icons.admin_panel_settings),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminScreen()),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.admin);
                 },
               ),
             IconButton(
               tooltip: 'Hộp thư kết nối',
               icon: const Icon(Icons.mail_outline),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RequestsScreen(currentUserId: _currentUserId),
-                  ),
-                );
+                Navigator.pushNamed(context, AppRoutes.requests);
               },
             ),
             IconButton(
               tooltip: 'Cập nhật tiêu chí bạn trọ',
               icon: const Icon(Icons.tune),
               onPressed: () async {
-                final updated = await Navigator.push(
+                final updated = await Navigator.pushNamed(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => SurveyScreen(userId: _currentUserId),
-                  ),
+                  AppRoutes.survey,
                 );
                 if (updated == true) {
                   _loadData();
@@ -125,12 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
               tooltip: 'Thông tin cá nhân & Đăng xuất',
               icon: const Icon(Icons.account_circle),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(currentUser: widget.currentUser),
-                  ),
-                );
+                Navigator.pushNamed(context, AppRoutes.profile);
               },
             ),
           ],
@@ -158,7 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 final list = snapshot.data ?? [];
                 if (list.isEmpty) {
-                  return const Center(child: Text('Không tìm thấy người phù hợp'));
+                  return const Center(
+                    child: Text('Không tìm thấy người phù hợp'),
+                  );
                 }
                 return ListView.builder(
                   itemCount: list.length,
@@ -168,13 +159,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       item: item,
                       onConnect: () async {
                         final messenger = ScaffoldMessenger.of(context);
-                        final ok = await _api.sendMatchRequest(_currentUserId, item.userId, item.totalScore);
+                        final ok = await _api.sendMatchRequest(
+                          _currentUserId,
+                          item.userId,
+                          item.totalScore,
+                        );
                         if (!mounted) return;
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(ok
-                                ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
-                                : 'Gửi kết nối thất bại!'),
+                            content: Text(
+                              ok
+                                  ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
+                                  : 'Gửi kết nối thất bại!',
+                            ),
                           ),
                         );
                       },
@@ -189,7 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Khung tìm kiếm & Lọc theo giá
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   color: Colors.white,
                   child: Column(
                     children: [
@@ -209,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : null,
                           isDense: true,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         onChanged: (val) {
                           _searchKeyword = val.trim();
@@ -219,10 +221,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Text('Giá tối đa: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          const Text(
+                            'Giá tối đa: ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                           Text(
-                            _maxPriceFilter >= 10000000 ? 'Tất cả' : fmt.format(_maxPriceFilter),
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 13),
+                            _maxPriceFilter >= 10000000
+                                ? 'Tất cả'
+                                : fmt.format(_maxPriceFilter),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                              fontSize: 13,
+                            ),
                           ),
                           Expanded(
                             child: Slider(
@@ -251,48 +265,82 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _isLoadingPosts
                       ? const Center(child: CircularProgressIndicator())
                       : _filteredPosts.isEmpty
-                          ? const Center(child: Text('Không tìm thấy phòng phù hợp với tiêu chí lọc.'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(12),
-                              itemCount: _filteredPosts.length,
-                              itemBuilder: (context, i) {
-                                final p = _filteredPosts[i];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                      ? const Center(
+                          child: Text(
+                            'Không tìm thấy phòng phù hợp với tiêu chí lọc.',
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: _filteredPosts.length,
+                          itemBuilder: (context, i) {
+                            final p = _filteredPosts[i];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      p.title,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Giá: ${fmt.format(p.price)}/tháng',
+                                      style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Địa chỉ: ${p.address}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      p.description,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const Divider(height: 16),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(p.title,
-                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 6),
-                                        Text('Giá: ${fmt.format(p.price)}/tháng',
-                                            style: const TextStyle(
-                                                color: Colors.green, fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 4),
-                                        Text('Địa chỉ: ${p.address}',
-                                            style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                                        const SizedBox(height: 6),
-                                        Text(p.description,
-                                            style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                                        const Divider(height: 16),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Người đăng: ${p.authorName}',
-                                                style: const TextStyle(fontStyle: FontStyle.italic)),
-                                            Text('Tối đa: ${p.maxOccupants} người',
-                                                style: const TextStyle(fontWeight: FontWeight.w500)),
-                                          ],
+                                        Text(
+                                          'Người đăng: ${p.authorName}',
+                                          style: const TextStyle(
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Tối đa: ${p.maxOccupants} người',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -304,11 +352,9 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: const Icon(Icons.add_home_work),
           label: const Text('Đăng Tin'),
           onPressed: () async {
-            final created = await Navigator.push(
+            final created = await Navigator.pushNamed(
               context,
-              MaterialPageRoute(
-                builder: (_) => CreatePostScreen(authorId: _currentUserId),
-              ),
+              AppRoutes.createPost,
             );
             if (created == true) {
               _loadData();
