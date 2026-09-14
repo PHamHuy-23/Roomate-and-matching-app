@@ -64,7 +64,7 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/use-case-design`
 
-#### 📌 Task QH-2.1: Thiết kế 6 Lược đồ Use Case phân hệ chi tiết [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+#### 📌 Task T2.1 (Mã: QH-2.1): Thiết kế 6 Lược đồ Use Case phân hệ chi tiết [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **17:00 Thứ Sáu, 11/09/2026** — *Hoàn thành & format trực tiếp vào `docs/Nhom13_Mohinhhoayeucau.docx`!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / StarUML / PlantUML vẽ 6 sơ đồ Use Case bao phủ trọn vẹn 54 FRs:
@@ -88,7 +88,7 @@ gantt
   ```
 - **Bàn giao chéo**: Gửi sơ đồ cho Quang Huy và Tiến Đạt để đối chiếu với API Contract và Class Diagram.
 
-#### 📌 Task QH-2.2: Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+#### 📌 Task T2.6a (Mã: QH-2.2): Thiết kế Sequence Diagram luồng Khảo sát Tiêu chí & Quản trị Admin [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026** — *Hoàn thành trước hạn!*
 - **Nhiệm vụ cụ thể**:
   - Vẽ Sơ đồ tuần tự (Sequence Diagram) thể hiện chính xác các bước giao tiếp giữa các tầng: `Flutter Client` ⇄ `ProfileController` ⇄ `ProfileService` ⇄ `UserPreferenceRepository` ⇄ `MySQL`:
@@ -96,7 +96,7 @@ gantt
     2. *Luồng Admin phê duyệt bài đăng / Khóa tài khoản*: Client Admin gửi request -> Spring Security lọc quyền `ROLE_ADMIN` -> Cập nhật trạng thái trong DB -> Gửi phản hồi 200 OK.
 - **Đầu ra**: 2 sơ đồ tuần tự định dạng PNG lưu tại `docs/diagrams/sequences/` (`seq_survey.png`, `seq_admin.png`).
 
-#### 📌 Task QH-2.3: Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
+#### 📌 Task T2.6b (Mã: QH-2.3): Xây dựng Bộ đặc tả Thuật toán Tiêu chí 5 Chiều (5D Preference Spec) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn thảo tài liệu đặc tả chi tiết 5 nhóm thuộc tính của bảng `user_preferences`:
@@ -107,7 +107,7 @@ gantt
     - *Chiều 5 - Tính cách & Sở thích (Personality & Interests)*: `personality_type` (INTROVERT / EXTROVERT / AMBIVERT), `interests` (Chuỗi JSON hoặc tags: Đọc sách, Thể thao, Game, Âm nhạc...).
 - **Đầu ra**: File tài liệu `docs/PREFERENCE_CRITERIA_SPEC.docx` bàn giao trực tiếp cho Quang Huy để cài đặt công thức toán học trong `MatchingService.java`.
 
-#### 📌 Task QH-2.4: Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
+#### 📌 Task T2.6c (Mã: QH-2.4): Báo cáo Thiết kế dữ liệu và Cơ sở dữ liệu (Giao bổ sung) [x] (✅ ĐÃ NGHIỆM THU 12/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Chủ Nhật, 13/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Dựa trên file mẫu đã có trong `docs/BaoCaoMau_ThietKeCSDL va ThietKeGiaoDien (1).docx` (nhánh `fix/setup-and-tests`), soạn thảo báo cáo phần Thiết kế dữ liệu.
@@ -122,7 +122,7 @@ gantt
 *Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
 *Nhánh Git thực hiện*: `feature/preference-admin-backend`
 
-#### 📌 Task QH-3.1: Lập trình Backend Module `UserPreference` & `Profile`
+#### 📌 Task T4.3 (Mã: QH-3.1): Lập trình Backend Module `UserPreference` & `Profile`
 - **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/dto/UserPreferenceDTO.java`:
@@ -144,7 +144,7 @@ gantt
   - Test request thành công qua Postman với token Bearer hợp lệ: HTTP 200/201.
   - Test dữ liệu sai (ngân sách âm): Trả về HTTP 400 Bad Request kèm message rõ ràng.
 
-#### 📌 Task QH-3.2: Lập trình Backend Module Quản trị viên (`AdminController` & `AdminService`)
+#### 📌 Task T4.4 (Mã: QH-3.2): Lập trình Backend Module Quản trị viên (`AdminController` & `AdminService`)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/AdminService.java`:
@@ -161,7 +161,7 @@ gantt
   - Tài khoản User thông thường gọi API Admin: Trả về HTTP 403 Forbidden.
   - Tài khoản Admin gọi API: Trả về dữ liệu đúng 100%.
 
-#### 📌 Task QH-3.3: Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
+#### 📌 Task T4.x (Mã: QH-3.3): Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/ProfileServiceTest.java`:
@@ -185,7 +185,7 @@ gantt
 *Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/survey-profile-flutter`
 
-#### 📌 Task QH-4.1: Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`)
+#### 📌 Task T3.4 (Mã: QH-4.1): Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/survey_screen.dart`, nâng cấp thành giao diện **Multi-step Stepper** gồm 5 bước:
@@ -206,7 +206,7 @@ gantt
       - Nút ElevatedButton "Lưu tiêu chí & Tìm bạn trọ ngay".
   - Bắt lỗi Form (Validation): Nếu người dùng chưa chọn bước bắt buộc, hiển thị `SnackBar` cảnh báo.
 
-#### 📌 Task QH-4.2: Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`)
+#### 📌 Task T3.5a (Mã: QH-4.2): Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/profile_screen.dart`:
@@ -216,7 +216,7 @@ gantt
     - Nút Action "Cập nhật tiêu chí": Nhấn vào sẽ điều hướng mở lại `survey_screen.dart` và tự động fill lại các giá trị cũ.
     - Section Cài đặt: Nút "Đổi mật khẩu" (mở Dialog nhập mật khẩu cũ/mới), Nút "Đăng xuất" (Xóa token trong `SharedPreferences` và chuyển về `login_screen.dart`).
 
-#### 📌 Task QH-4.3: Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`)
+#### 📌 Task T3.5b (Mã: QH-4.3): Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/admin_screen.dart`:

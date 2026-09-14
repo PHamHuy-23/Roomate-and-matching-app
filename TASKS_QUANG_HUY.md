@@ -65,7 +65,7 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `docs/architecture-specs`
 
-#### 📌 Task QH2-2.1: Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
+#### 📌 Task T2.2 (Mã: QH2-2.1): Thiết kế Sequence Diagram luồng Xác thực JWT & Thuật toán Matching [x] (✅ ĐÃ NGHIỆM THU 11/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026** — *Hoàn thành đúng hạn!*
 - **Nhiệm vụ cụ thể**:
   - Dùng Draw.io / PlantUML thiết kế 2 sơ đồ tuần tự (Sequence Diagram) cấp hệ thống:
@@ -85,7 +85,7 @@ gantt
 - **Đầu ra**: 2 file ảnh PNG lưu tại `docs/diagrams/sequences/` (`seq_jwt_auth.png`, `seq_matching_engine.png`).
 - **Bàn giao chéo**: Gửi cho Quốc Huy để chèn vào báo cáo học thuật [`Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx).
 
-#### 📌 Task QH2-2.2: Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract) [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
+#### 📌 Task T2.5 (Mã: QH2-2.2): Ban hành Tài liệu Đặc tả Chuẩn REST API Specifications (API Contract) [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Soạn file tài liệu Markdown `docs/API_SPECIFICATION.md` định nghĩa toàn bộ 25+ endpoints của dự án:
@@ -106,7 +106,7 @@ gantt
   - Định nghĩa chi tiết Schema Request/Response cho nhóm Auth và Matching.
 - **Đầu ra**: File `docs/API_SPECIFICATION.md`. Bàn giao trực tiếp cho Quốc Huy và Tiến Đạt để code Backend khớp 100% với Frontend.
 
-#### 📌 Task QH2-2.3: Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
+#### 📌 Task T3.1a (Mã: QH2-2.3): Chuẩn hóa Kiến trúc HTTP Client & Token Interceptor trong Flutter [x] (✅ ĐÃ NGHIỆM THU 13/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
   - Mở file `frontend/lib/services/api_service.dart`:
@@ -123,7 +123,7 @@ gantt
 *Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
 *Nhánh Git thực hiện*: `feature/auth-matching-backend`
 
-#### 📌 Task QH2-3.1: Lập trình Module Bảo mật Xác thực JWT (`AuthController` & `SecurityConfig`)
+#### 📌 Task T4.1 (Mã: QH2-3.1): Lập trình Module Bảo mật Xác thực JWT (`AuthController` & `SecurityConfig`)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/config/SecurityConfig.java`:
@@ -148,7 +148,7 @@ gantt
   - Gọi đăng ký user mới -> lưu DB với mật khẩu đã hash BCrypt (chuỗi dạng `$2a$10$...`).
   - Đăng nhập đúng email/pass -> trả về chuỗi JWT token dài. Đăng nhập sai pass -> trả về HTTP 401.
 
-#### 📌 Task QH2-3.2: Lập trình Lõi Thuật toán Matching Engine (`MatchingService`)
+#### 📌 Task T4.2 (Mã: QH2-3.2): Lập trình Lõi Thuật toán Matching Engine (`MatchingService`)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/MatchingService.java`:
@@ -175,7 +175,7 @@ gantt
     - `GET /api/v1/matching/compare/{candidateId}`: So sánh chi tiết tiêu chí 1-1.
 - **Tiêu chí nghiệm thu**: Thời gian tính toán cho 100 ứng viên dưới 200ms, không có lỗi chia cho 0 (`ArithmeticException`).
 
-#### 📌 Task QH2-3.3: Viết Bộ Unit Tests tự động cho `AuthService` & `MatchingService`
+#### 📌 Task T4.7 (Mã: QH2-3.3): Viết Bộ Unit Tests tự động cho `AuthService` & `MatchingService`
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/AuthServiceTest.java`:
@@ -198,7 +198,7 @@ gantt
 *Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/auth-discovery-flutter`
 
-#### 📌 Task QH2-4.1: Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`) [x] (✅ ĐÃ XONG 14/09/2026)
+#### 📌 Task T3.2a (Mã: QH2-4.1): Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`) [x] (✅ ĐÃ XONG 14/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/login_screen.dart`:
@@ -214,7 +214,7 @@ gantt
       - Bắt lỗi: Mật khẩu xác nhận phải trùng khớp, độ dài tối thiểu 6 ký tự.
   - Hiển thị thông báo lỗi bằng `SnackBar` màu đỏ nếu tài khoản/mật khẩu không chính xác.
 
-#### 📌 Task QH2-4.2: Xây dựng Giao diện Khám phá Bạn trọ (`home_screen.dart` / Discovery Feed)
+#### 📌 Task T3.2b (Mã: QH2-4.2): Xây dựng Giao diện Khám phá Bạn trọ (`home_screen.dart` / Discovery Feed)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/home_screen.dart`:
@@ -232,7 +232,7 @@ gantt
     1. Nút TextButton "Xem chi tiết đối chiếu tiêu chí".
     2. Nút ElevatedButton "Gửi lời mời ghép đôi" (kết nối trực tiếp với API của Tiến Đạt).
 
-#### 📌 Task QH2-4.3: Xây dựng Modal / BottomSheet Đối chiếu Chi tiết 5 Tiêu chí
+#### 📌 Task T3.3 (Mã: QH2-4.3): Xây dựng Modal / BottomSheet Đối chiếu Chi tiết 5 Tiêu chí
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Khi bấm "Xem chi tiết đối chiếu", mở `showModalBottomSheet`:

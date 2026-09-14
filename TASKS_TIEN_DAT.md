@@ -64,7 +64,7 @@ gantt
 *Hạn chót toàn giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***  
 *Nhánh Git thực hiện*: `feature/database-expansion`
 
-#### 📌 Task TD-2.1: Viết Script Mở rộng CSDL MySQL (Bổ sung 3 bảng mới)
+#### 📌 Task T2.4 (Mã: TD-2.1): Viết Script Mở rộng CSDL MySQL (Bổ sung 3 bảng mới)
 - [x] **Trạng thái**: Đã hoàn thành trên nhánh `feature/database-expansion`
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 11/09/2026**
 - **Nhiệm vụ kỹ thuật cụ thể**:
@@ -120,7 +120,7 @@ gantt
 - **Đầu ra**: Cập nhật hoàn tất `database/01_schema.sql`, `database/02_seed_data.sql` và `database/roommate_hub.sql`.
 - **Bàn giao chéo**: Gửi thông báo cho Quốc Huy và Quang Huy để ánh xạ Entity Java tương ứng.
 
-#### 📌 Task TD-2.2: Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository)
+#### 📌 Task T2.3 (Mã: TD-2.2): Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository)
 - [x] **Trạng thái**: Đã hoàn thành (File png đính kèm trong nhánh `feature/database-expansion`)
 - **Thời hạn hoàn thành**: ⏰ **12:00 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
@@ -130,7 +130,7 @@ gantt
     - Liệt kê các Interface Repository kế thừa `JpaRepository`.
 - **Đầu ra**: File ảnh `docs/diagrams/classes/class_diagram.png` và bàn giao cho Quốc Huy chèn vào báo cáo học thuật.
 
-#### 📌 Task TD-2.3: Xây dựng Kế hoạch Kiểm thử Toàn diện (QA Test Plan)
+#### 📌 Task T2.x (Mã: TD-2.3): Xây dựng Kế hoạch Kiểm thử Toàn diện (QA Test Plan)
 - [x] **Trạng thái**: Đã hoàn thành (`docs/TEST_PLAN.md`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 12/09/2026**
 - **Nhiệm vụ cụ thể**:
@@ -150,7 +150,7 @@ gantt
 *Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
 *Nhánh Git thực hiện*: `feature/room-appointment-backend`
 
-#### 📌 Task TD-3.1: Lập trình Backend Module Bài đăng Phòng trọ (`RoomPostController` & `Service`)
+#### 📌 Task T4.5 (Mã: TD-3.1): Lập trình Backend Module Bài đăng Phòng trọ (`RoomPostController` & `Service`)
 - **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/repository/RoomPostRepository.java`:
@@ -170,7 +170,7 @@ gantt
 - **Tiêu chí nghiệm thu (DoD)**:
   - Gọi `GET /api/v1/posts` trả về đúng định dạng JSON có phân trang (`totalPages`, `totalElements`, `content`).
 
-#### 📌 Task TD-3.2: Lập trình Backend Lời mời Ghép đôi Double Opt-in & Đặt lịch hẹn
+#### 📌 Task T4.6 (Mã: TD-3.2): Lập trình Backend Lời mời Ghép đôi Double Opt-in & Đặt lịch hẹn
 - **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/MatchRequestService.java`:
@@ -189,7 +189,7 @@ gantt
   - Khi một bên từ chối: Số điện thoại tuyệt đối không được trả về trong DTO.
   - Khi cả hai đồng ý: DTO trả về số điện thoại và email liên hệ rõ ràng.
 
-#### 📌 Task TD-3.3: Viết Bộ Unit Tests cho RoomPost & MatchRequest
+#### 📌 Task T4.7 (Mã: TD-3.3): Viết Bộ Unit Tests cho RoomPost & MatchRequest
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/RoomPostServiceTest.java`:
@@ -211,7 +211,7 @@ gantt
 *Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/room-requests-flutter`
 
-#### 📌 Task TD-4.1: Xây dựng Giao diện Đăng tin Phòng trọ (`create_post_screen.dart`)
+#### 📌 Task T3.6 (Mã: TD-4.1): Xây dựng Giao diện Đăng tin Phòng trọ (`create_post_screen.dart`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/create_post_screen.dart`:
@@ -230,7 +230,7 @@ gantt
       - 🔑 Giờ giấc tự do, không chung chủ
     - Nút ElevatedButton "Đăng bài ngay": Gọi API Backend, bắt lỗi không để trống thông tin bắt buộc.
 
-#### 📌 Task TD-4.2: Xây dựng Giao diện Bảng tin Danh sách Phòng trọ (Room Feed)
+#### 📌 Task T3.7 (Mã: TD-4.2): Xây dựng Giao diện Bảng tin Danh sách Phòng trọ (Room Feed)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Nâng cấp màn hình danh sách bài đăng:
@@ -244,7 +244,7 @@ gantt
       - Thanh tìm kiếm theo từ khóa tên đường/trường học.
       - Nút BottomSheet lọc theo khoảng giá và tiện ích mong muốn.
 
-#### 📌 Task TD-4.3: Xây dựng Màn hình Quản lý Lời mời & Lịch hẹn xem phòng (`requests_screen.dart`)
+#### 📌 Task T3.8 (Mã: TD-4.3): Xây dựng Màn hình Quản lý Lời mời & Lịch hẹn xem phòng (`requests_screen.dart`)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/requests_screen.dart`:
