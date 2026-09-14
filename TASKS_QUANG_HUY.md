@@ -198,7 +198,7 @@ gantt
 *Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/auth-discovery-flutter`
 
-#### 📌 Task QH2-4.1: Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`)
+#### 📌 Task QH2-4.1: Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`) [x] (✅ ĐÃ XONG 14/09/2026)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/login_screen.dart`:

@@ -107,7 +107,7 @@ gantt
 | Mã Task | Phân hệ Giao diện Flutter | Phân công trực tiếp | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
 | **T3.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 13/09/2026 | ✅ **ĐÃ XONG** |
-| **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | ⏳ Hàng đợi |
+| **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | ⏳ Đang làm |
 | **T3.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 16/09/2026 | ⏳ Hàng đợi |
 | **T3.4** | UI Form khảo sát tiêu chí lối sống 5 chiều (Sliders, Chips, Validation) | **Phạm Quốc Huy** | 14/09/2026 | ⏳ Đang làm |
 | **T3.5** | UI Xem/Chỉnh sửa Profile cá nhân & Màn hình Dashboard Admin quản trị | **Phạm Quốc Huy** | 16/09/2026 | ⏳ Hàng đợi |
