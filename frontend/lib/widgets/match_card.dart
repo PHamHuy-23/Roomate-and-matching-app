@@ -5,34 +5,92 @@ import '../models/match_recommendation.dart';
 class MatchCard extends StatelessWidget {
   final MatchRecommendation item;
   final VoidCallback onConnect;
+  final bool isConnecting;
+  final bool isRequestSent;
 
-  const MatchCard({super.key, required this.item, required this.onConnect});
+  const MatchCard({
+    super.key,
+    required this.item,
+    required this.onConnect,
+    this.isConnecting = false,
+    this.isRequestSent = false,
+  });
 
-  Color _getScoreColor(double score) {
-    if (score >= 80) return Colors.green.shade700;
-    if (score >= 60) return Colors.orange.shade800;
-    return Colors.red.shade700;
+  static Color scoreColor(double score) {
+    if (score >= 85) return const Color(0xFF1565C0);
+    if (score >= 60) return const Color(0xFF9A5B00);
+    return const Color(0xFF616161);
   }
 
-  Widget _buildCriterionBar(String label, double score) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
-        children: [
-          SizedBox(width: 95, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.black87))),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (score / 100).clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(score)),
-                minHeight: 6,
+  double _percentage(double score) =>
+      score.isFinite ? score.clamp(0.0, 100.0).toDouble() : 0;
+
+  Widget _avatar() {
+    final name = item.fullName.trim();
+    final fallback = ColoredBox(
+      color: Colors.indigo.shade50,
+      child: Center(
+        child: Text(
+          name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.indigo.shade700,
+          ),
+        ),
+      ),
+    );
+    final url = item.avatarUrl?.trim();
+    return ClipOval(
+      child: SizedBox(
+        width: 60,
+        height: 60,
+        child: url == null || url.isEmpty
+            ? fallback
+            : Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => fallback,
+                loadingBuilder: (_, child, progress) =>
+                    progress == null ? child : fallback,
               ),
+      ),
+    );
+  }
+
+  Widget _info(IconData icon, String text) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: Colors.indigo.shade600),
+      const SizedBox(width: 5),
+      Flexible(child: Text(text, style: const TextStyle(fontSize: 13))),
+    ],
+  );
+
+  Widget _criterion(String label, double rawScore) {
+    final score = _percentage(rawScore);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(label, style: const TextStyle(fontSize: 13)),
+              ),
+              Text('${score.toStringAsFixed(0)}%'),
+            ],
+          ),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 100,
+              minHeight: 6,
+              backgroundColor: Colors.grey.shade200,
+              color: scoreColor(score),
             ),
           ),
-          const SizedBox(width: 8),
-          Text('${score.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -40,80 +98,182 @@ class MatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
-
+    final score = _percentage(item.totalScore);
+    final color = scoreColor(score);
+    final label = score >= 85
+        ? 'Rất phù hợp'
+        : score >= 60
+        ? 'Có tiềm năng'
+        : 'Cần cân nhắc';
+    final fmt = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: 'đ',
+      decimalDigits: 0,
+    );
+    final bio = item.bioDescription?.trim();
+    final university = item.university?.trim();
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 0,
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14.0),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.indigo.shade50,
-                  child: Text(
-                    item.fullName.isNotEmpty ? item.fullName[0] : '?',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo.shade800),
-                  ),
-                ),
+                _avatar(),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.fullName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text('Khu vực: ${item.targetDistrict}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      Text(
+                        item.fullName.trim().isEmpty
+                            ? 'Ứng viên'
+                            : item.fullName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (item.age != null && item.age! > 0)
+                        Text(
+                          '${item.age} tuổi',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      if (university != null && university.isNotEmpty)
+                        Text(
+                          university,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 13,
+                          ),
+                        ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getScoreColor(item.totalScore).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _getScoreColor(item.totalScore)),
-                  ),
-                  child: Text(
-                    '${item.totalScore}% Phù hợp',
-                    style: TextStyle(color: _getScoreColor(item.totalScore), fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 20),
-            Text('Ngân sách: ${fmt.format(item.budgetAmount)}/tháng', style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(
-              item.bioDescription ?? 'Chưa cập nhật phần giới thiệu bản thân.',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic),
-            ),
-            const SizedBox(height: 10),
-            const Text('Chi tiết độ hòa hợp:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-            const SizedBox(height: 4),
-            _buildCriterionBar('Ngân sách (30%)', item.criteriaDetail.budgetMatch),
-            _buildCriterionBar('Giờ giấc (25%)', item.criteriaDetail.sleepMatch),
-            _buildCriterionBar('Vệ sinh (20%)', item.criteriaDetail.cleanlinessMatch),
-            _buildCriterionBar('Hút thuốc (15%)', item.criteriaDetail.smokingMatch),
-            _buildCriterionBar('Thú cưng (10%)', item.criteriaDetail.petMatch),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onConnect,
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Gửi Yêu Cầu Kết Nối'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            const SizedBox(height: 16),
+            Semantics(
+              label:
+                  'Tương thích ${score.toStringAsFixed(0)} phần trăm, $label',
+              excludeSemantics: true,
+              child: Container(
+                key: const ValueKey('match-score-badge'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.favorite_rounded, size: 22, color: color),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${score.toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '$label\nTương thích với bạn',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            )
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 14,
+              runSpacing: 8,
+              children: [
+                _info(Icons.location_on_outlined, item.targetDistrict),
+                _info(
+                  Icons.payments_outlined,
+                  '${fmt.format(item.budgetAmount)}/tháng',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              bio == null || bio.isEmpty
+                  ? 'Chưa cập nhật giới thiệu bản thân.'
+                  : bio,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+            ),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              title: const Text(
+                'Xem 5 tiêu chí tương thích',
+                style: TextStyle(fontSize: 13),
+              ),
+              children: [
+                _criterion('Ngân sách', item.criteriaDetail.budgetMatch),
+                _criterion('Giờ giấc', item.criteriaDetail.sleepMatch),
+                _criterion('Vệ sinh', item.criteriaDetail.cleanlinessMatch),
+                _criterion('Hút thuốc', item.criteriaDetail.smokingMatch),
+                _criterion('Thú cưng', item.criteriaDetail.petMatch),
+              ],
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: isConnecting || isRequestSent ? null : onConnect,
+                icon: isConnecting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        isRequestSent
+                            ? Icons.check_circle_outline
+                            : Icons.person_add_alt_1,
+                        size: 18,
+                      ),
+                label: Text(
+                  isConnecting
+                      ? 'Đang gửi...'
+                      : isRequestSent
+                      ? 'Đã gửi yêu cầu'
+                      : 'Gửi yêu cầu kết nối',
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

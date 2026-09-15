@@ -9,18 +9,21 @@ import '../widgets/match_card.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
-  const HomeScreen({super.key, required this.currentUser});
+  final ApiService? apiService;
+  const HomeScreen({super.key, required this.currentUser, this.apiService});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   late Future<List<MatchRecommendation>> _matchesFuture;
   late int _currentUserId;
+  final Set<int> _connectingUsers = {};
+  final Set<int> _sentRequests = {};
 
   // Trạng thái cho bộ lọc phòng trọ
   List<RoomPost> _allPosts = [];
@@ -32,13 +35,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _currentUserId = widget.currentUser.userId;
     _loadData();
   }
 
   void _loadData() {
     setState(() {
-      _matchesFuture = _api.getRecommendations(_currentUserId);
+      _matchesFuture = _fetchMatches();
       _isLoadingPosts = true;
     });
 
@@ -58,6 +62,206 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() => _isLoadingPosts = false);
           }
         });
+  }
+
+  Future<List<MatchRecommendation>> _fetchMatches() async {
+    final matches = List<MatchRecommendation>.of(
+      await _api.getRecommendations(_currentUserId),
+    );
+    matches.sort((a, b) => b.totalScore.compareTo(a.totalScore));
+    return matches;
+  }
+
+  Future<void> _refreshMatches() async {
+    final future = _fetchMatches();
+    setState(() {
+      _matchesFuture = future;
+    });
+    try {
+      await future;
+    } catch (_) {
+      // FutureBuilder hiển thị lỗi và nút thử lại.
+    }
+  }
+
+  Future<void> _connect(MatchRecommendation item) async {
+    if (_connectingUsers.contains(item.userId) ||
+        _sentRequests.contains(item.userId)) {
+      return;
+    }
+    setState(() => _connectingUsers.add(item.userId));
+    try {
+      final ok = await _api.sendMatchRequest(
+        _currentUserId,
+        item.userId,
+        item.totalScore,
+      );
+      if (!mounted) return;
+      if (ok) setState(() => _sentRequests.add(item.userId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Đã gửi yêu cầu tới ${item.fullName}.'
+                : 'Không thể gửi yêu cầu. Vui lòng thử lại.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      // ApiService đã xử lý điều hướng cho phiên hết hạn.
+      if (error is! ApiException || error.statusCode != 401) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Không thể gửi yêu cầu. Vui lòng thử lại.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _connectingUsers.remove(item.userId));
+    }
+  }
+
+  Widget _feedState(
+    IconData icon,
+    String title,
+    String message,
+    String buttonLabel,
+    VoidCallback action,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 36),
+      child: Column(
+        children: [
+          Icon(icon, size: 56, color: Colors.indigo.shade300),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade700),
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton(onPressed: action, child: Text(buttonLabel)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscoveryFeed() {
+    return ColoredBox(
+      color: const Color(0xFFF5F7FB),
+      child: FutureBuilder<List<MatchRecommendation>>(
+        future: _matchesFuture,
+        builder: (context, snapshot) {
+          final loading = snapshot.connectionState == ConnectionState.waiting;
+          final list = !loading && !snapshot.hasError
+              ? snapshot.data ?? <MatchRecommendation>[]
+              : <MatchRecommendation>[];
+          return RefreshIndicator(
+            onRefresh: _refreshMatches,
+            child: ListView.builder(
+              key: const PageStorageKey('discovery-feed'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
+              itemCount: list.isEmpty ? 2 : list.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Khám phá bạn trọ',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Tìm người phù hợp để cùng xây dựng không gian sống.',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                        if (list.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            '${list.length} ứng viên • Tương thích cao nhất trước',
+                            style: TextStyle(
+                              color: Colors.indigo.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+                if (loading) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Đang tìm bạn trọ phù hợp...'),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  final error = snapshot.error;
+                  return _feedState(
+                    Icons.wifi_off_rounded,
+                    'Chưa tải được gợi ý',
+                    error is ApiException
+                        ? error.message
+                        : 'Vui lòng kiểm tra kết nối và thử lại.',
+                    'Thử lại',
+                    _refreshMatches,
+                  );
+                }
+                if (list.isEmpty) {
+                  return _feedState(
+                    Icons.people_outline,
+                    'Chưa có ứng viên phù hợp',
+                    'Cập nhật tiêu chí tìm bạn trọ hoặc kéo xuống để làm mới gợi ý.',
+                    'Cập nhật tiêu chí',
+                    () async {
+                      final updated = await Navigator.pushNamed(
+                        context,
+                        AppRoutes.survey,
+                      );
+                      if (updated == true && mounted) await _refreshMatches();
+                    },
+                  );
+                }
+                final item = list[index - 1];
+                return MatchCard(
+                  key: ValueKey(item.userId),
+                  item: item,
+                  isConnecting: _connectingUsers.contains(item.userId),
+                  isRequestSent: _sentRequests.contains(item.userId),
+                  onConnect: () => _connect(item),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _applyPostFilters() {
@@ -136,50 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
         body: TabBarView(
           children: [
             // TAB 1: GỢI Ý BẠN TRỌ
-            FutureBuilder<List<MatchRecommendation>>(
-              future: _matchesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Lỗi: ${snapshot.error}'));
-                }
-                final list = snapshot.data ?? [];
-                if (list.isEmpty) {
-                  return const Center(
-                    child: Text('Không tìm thấy người phù hợp'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: list.length,
-                  itemBuilder: (_, i) {
-                    final item = list[i];
-                    return MatchCard(
-                      item: item,
-                      onConnect: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        final ok = await _api.sendMatchRequest(
-                          _currentUserId,
-                          item.userId,
-                          item.totalScore,
-                        );
-                        if (!mounted) return;
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              ok
-                                  ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
-                                  : 'Gửi kết nối thất bại!',
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+            _buildDiscoveryFeed(),
 
             // TAB 2: BÀI ĐĂNG PHÒNG CÓ BỘ LỌC TÌM KIẾM
             Column(

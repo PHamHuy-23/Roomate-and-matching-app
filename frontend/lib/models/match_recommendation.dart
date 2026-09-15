@@ -4,6 +4,8 @@ class MatchRecommendation {
   final int userId;
   final String fullName;
   final String? avatarUrl;
+  final int? age;
+  final String? university;
   final String targetDistrict;
   final double budgetAmount;
   final String? bioDescription;
@@ -14,6 +16,8 @@ class MatchRecommendation {
     required this.userId,
     required this.fullName,
     this.avatarUrl,
+    this.age,
+    this.university,
     required this.targetDistrict,
     required this.budgetAmount,
     this.bioDescription,
@@ -26,6 +30,8 @@ class MatchRecommendation {
       userId: json['userId'] as int,
       fullName: json['fullName'] as String,
       avatarUrl: json['avatarUrl'] as String?,
+      age: (json['age'] as num?)?.toInt(),
+      university: json['university'] as String?,
       targetDistrict: json['targetDistrict'] as String,
       budgetAmount: (json['budgetAmount'] as num).toDouble(),
       bioDescription: json['bioDescription'] as String?,
