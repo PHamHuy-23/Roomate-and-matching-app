@@ -185,8 +185,8 @@ gantt
 *Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
 *Nhánh Git thực hiện*: `feature/survey-profile-flutter`
 
-#### 📌 Task T3.4 (Mã: QH-4.1): Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
+#### 📌 Task T3.4 (Mã: QH-4.1): Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`) [x] (✅ ĐÃ HOÀN THÀNH 14/09/2026)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026** — *Đã hoàn thành đúng hạn!*
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/survey_screen.dart`, nâng cấp thành giao diện **Multi-step Stepper** gồm 5 bước:
     - *Bước 1: Ngân sách & Khu vực*:
