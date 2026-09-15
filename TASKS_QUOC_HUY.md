@@ -206,7 +206,7 @@ gantt
       - Nút ElevatedButton "Lưu tiêu chí & Tìm bạn trọ ngay".
   - Bắt lỗi Form (Validation): Nếu người dùng chưa chọn bước bắt buộc, hiển thị `SnackBar` cảnh báo.
 
-#### 📌 Task T3.5a (Mã: QH-4.2): Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`)
+#### 📌 Task T3.5a (Mã: QH-4.2): Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`) [ ] (⏳ ĐANG LÀM)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/profile_screen.dart`:
@@ -216,7 +216,7 @@ gantt
     - Nút Action "Cập nhật tiêu chí": Nhấn vào sẽ điều hướng mở lại `survey_screen.dart` và tự động fill lại các giá trị cũ.
     - Section Cài đặt: Nút "Đổi mật khẩu" (mở Dialog nhập mật khẩu cũ/mới), Nút "Đăng xuất" (Xóa token trong `SharedPreferences` và chuyển về `login_screen.dart`).
 
-#### 📌 Task T3.5b (Mã: QH-4.3): Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`)
+#### 📌 Task T3.5b (Mã: QH-4.3): Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`) [ ] (⏳ ĐANG LÀM)
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/admin_screen.dart`:
