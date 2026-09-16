@@ -13,11 +13,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 1. Seed Data: users
 -- -------------------------------------------------------------
 TRUNCATE TABLE `users`;
-INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `role`, `status`, `created_at`) VALUES
-(1, 'huy@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Quang Huy', 'MALE', '0970780778', NULL, 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.720931'),
-(2, 'nam@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Văn Nam', 'MALE', '0903333444', NULL, 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.744246'),
-(3, 'hoang@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Minh Hoàng', 'MALE', '0905555666', NULL, 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.749481'),
-(4, 'admin@roommatehub.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Quản Trị Viên', 'MALE', '0909000111', NULL, 'ROLE_ADMIN', 'ACTIVE', '2026-09-06 12:51:21.338691');
+INSERT INTO `users` (`id`, `email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`, `created_at`) VALUES
+(1, 'huy@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Quang Huy', 'MALE', '0970780778', NULL, '2004-04-12', 'Đại học Công nghệ Thông tin', 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.720931'),
+(2, 'nam@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Văn Nam', 'MALE', '0903333444', NULL, '2003-09-18', 'Đại học Sư phạm Kỹ thuật TP.HCM', 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.744246'),
+(3, 'hoang@gmail.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Minh Hoàng', 'MALE', '0905555666', NULL, '2002-12-03', 'Đại học Quốc gia TP.HCM', 'ROLE_USER', 'ACTIVE', '2026-09-06 12:45:37.749481'),
+(4, 'admin@roommatehub.com', '$2a$10$Xoa9wWbWB5Xdkab/KRjTQeP7D7BpBfKrPJ2wIrjE1L4nZ5yRPWGei', 'Quản Trị Viên', 'MALE', '0909000111', NULL, NULL, NULL, 'ROLE_ADMIN', 'ACTIVE', '2026-09-06 12:51:21.338691');
 
 -- -------------------------------------------------------------
 -- 2. Seed Data: user_preferences

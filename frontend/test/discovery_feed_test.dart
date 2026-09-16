@@ -33,7 +33,7 @@ MatchRecommendation recommendation({
 
 void main() {
   test(
-    'MatchRecommendation hỗ trợ response mới và response backend hiện tại',
+    'MatchRecommendation đọc đúng contract của recommendations API',
     () {
       final item = MatchRecommendation.fromJson({
         'userId': 2,
@@ -44,7 +44,7 @@ void main() {
         'targetDistrict': 'Thủ Đức',
         'budgetAmount': 2200000,
         'bioDescription': 'Hòa đồng',
-        'matchScore': 92,
+        'totalScore': 92,
         'matchedReasons': ['Cùng ngân sách'],
         'criteriaDetail': {
           'budgetMatch': 96,

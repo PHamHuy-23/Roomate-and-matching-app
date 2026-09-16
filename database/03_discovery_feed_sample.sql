@@ -63,25 +63,38 @@ START TRANSACTION;
 
 -- Ba ung vien phu ba nhom diem: cao, trung binh va thap.
 INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `role`, `status`)
+    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
 SELECT
     'demo.match.high@roommatehub.local', @test_password, 'Tuấn Minh',
-    @test_gender, '0908000101', NULL, 'ROLE_USER', 'ACTIVE'
+    @test_gender, '0908000101', NULL, '2004-02-15', 'Đại học Công nghệ Thông tin', 'ROLE_USER', 'ACTIVE'
 WHERE @test_user_id IS NOT NULL;
 
 INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `role`, `status`)
+    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
 SELECT
     'demo.match.medium@roommatehub.local', @test_password, 'Hoàng Nam',
-    @test_gender, '0908000102', NULL, 'ROLE_USER', 'ACTIVE'
+    @test_gender, '0908000102', NULL, '2003-08-21', 'Đại học Sư phạm Kỹ thuật TP.HCM', 'ROLE_USER', 'ACTIVE'
 WHERE @test_user_id IS NOT NULL;
 
 INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `role`, `status`)
+    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
 SELECT
     'demo.match.low@roommatehub.local', @test_password, 'Gia Bảo',
-    @test_gender, '0908000103', NULL, 'ROLE_USER', 'ACTIVE'
+    @test_gender, '0908000103', NULL, '2002-11-09', 'Đại học Quốc gia TP.HCM', 'ROLE_USER', 'ACTIVE'
 WHERE @test_user_id IS NOT NULL;
+
+-- Đồng bộ thông tin hồ sơ nếu các tài khoản mẫu đã tồn tại từ lần chạy trước.
+UPDATE `users`
+SET `birth_date` = '2004-02-15', `university` = 'Đại học Công nghệ Thông tin'
+WHERE `email` = 'demo.match.high@roommatehub.local';
+
+UPDATE `users`
+SET `birth_date` = '2003-08-21', `university` = 'Đại học Sư phạm Kỹ thuật TP.HCM'
+WHERE `email` = 'demo.match.medium@roommatehub.local';
+
+UPDATE `users`
+SET `birth_date` = '2002-11-09', `university` = 'Đại học Quốc gia TP.HCM'
+WHERE `email` = 'demo.match.low@roommatehub.local';
 
 -- Gan nhu trung khop hoan toan: badge xanh, diem thuong tren 90%.
 INSERT INTO `user_preferences`
@@ -151,7 +164,7 @@ COMMIT;
 
 -- Xem nhanh cac ban ghi vua tao.
 SELECT
-    u.`id`, u.`full_name`, u.`email`, p.`target_district`,
+    u.`id`, u.`full_name`, u.`birth_date`, u.`university`, u.`email`, p.`target_district`,
     p.`budget_amount`, p.`sleep_habit`, p.`cleanliness_level`,
     p.`is_smoking`, p.`allow_pets`
 FROM `users` u

@@ -8,6 +8,8 @@ import com.roommate.hub.repository.UserPreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,6 +47,8 @@ public class MatchingService {
                             .userId(candidate.getUser().getId())
                             .fullName(candidate.getUser().getFullName())
                             .avatarUrl(candidate.getUser().getAvatarUrl())
+                            .age(calculateAge(candidate.getUser().getBirthDate()))
+                            .university(candidate.getUser().getUniversity())
                             .targetDistrict(candidate.getTargetDistrict())
                             .budgetAmount(candidate.getBudgetAmount())
                             .bioDescription(candidate.getBioDescription())
@@ -54,6 +58,13 @@ public class MatchingService {
                 })
                 .sorted(Comparator.comparingDouble(MatchRecommendationDTO::getTotalScore).reversed())
                 .collect(Collectors.toList());
+    }
+
+    private Integer calculateAge(LocalDate birthDate) {
+        if (birthDate == null) {
+            return null;
+        }
+        return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
     public MatchCriteriaDetailDTO calculateCriteriaDetail(UserPreference a, UserPreference b) {

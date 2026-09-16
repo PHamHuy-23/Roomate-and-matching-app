@@ -7,7 +7,10 @@ import com.roommate.hub.service.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -35,12 +38,21 @@ public class ProfileController {
             @PathVariable Long userId,
             @RequestParam String fullName,
             @RequestParam String phone,
-            @RequestParam String gender) {
+            @RequestParam String gender,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthDate,
+            @RequestParam(required = false) String university) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
         user.setFullName(fullName);
         user.setPhone(phone);
         user.setGender(gender.toUpperCase());
+        if (birthDate != null) {
+            user.setBirthDate(birthDate);
+        }
+        if (university != null) {
+            user.setUniversity(university.trim());
+        }
         return ResponseEntity.ok(userRepository.save(user));
     }
 }
