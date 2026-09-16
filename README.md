@@ -48,12 +48,22 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt các c�
      mysql -u root -p < database/roommate_hub.sql
      ```
    - **Hoặc qua DBeaver / Workbench**: Mở file `database/roommate_hub.sql` và thực thi toàn bộ script (`Ctrl + Alt + X` hoặc `Ctrl + Shift + Enter`).
-3. Cấu hình mật khẩu DB: Mở file `backend/src/main/resources/application.properties` và chỉnh sửa mật khẩu MySQL nếu máy của bạn khác `123456`:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
-   spring.datasource.username=root
-   spring.datasource.password=123456
+3. Tạo cấu hình MySQL riêng cho máy local:
+
+   ```bash
+   cd backend
+   cp .env.example .env
    ```
+
+   Trên Windows PowerShell, dùng `Copy-Item .env.example .env`. Sau đó chỉnh các giá trị trong `backend/.env`:
+
+   ```properties
+   DB_URL=jdbc:mysql://127.0.0.1:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
+   DB_USERNAME=root
+   DB_PASSWORD=your_mysql_password
+   ```
+
+   File `.env` đã được Git ignore nên mỗi thành viên có thể dùng thông tin MySQL khác nhau. Chỉ `.env.example` được commit làm mẫu.
 
 #### 🔑 Tài khoản mẫu thử nghiệm (Test Accounts)
 Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
@@ -138,4 +148,3 @@ Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả 
 - **Tránh lỗi .NET khi mở dự án trên VS Code**: Nếu bạn đã cài đặt extension **C# Dev Kit**, extension này có thể quét nhầm các file solution C++ do Flutter Windows build sinh ra. Dự án đã bổ sung cấu hình trong `.vscode/settings.json` để ngăn ngừa tình trạng này. Bạn cũng có thể nhấn chuột phải vào extension *C# Dev Kit* và chọn *Disable (Workspace)*.
 - **CORS & Authentication**: Backend đã cấu hình sẵn Spring Security và CORS Filter, cho phép Web Frontend gửi request kèm JWT token mà không bị block.
 - **Tự động đồng bộ Schema**: Thuộc tính `spring.jpa.hibernate.ddl-auto=update` được bật để tự động đồng bộ thêm cột hoặc bảng mới khi Entity trong Java thay đổi.
-

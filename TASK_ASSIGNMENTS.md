@@ -4,6 +4,14 @@
 > **Thời gian thực hiện**: **Từ ngày 09/09/2026 đến ngày 23/09/2026** (Tổng thời gian: **14 ngày / 2 tuần**)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**  
 > **Mô hình đội ngũ**: **All-Dev Core Team** — Cả 3 thành viên (**Quốc Huy, Quang Huy, Tiến Đạt**) đều là Lập trình viên chính (Main Developers), trực tiếp tham gia viết mã nguồn và thực hiện mọi công đoạn SDLC.  
+> **Cập nhật trạng thái gần nhất**: **16/09/2026**, đối chiếu theo nội dung đang có trên nhánh `master`.
+
+### Quy ước nguồn dữ liệu tiến độ
+
+- `TASK_ASSIGNMENTS.md` là **nguồn chuẩn duy nhất** về mã task tổng, người phụ trách, deadline và trạng thái.
+- Ba file `TASKS_*.md` chỉ mô tả chi tiết cách thực hiện; mỗi task cá nhân phải ghi rõ mã task tổng tương ứng.
+- Chỉ đánh dấu **Hoàn thành** khi sản phẩm đã có trên `master` và đáp ứng tiêu chí nghiệm thu. Nội dung chỉ tồn tại trên branch cá nhân vẫn là **Đang làm / Chờ nghiệm thu**.
+- Trạng thái dùng thống nhất: `Chưa bắt đầu`, `Đang làm`, `Chờ nghiệm thu`, `Hoàn thành`, `Bị chặn`.
 
 ---
 
@@ -16,11 +24,11 @@ gantt
     section Giai đoạn 1
     Khảo sát, CSDL & Báo cầu 54 FRs (Đã xong)   :done, p1, 2026-09-09, 2026-09-10
     section Giai đoạn 2
-    Thiết kế Kiến trúc Hệ thống & ERD Mở rộng   :active, p2, 2026-09-11, 2026-09-12
+    Thiết kế Kiến trúc Hệ thống & ERD Mở rộng   :done, p2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Lập trình Frontend Flutter Client          :p3, 2026-09-13, 2026-09-16
+    Lập trình Frontend Flutter Client          :active, p3, 2026-09-13, 2026-09-16
     section Giai đoạn 4
-    Lập trình Backend Spring Boot 3 API        :p4, 2026-09-17, 2026-09-19
+    Lập trình Backend Spring Boot 4 API        :p4, 2026-09-17, 2026-09-19
     section Giai đoạn 5
     Tích hợp End-to-End, Kiểm thử QA & Sửa lỗi :p5, 2026-09-20, 2026-09-22
     section Bàn giao
@@ -30,10 +38,10 @@ gantt
 | Cột mốc (Milestone) | Giai đoạn thực hiện | Thời gian bắt đầu | Hạn chót (Deadline) | Trọng tâm bàn giao (Deliverables) | Trạng thái |
 | :---: | :--- | :---: | :---: | :--- | :---: |
 | **Mốc 1** | **Giai đoạn 1: CSDL & Báo cáo Yêu cầu** | 09/09/2026 | **23:59 10/09/2026** | File Word `Nhom13_Mohinhhoayeucau.docx` (54 FRs), CSDL `database/`, Prototype framework. | ✅ **HOÀN THÀNH** |
-| **Mốc 2** | **Giai đoạn 2: Thiết kế Hệ thống & ERD** | 11/09/2026 | **23:59 12/09/2026** | 6 Lược đồ Use Case, Sequence Diagram, Class Diagram, Bổ sung Schema CSDL (`appointments`, `reports`). | ⏳ **Đang tiến hành** |
-| **Mốc 3** | **Giai đoạn 3: Lập trình Frontend Flutter** | 13/09/2026 | **23:59 16/09/2026** | Ứng dụng Flutter: UI Auth, Form khảo sát 5 chiều, Gợi ý % Matching, Quản lý bài đăng, Lịch hẹn xem trọ. | ⏳ Hàng đợi |
-| **Mốc 4** | **Giai đoạn 4: Lập trình Backend API** | 17/09/2026 | **23:59 19/09/2026** | REST APIs Spring Boot: Auth/JWT, Matching Engine, Double Opt-in, RoomPost, Lịch hẹn, Unit Tests. | ⏳ Hàng đợi |
-| **Mốc 5** | **Giai đoạn 5: Tích hợp E2E & Kiểm thử QA** | 20/09/2026 | **23:59 22/09/2026** | Tích hợp Frontend gọi Backend lưu MySQL, kiểm thử ngoại lệ, sửa lỗi toàn diện, nạp dữ liệu demo. | ⏳ Hàng đợi |
+| **Mốc 2** | **Giai đoạn 2: Thiết kế Hệ thống & ERD** | 11/09/2026 | **23:59 12/09/2026** | 6 Lược đồ Use Case, Sequence Diagram, Class Diagram, Bổ sung Schema CSDL (`viewing_appointments`, `contact_permissions`, `reports`). | ✅ **HOÀN THÀNH** |
+| **Mốc 3** | **Giai đoạn 3: Lập trình Frontend Flutter** | 13/09/2026 | **23:59 16/09/2026** | Ứng dụng Flutter: UI Auth, Form khảo sát 5 chiều, Gợi ý % Matching, Quản lý bài đăng, Lịch hẹn xem trọ. | 🔄 **ĐANG LÀM** |
+| **Mốc 4** | **Giai đoạn 4: Lập trình Backend API** | 17/09/2026 | **23:59 19/09/2026** | REST APIs Spring Boot: Auth/JWT, Matching Engine, Double Opt-in, RoomPost, Lịch hẹn, Unit Tests. | ⏸️ **CHƯA BẮT ĐẦU** |
+| **Mốc 5** | **Giai đoạn 5: Tích hợp E2E & Kiểm thử QA** | 20/09/2026 | **23:59 22/09/2026** | Tích hợp Frontend gọi Backend lưu MySQL, kiểm thử ngoại lệ, sửa lỗi toàn diện, nạp dữ liệu demo. | ⏸️ **CHƯA BẮT ĐẦU** |
 | **Mốc 6** | **Tổng duyệt & Đóng gói Hoàn thiện** | 23/09/2026 | ⏰ **18:00 23/09/2026** | Tổng duyệt demo luồng hoàn chỉnh, build APK/Web release, hoàn thiện Slide & Báo cáo đồ án. | 🎯 **HẠN CHÓT BÀN GIAO** |
 
 ---
@@ -62,41 +70,24 @@ gantt
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **T1.1** | Phân rã cấu trúc CSDL DDL (`01_schema.sql`) & Seed Data (`02_seed_data.sql`) | **Tiến Đạt & Quốc Huy** | 10/09/2026 | ✅ Xong | Thư mục `database/` chuẩn chỉ |
 | **T1.2** | Biên soạn báo cáo `Nhom13_Mohinhhoayeucau.docx` theo 4 mẫu GV (54 FRs, 5 biểu mẫu, 7 đặc tả Use Case) | **Quốc Huy (Lead) & Cả nhóm** | 10/09/2026 | ✅ Xong | File `docs/Nhom13_Mohinhhoayeucau.docx` |
-| **T1.3** | Cấu hình Prototype Backend Spring Boot 3 & Frontend Flutter, dọn dẹp lỗi .NET | **Quang Huy (Lead)** | 10/09/2026 | ✅ Xong | Thư mục `backend/` & `frontend/` |
+| **T1.3** | Cấu hình Prototype Backend Spring Boot 4 & Frontend Flutter, dọn dẹp lỗi .NET | **Quang Huy (Lead)** | 10/09/2026 | ✅ Hoàn thành | Thư mục `backend/` & `frontend/` |
 | **T1.4** | Thiết lập Git Workflow, phân công task qua Markdown và đồng bộ GitHub | **PM Leader** | 10/09/2026 | ✅ Xong | Git commit & push nhánh `master` |
 
 ---
 
 ### GIAI ĐOẠN 2: THIẾT KẾ HỆ THỐNG & CSDL MỞ RỘNG (11/09 - 12/09/2026)
 *Mục tiêu: Hoàn tất toàn bộ sơ đồ thiết kế kiến trúc và mở rộng CSDL MySQL.*  
-*Deadline Giai đoạn 2: ⏰ **23:59 Thứ Sáu, 12/09/2026***
+*Deadline Giai đoạn 2: ⏰ **23:59 Thứ Bảy, 12/09/2026***
 
 | Mã Task | Tên công việc chi tiết | Phân công | Deadline | Trạng thái | Sản phẩm bàn giao |
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **T2.1** | Vẽ 6 Lược đồ Use Case phân hệ trên Enterprise Architect / StarUML | **Phạm Quốc Huy (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | Nhúng trực tiếp vào `docs/Nhom13_Mohinhhoayeucau.docx` & trích xuất `docs/diagrams/use_cases/` |
-| **T2.2** | Thiết kế Sơ đồ Tuần tự (Sequence Diagram) luồng Đăng nhập JWT & Thuật toán Matching | **Trần Quang Huy** | 12/09/2026 | ✅ **ĐÃ XONG** | `docs/seq_jwt_auth.png` & `docs/seq_matching_engine.png` |
-| **T2.3** | Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository, Service, Controller) | **Phan Tiến Đạt** | 12/09/2026 | ✅ **ĐÃ XONG** | File sơ đồ lớp kiến trúc |
+| **T2.2** | Thiết kế Sơ đồ Tuần tự (Sequence Diagram) luồng Đăng nhập JWT & Thuật toán Matching | **Trần Quang Huy** | 12/09/2026 | ✅ **HOÀN THÀNH** | `docs/diagrams/sequences/seq_jwt_auth.png` & `docs/diagrams/sequences/seq_matching_engine.png` |
+| **T2.3** | Thiết kế Sơ đồ Lớp thực thể (Class Diagram: Entity, DTO, Repository, Service, Controller) | **Phan Tiến Đạt** | 12/09/2026 | ✅ **HOÀN THÀNH** | `docs/diagrams/classes/class_diagram.png` |
 | **T2.4** | Bổ sung bảng CSDL mới: `viewing_appointments`, `contact_permissions`, `reports` | **Phan Tiến Đạt (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | File SQL cập nhật trong `database/` |
-| **T2.5** | Đặc tả tài liệu danh sách REST APIs (Swagger / OpenAPI specifications) | **Trần Quang Huy (Lead)** | 12/09/2026 | ✅ **ĐÃ XONG** | Tài liệu API contract |
+| **T2.5** | Đặc tả tài liệu danh sách REST APIs | **Trần Quang Huy (Lead)** | 12/09/2026 | ✅ **HOÀN THÀNH** | `docs/API_SPECIFICATION.md` |
 | **T2.6** | Cập nhật các bản vẽ thiết kế vào tài liệu báo cáo giai đoạn 2 | **Phạm Quốc Huy & PM** | 12/09/2026 | ✅ **ĐÃ XONG** | Nhúng 6 Use Case + 4 Sequence Diagrams vào `docs/Nhom13_Mohinhhoayeucau.docx` |
-| **T2.7** | Review kỹ thuật và kiểm tra tính tương thích giữa CSDL và Backend Entity | **PM Leader** | 12/09/2026 | ✅ **ĐÃ XONG** | Biên bản kiểm duyệt thiết kế |
-
----
-
-### GIAI ĐOẠN 4: LẬP TRÌNH HOÀN THIỆN BACKEND SPRING BOOT (17/09 - 19/09/2026)
-*Mục tiêu: Hoàn thành 100% các REST APIs Backend có bảo mật JWT và Unit Test.*  
-*Deadline Giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
-
-| Mã Task | Phân hệ Backend phân công | Phân công trực tiếp | Deadline | Trạng thái |
-| :---: | :--- | :---: | :---: | :---: |
-| **T4.1** | **Auth, User & Security**: Đăng ký, đăng nhập JWT, đổi mật khẩu, OTP email | **Trần Quang Huy (Lead)** | 18/09/2026 | ⏳ Hàng đợi |
-| **T4.2** | **Lõi Matching Engine**: Thuật toán tính % tương thích có trọng số đa tiêu chí | **Trần Quang Huy** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.3** | **Khảo sát Tiêu chí**: APIs lưu và cập nhật `UserPreference` 5 chiều | **Phạm Quốc Huy** | 18/09/2026 | ⏳ Hàng đợi |
-| **T4.4** | **Quản trị Admin**: APIs quản lý tài khoản (khóa/mở) và duyệt bài đăng phòng | **Phạm Quốc Huy** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.5** | **Bài đăng phòng trọ**: APIs tạo bài, duyệt bài, lọc tìm phòng, xem chi tiết | **Phan Tiến Đạt** | 18/09/2026 | ⏳ Hàng đợi |
-| **T4.6** | **Ghép đôi & Lịch hẹn xem phòng**: Double Opt-in (Accept/Reject), đặt lịch hẹn xem trọ | **Phan Tiến Đạt** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.7** | **Viết Unit Tests (JUnit 5 & Mockito)**: Kiểm thử tự động tính đúng đắn của Matching | **Phan Tiến Đạt (Lead QA)** | 19/09/2026 | ⏳ Hàng đợi |
-| **T4.8** | **Kiểm thử tích hợp Postman & nghiệm thu Backend Milestone 4** | **PM Leader** | 19/09/2026 | ⏳ Hàng đợi |
+| **T2.7** | Review kỹ thuật và kiểm tra tính tương thích giữa CSDL và Backend Entity | **PM Leader** | 12/09/2026 | ✅ **HOÀN THÀNH** | `docs/ARCHITECTURAL_DECISIONS.md` |
 
 ---
 
@@ -107,27 +98,44 @@ gantt
 | Mã Task | Phân hệ Giao diện Flutter | Phân công trực tiếp | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
 | **T3.1** | Cấu hình State Management (Provider), Routing, Network Service (`api_service.dart`) | **Trần Quang Huy (Lead)** | 13/09/2026 | ✅ **ĐÃ XONG** |
-| **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | ⏳ Đang làm |
-| **T3.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 16/09/2026 | ⏳ Hàng đợi |
+| **T3.2** | UI Đăng nhập, Đăng ký & Màn hình Khám phá bạn trọ (Thẻ % tương thích) | **Trần Quang Huy** | 15/09/2026 | 🔄 Đang làm — UI Auth đã xong; Discovery Feed đang ở branch cá nhân |
+| **T3.3** | UI Bảng so sánh 2–3 hồ sơ ứng viên đối đầu trực quan (Comparison View) | **Trần Quang Huy** | 16/09/2026 | 🔄 Đang làm — chờ merge/nghiệm thu cùng Discovery Feed |
 | **T3.4** | UI Form khảo sát tiêu chí lối sống 5 chiều (Sliders, Chips, Validation) | **Phạm Quốc Huy** | 14/09/2026 | ✅ Đã hoàn thành |
-| **T3.5** | UI Xem/Chỉnh sửa Profile cá nhân & Màn hình Dashboard Admin quản trị | **Phạm Quốc Huy** | 16/09/2026 | ⏳ Đang làm |
-| **T3.6** | UI Feed Bài đăng phòng trọ, Màn hình Chi tiết phòng trọ & Form Đăng tin phòng | **Phan Tiến Đạt** | 15/09/2026 | ⏳ Đang làm |
-| **T3.7** | UI Quản lý Yêu cầu ghép đôi (Tab Đã gửi / Đã nhận) & Quản lý lịch hẹn xem phòng | **Phan Tiến Đạt** | 16/09/2026 | ⏳ Hàng đợi |
-| **T3.8** | Kiểm thử giao diện trên Android Emulator và Web, tối ưu trải nghiệm người dùng | **Tiến Đạt & PM Leader** | 16/09/2026 | ⏳ Hàng đợi |
+| **T3.5** | UI Xem/Chỉnh sửa Profile cá nhân & Màn hình Dashboard Admin quản trị | **Phạm Quốc Huy** | 16/09/2026 | 🔄 Đang làm |
+| **T3.6** | UI Feed Bài đăng phòng trọ, Màn hình Chi tiết phòng trọ & Form Đăng tin phòng (TD-4.1, TD-4.2) | **Phan Tiến Đạt** | 15/09/2026 | 🔄 Đang làm |
+| **T3.7** | UI Quản lý Yêu cầu ghép đôi (Tab Đã gửi / Đã nhận) & Quản lý lịch hẹn xem phòng (TD-4.3) | **Phan Tiến Đạt** | 16/09/2026 | 🔄 Đang làm |
+| **T3.8** | Kiểm thử giao diện trên Android Emulator và Web, tối ưu trải nghiệm người dùng | **Tiến Đạt & PM Leader** | 16/09/2026 | ⏸️ Chưa bắt đầu |
+
+---
+
+### GIAI ĐOẠN 4: LẬP TRÌNH HOÀN THIỆN BACKEND SPRING BOOT (17/09 - 19/09/2026)
+*Mục tiêu: Hoàn thành 100% các REST APIs Backend có bảo mật JWT và Unit Test.*
+*Deadline Giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
+
+| Mã Task | Phân hệ Backend phân công | Phân công trực tiếp | Deadline | Trạng thái |
+| :---: | :--- | :---: | :---: | :---: |
+| **T4.1** | **Auth, User & Security**: Đăng ký, đăng nhập JWT, đổi mật khẩu, OTP email | **Trần Quang Huy (Lead)** | 18/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.2** | **Lõi Matching Engine**: Thuật toán tính % tương thích có trọng số đa tiêu chí | **Trần Quang Huy** | 19/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.3** | **Khảo sát Tiêu chí**: APIs lưu và cập nhật `UserPreference` 5 chiều | **Phạm Quốc Huy** | 18/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.4** | **Quản trị Admin**: APIs quản lý tài khoản (khóa/mở) và duyệt bài đăng phòng | **Phạm Quốc Huy** | 19/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.5** | **Bài đăng phòng trọ**: APIs tạo bài, duyệt bài, lọc tìm phòng, xem chi tiết | **Phan Tiến Đạt** | 18/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.6** | **Ghép đôi & Lịch hẹn xem phòng**: Double Opt-in (Accept/Reject), đặt lịch hẹn xem trọ | **Phan Tiến Đạt** | 19/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.7** | **Viết Unit Tests (JUnit 5 & Mockito)**: Auth/Matching, Profile/Admin, RoomPost/MatchRequest | **Cả 3 thành viên; Tiến Đạt Lead QA** | 19/09/2026 | ⏸️ Chưa bắt đầu |
+| **T4.8** | **Kiểm thử tích hợp Postman & nghiệm thu Backend Milestone 4** | **PM Leader** | 19/09/2026 | ⏸️ Chưa bắt đầu |
 
 ---
 
 ### GIAI ĐOẠN 5: TÍCH HỢP TOÀN DIỆN (E2E), KIỂM THỬ QA & SỬA LỖI (20/09 - 22/09/2026)
 *Mục tiêu: Đảm bảo toàn bộ luồng hoạt động thông suốt từ UI đến CSDL, sửa sạch lỗi.*  
-*Deadline Giai đoạn 5: ⏰ **23:59 Thứ Hai, 22/09/2026***
+*Deadline Giai đoạn 5: ⏰ **23:59 Thứ Ba, 22/09/2026***
 
 | Mã Task | Nội dung công việc | Phân công | Deadline | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: |
-| **T5.1** | Tích hợp End-to-End toàn diện: Khảo sát -> Tính điểm -> Gợi ý -> Ghép đôi -> Hẹn xem phòng | **Cả 3 thành viên** | 21/09/2026 | ⏳ Hàng đợi |
-| **T5.2** | Chuẩn bị kịch bản demo và nạp dữ liệu mẫu sinh viên thực tế (Demo Data Seeding) | **Phan Tiến Đạt (Lead QA)** | 21/09/2026 | ⏳ Hàng đợi |
-| **T5.3** | Rà soát lỗi ngoại lệ (Bug Fixing) và tối ưu hóa thời gian phản hồi API | **Trần Quang Huy & PM Lead** | 22/09/2026 | ⏳ Hàng đợi |
-| **T5.4** | Hoàn thiện tài liệu Hướng dẫn sử dụng (User Guide) kèm hình ảnh chụp màn hình | **Phạm Quốc Huy** | 22/09/2026 | ⏳ Hàng đợi |
-| **T5.5** | Soạn thảo bộ Slide PowerPoint thuyết trình bảo vệ đồ án trước hội đồng | **Phạm Quốc Huy & Cả nhóm** | 22/09/2026 | ⏳ Hàng đợi |
+| **T5.1** | Tích hợp End-to-End toàn diện: Khảo sát -> Tính điểm -> Gợi ý -> Ghép đôi -> Hẹn xem phòng | **Cả 3 thành viên** | 21/09/2026 | ⏸️ Chưa bắt đầu |
+| **T5.2** | Chuẩn bị kịch bản demo và nạp dữ liệu mẫu sinh viên thực tế (Demo Data Seeding) | **Phan Tiến Đạt (Lead QA)** | 21/09/2026 | ⏸️ Chưa bắt đầu |
+| **T5.3** | Rà soát lỗi ngoại lệ (Bug Fixing) và tối ưu hóa thời gian phản hồi API | **Trần Quang Huy & PM Lead** | 22/09/2026 | ⏸️ Chưa bắt đầu |
+| **T5.4** | Hoàn thiện tài liệu Hướng dẫn sử dụng (User Guide) kèm hình ảnh chụp màn hình | **Phạm Quốc Huy** | 22/09/2026 | ⏸️ Chưa bắt đầu |
+| **T5.5** | Soạn thảo bộ Slide PowerPoint thuyết trình bảo vệ đồ án trước hội đồng | **Phạm Quốc Huy & Cả nhóm** | 22/09/2026 | ⏸️ Chưa bắt đầu |
 
 ---
 

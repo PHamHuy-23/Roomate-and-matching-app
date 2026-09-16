@@ -49,11 +49,12 @@ mysql -u root -p < database/02_seed_data.sql
 
 ## Cấu hình kết nối trên Backend (Spring Boot)
 
-Mở file `backend/src/main/resources/application.properties` và điều chỉnh thông số phù hợp với máy tính của bạn:
+Copy `backend/.env.example` thành `backend/.env`, sau đó điều chỉnh thông số phù hợp với máy tính của bạn:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=123456
+DB_URL=jdbc:mysql://127.0.0.1:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
+DB_USERNAME=root
+DB_PASSWORD=your_mysql_password
 ```
-*(Lưu ý: Thay `123456` bằng mật khẩu MySQL của bạn nếu khác).*
+
+`backend/.env` chỉ dùng trên máy local và không được commit lên Git.

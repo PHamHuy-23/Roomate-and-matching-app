@@ -5,7 +5,8 @@
 > **Vai trò nòng cốt**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
 > **Mảng Kỹ thuật Phụ trách Đầu mối (Lead)**: **Lead Cơ sở Dữ liệu & Đảm bảo Chất lượng (Database & QA Lead)**  
 > **Dự án**: Nền tảng Tìm bạn cùng thuê trọ và Ghép bạn trọ theo tiêu chí (Roommate Matching Hub)  
-> **Công nghệ thực hiện**: Java 21 Spring Boot 3 (Backend) + Flutter Dart (Frontend) + MySQL 8.0  
+> **Công nghệ thực hiện**: Java 21 Spring Boot 4 (Backend) + Flutter Dart (Frontend) + MySQL 8.x
+> **Nguồn trạng thái chuẩn**: `TASK_ASSIGNMENTS.md` — cập nhật gần nhất 16/09/2026.
 > **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày / 2 tuần)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**
 
@@ -15,7 +16,7 @@
 
 | Phân hệ đảm nhiệm | File / Module cụ thể | Nhiệm vụ chính |
 | :--- | :--- | :--- |
-| **Backend (Spring Boot 3)** | `controller/RoomPostController.java`<br>`service/RoomPostService.java`<br>`repository/RoomPostRepository.java`<br>`service/MatchRequestService.java`<br>`repository/MatchRequestRepository.java`<br>`entity/ViewingAppointment.java`<br>`service/AppointmentService.java` | Lập trình toàn bộ APIs Quản lý Bài đăng Phòng trọ (`RoomPost`) kèm tìm kiếm phân trang/lọc theo quận/giá, Module Lời mời ghép đôi với cơ chế **Double Opt-in** (chỉ mở khóa số điện thoại khi cả hai đồng ý), và Module Đặt lịch hẹn xem phòng trực tiếp (`ViewingAppointment`). |
+| **Backend (Spring Boot 4)** | `controller/RoomPostController.java`<br>`service/RoomPostService.java`<br>`repository/RoomPostRepository.java`<br>`service/MatchRequestService.java`<br>`repository/MatchRequestRepository.java`<br>`entity/ViewingAppointment.java`<br>`service/AppointmentService.java` | Lập trình toàn bộ APIs Quản lý Bài đăng Phòng trọ (`RoomPost`) kèm tìm kiếm phân trang/lọc theo quận/giá, Module Lời mời ghép đôi với cơ chế **Double Opt-in** (chỉ mở khóa số điện thoại khi cả hai đồng ý), và Module Đặt lịch hẹn xem phòng trực tiếp (`ViewingAppointment`). |
 | **Frontend (Flutter Client)** | `screens/create_post_screen.dart`<br>`screens/requests_screen.dart`<br>`models/room_post.dart`<br>`models/match_request_item.dart`<br>`services/api_service.dart` | Xây dựng Giao diện Đăng bài tìm bạn ở ghép / cho thuê phòng, Màn hình Quản lý Lời mời ghép đôi (Chấp nhận / Từ chối / Xem liên hệ Zalo-SĐT), và Màn hình Quản lý Lịch hẹn xem trọ trực tiếp. |
 | **Lead Database & QA** | `database/01_schema.sql`<br>`database/02_seed_data.sql`<br>`database/roommate_hub.sql`<br>`docs/TEST_PLAN.md`<br>`docs/BUG_TRACKER.md`<br>`docs/diagrams/classes/` | Quản lý toàn bộ cấu trúc CSDL MySQL, bổ sung 3 bảng mới (`appointments`, `contact_permissions`, `reports`), vẽ Sơ đồ Lớp thực thể (Class Diagram), lập Kế hoạch kiểm thử QA (54 FRs), vận hành Bug Tracker và chuẩn bị bộ Dữ liệu mẫu Demo sạch (Clean Seed Data). |
 
@@ -32,9 +33,9 @@ gantt
     section Giai đoạn 2
     Mở rộng CSDL 3 Bảng, Class Diagram & QA Plan :done, td2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend RoomPost, Request & Appointment :active, td3, 2026-09-13, 2026-09-15
+    Code Flutter Đăng Tin, Requests & Lịch Hẹn   :active, td3, 2026-09-13, 2026-09-16
     section Giai đoạn 4
-    Code Flutter Đăng Tin, Requests & Lịch Hẹn   :td4, 2026-09-16, 2026-09-19
+    Code Backend RoomPost, Request & Appointment :td4, 2026-09-17, 2026-09-19
     section Giai đoạn 5
     Tích hợp E2E Room/Lịch hẹn, Bug Tracker & QA :td5, 2026-09-20, 2026-09-22
     section Giai đoạn 6
@@ -145,13 +146,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 3 (17/09 – 19/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 4 (17/09 – 19/09/2026)
 *Mục tiêu giai đoạn: Xây dựng toàn bộ APIs Bài đăng phòng trọ, Lời mời ghép đôi Double Opt-in và Lịch hẹn xem trọ.*  
-*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
 *Nhánh Git thực hiện*: `feature/room-appointment-backend`
 
 #### 📌 Task T4.5 (Mã: TD-3.1): Lập trình Backend Module Bài đăng Phòng trọ (`RoomPostController` & `Service`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/repository/RoomPostRepository.java`:
     - Viết truy vấn phân trang kèm bộ lọc đa tiêu chí:
@@ -171,7 +172,7 @@ gantt
   - Gọi `GET /api/v1/posts` trả về đúng định dạng JSON có phân trang (`totalPages`, `totalElements`, `content`).
 
 #### 📌 Task T4.6 (Mã: TD-3.2): Lập trình Backend Lời mời Ghép đôi Double Opt-in & Đặt lịch hẹn
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/MatchRequestService.java`:
     - Hàm `sendMatchRequest(Long senderId, Long receiverId, String message)`:
@@ -189,8 +190,8 @@ gantt
   - Khi một bên từ chối: Số điện thoại tuyệt đối không được trả về trong DTO.
   - Khi cả hai đồng ý: DTO trả về số điện thoại và email liên hệ rõ ràng.
 
-#### 📌 Task T4.7 (Mã: TD-3.3): Viết Bộ Unit Tests cho RoomPost & MatchRequest
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
+#### 📌 Task T4.7c (Mã: TD-3.3): Viết Bộ Unit Tests cho RoomPost & MatchRequest
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/RoomPostServiceTest.java`:
     - Test tạo bài đăng hợp lệ.
@@ -206,13 +207,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 13/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 16/09/2026)
 *Mục tiêu giai đoạn: Xây dựng màn hình Đăng tin phòng, Bảng tin phòng trọ và Màn hình quản lý Lời mời & Lịch hẹn.*  
-*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Tư, 16/09/2026***
 *Nhánh Git thực hiện*: `feature/room-requests-flutter`
 
-#### 📌 Task T3.6 (Mã: TD-4.1): Xây dựng Giao diện Đăng tin Phòng trọ (`create_post_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
+#### 📌 Task T3.6a (Mã: TD-4.1): Xây dựng Giao diện Đăng tin Phòng trọ (`create_post_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/create_post_screen.dart`:
     - Tiêu đề AppBar: "Đăng tin tìm bạn ở ghép / Cho thuê phòng".
@@ -230,8 +231,8 @@ gantt
       - 🔑 Giờ giấc tự do, không chung chủ
     - Nút ElevatedButton "Đăng bài ngay": Gọi API Backend, bắt lỗi không để trống thông tin bắt buộc.
 
-#### 📌 Task T3.7 (Mã: TD-4.2): Xây dựng Giao diện Bảng tin Danh sách Phòng trọ (Room Feed)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
+#### 📌 Task T3.6b (Mã: TD-4.2): Xây dựng Giao diện Bảng tin Danh sách Phòng trọ (Room Feed)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Nâng cấp màn hình danh sách bài đăng:
     - Thẻ bài đăng dạng Card hiện đại:
@@ -244,8 +245,8 @@ gantt
       - Thanh tìm kiếm theo từ khóa tên đường/trường học.
       - Nút BottomSheet lọc theo khoảng giá và tiện ích mong muốn.
 
-#### 📌 Task T3.8 (Mã: TD-4.3): Xây dựng Màn hình Quản lý Lời mời & Lịch hẹn xem phòng (`requests_screen.dart`)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
+#### 📌 Task T3.7 (Mã: TD-4.3): Xây dựng Màn hình Quản lý Lời mời & Lịch hẹn xem phòng (`requests_screen.dart`)
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/requests_screen.dart`:
     - Sử dụng `TabBar` chia làm 2 phân hệ rõ ràng:
