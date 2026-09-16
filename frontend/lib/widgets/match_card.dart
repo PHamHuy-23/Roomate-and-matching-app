@@ -1,25 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../models/match_recommendation.dart';
 
 class MatchCard extends StatelessWidget {
-  const MatchCard({
-    super.key,
-    required this.item,
-    required this.onViewDetails,
-    required this.onConnect,
-    this.isConnecting = false,
-    this.requestSent = false,
-  });
+  const MatchCard({super.key, required this.item, required this.onViewDetails});
 
   static const _primary = Color(0xFF008F7A);
 
   final MatchRecommendation item;
   final VoidCallback onViewDetails;
-  final VoidCallback onConnect;
-  final bool isConnecting;
-  final bool requestSent;
 
   ({Color background, Color foreground}) _scoreColors(double score) {
     if (score >= 80) {
@@ -64,34 +53,41 @@ class MatchCard extends StatelessWidget {
   }
 
   String get _secondaryText {
-    final parts = <String>[];
-    if (item.age != null) parts.add('${item.age} tuổi');
+    final parts = <String>[item.fullName];
+    if (item.age != null) parts.add('${item.age}');
+    return parts.join(' · ');
+  }
+
+  String get _universityText {
     if (item.university?.trim().isNotEmpty == true) {
-      parts.add(item.university!.trim());
+      return item.university!.trim();
     }
-    return parts.isEmpty
-        ? 'Ứng viên tại ${item.targetDistrict}'
-        : parts.join(' • ');
+    return 'Sinh viên tại ${item.targetDistrict}';
+  }
+
+  String get _budgetText {
+    final millions = item.budgetAmount / 1000000;
+    final value = millions == millions.roundToDouble()
+        ? millions.toStringAsFixed(0)
+        : millions.toStringAsFixed(1);
+    return '$value triệu/tháng';
   }
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.compactCurrency(
-      locale: 'vi_VN',
-      symbol: 'đ',
-    );
     final colors = _scoreColors(item.totalScore);
+    final habits = _habitHighlights;
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: Color(0xFFE2EAE7)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -105,45 +101,28 @@ class MatchCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.fullName,
+                        _secondaryText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF17342F),
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        _secondaryText,
-                        maxLines: 2,
+                        _universityText,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 11.5,
                           color: Color(0xFF687873),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.background,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.bolt, size: 15, color: colors.foreground),
-                      const SizedBox(width: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        'Match ${item.totalScore.toStringAsFixed(0)}%',
+                        '${item.totalScore.toStringAsFixed(0)}% phù hợp',
                         style: TextStyle(
                           color: colors.foreground,
                           fontSize: 12,
@@ -155,76 +134,47 @@ class MatchCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 15),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _InfoChip(
-                  icon: Icons.location_on_outlined,
-                  label: item.targetDistrict,
-                ),
-                _InfoChip(
-                  icon: Icons.payments_outlined,
-                  label: '${formatter.format(item.budgetAmount)}/tháng',
-                ),
-                for (final highlight in _habitHighlights)
-                  _InfoChip(icon: Icons.check_circle_outline, label: highlight),
-              ],
+            const SizedBox(height: 11),
+            Text(
+              '${item.targetDistrict} · $_budgetText',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF52645F),
+                height: 1.35,
+              ),
             ),
-            if (item.bioDescription?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 12),
+            if (habits.isNotEmpty) ...[
+              const SizedBox(height: 2),
               Text(
-                item.bioDescription!.trim(),
-                maxLines: 2,
+                habits.join(' · '),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFF52645F), height: 1.35),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF52645F),
+                  height: 1.35,
+                ),
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onViewDetails,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _primary,
-                      side: const BorderSide(color: Color(0xFFB9DDD5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                    ),
-                    child: const Text(
-                      'Xem đối chiếu',
-                      textAlign: TextAlign.center,
-                    ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onViewDetails,
+                style: FilledButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: const Color(0xFFE2F6F1),
+                  foregroundColor: _primary,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: requestSent || isConnecting ? null : onConnect,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                    ),
-                    child: isConnecting
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(requestSent ? 'Đã gửi lời mời' : 'Gửi lời mời'),
-                  ),
+                child: const Text(
+                  'Xem lý do tương thích',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -270,40 +220,6 @@ class _Avatar extends StatelessWidget {
         height: 52,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => fallback,
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F6F4),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: const Color(0xFF4D6760)),
-          const SizedBox(width: 5),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 190),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF425A54)),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -32,41 +32,35 @@ MatchRecommendation recommendation({
 }
 
 void main() {
-  test(
-    'MatchRecommendation đọc đúng contract của recommendations API',
-    () {
-      final item = MatchRecommendation.fromJson({
-        'userId': 2,
-        'fullName': 'Tuấn Minh',
-        'avatarUrl': null,
-        'age': 22,
-        'university': 'Đại học Quốc gia',
-        'targetDistrict': 'Thủ Đức',
-        'budgetAmount': 2200000,
-        'bioDescription': 'Hòa đồng',
-        'totalScore': 92,
-        'matchedReasons': ['Cùng ngân sách'],
-        'criteriaDetail': {
-          'budgetMatch': 96,
-          'sleepMatch': 84,
-          'cleanlinessMatch': 100,
-          'smokingMatch': 100,
-          'petMatch': 80,
-        },
-      });
+  test('MatchRecommendation đọc đúng contract của recommendations API', () {
+    final item = MatchRecommendation.fromJson({
+      'userId': 2,
+      'fullName': 'Tuấn Minh',
+      'avatarUrl': null,
+      'age': 22,
+      'university': 'Đại học Quốc gia',
+      'targetDistrict': 'Thủ Đức',
+      'budgetAmount': 2200000,
+      'bioDescription': 'Hòa đồng',
+      'totalScore': 92,
+      'matchedReasons': ['Cùng ngân sách'],
+      'criteriaDetail': {
+        'budgetMatch': 96,
+        'sleepMatch': 84,
+        'cleanlinessMatch': 100,
+        'smokingMatch': 100,
+        'petMatch': 80,
+      },
+    });
 
-      expect(item.totalScore, 92);
-      expect(item.age, 22);
-      expect(item.university, 'Đại học Quốc gia');
-      expect(item.matchedReasons, ['Cùng ngân sách']);
-    },
-  );
+    expect(item.totalScore, 92);
+    expect(item.age, 22);
+    expect(item.university, 'Đại học Quốc gia');
+    expect(item.matchedReasons, ['Cùng ngân sách']);
+  });
 
-  testWidgets('MatchCard hiển thị đủ thông tin và hai hành động', (
-    tester,
-  ) async {
+  testWidgets('MatchCard hiển thị đúng nội dung theo Figma', (tester) async {
     var viewed = false;
-    var connected = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -75,23 +69,20 @@ void main() {
             child: MatchCard(
               item: recommendation(),
               onViewDetails: () => viewed = true,
-              onConnect: () => connected = true,
             ),
           ),
         ),
       ),
     );
 
-    expect(find.text('Tuấn Minh'), findsOneWidget);
-    expect(find.text('22 tuổi • Đại học Quốc gia'), findsOneWidget);
-    expect(find.text('Match 88%'), findsOneWidget);
-    expect(find.text('Thủ Đức'), findsOneWidget);
-    expect(find.text('Xem đối chiếu'), findsOneWidget);
+    expect(find.text('Tuấn Minh · 22'), findsOneWidget);
+    expect(find.text('Đại học Quốc gia'), findsOneWidget);
+    expect(find.text('88% phù hợp'), findsOneWidget);
+    expect(find.text('Thủ Đức · 2.2 triệu/tháng'), findsOneWidget);
+    expect(find.text('Xem lý do tương thích'), findsOneWidget);
 
-    await tester.tap(find.text('Xem đối chiếu'));
-    await tester.tap(find.text('Gửi lời mời'));
+    await tester.tap(find.text('Xem lý do tương thích'));
     expect(viewed, isTrue);
-    expect(connected, isTrue);
   });
 
   testWidgets('MatchCard phân loại đủ ba ngưỡng điểm', (tester) async {
@@ -104,7 +95,6 @@ void main() {
                 MatchCard(
                   item: recommendation(score: score),
                   onViewDetails: () {},
-                  onConnect: () {},
                 ),
             ],
           ),
@@ -112,9 +102,9 @@ void main() {
       ),
     );
 
-    expect(find.text('Match 88%'), findsOneWidget);
-    expect(find.text('Match 68%'), findsOneWidget);
-    expect(find.text('Match 55%'), findsOneWidget);
+    expect(find.text('88% phù hợp'), findsOneWidget);
+    expect(find.text('68% phù hợp'), findsOneWidget);
+    expect(find.text('55% phù hợp'), findsOneWidget);
   });
 
   testWidgets('BottomSheet hiển thị 5 tiêu chí, nổi bật và lưu ý', (
@@ -150,8 +140,7 @@ void main() {
     ]) {
       expect(find.text(label), findsOneWidget);
     }
-    expect(find.text('Điểm nổi bật'), findsOneWidget);
-    expect(find.text('Điểm cần lưu ý'), findsOneWidget);
+    expect(find.text('Điểm cần trao đổi'), findsOneWidget);
     expect(find.textContaining('hút thuốc'), findsOneWidget);
     expect(find.textContaining('thú cưng'), findsOneWidget);
   });

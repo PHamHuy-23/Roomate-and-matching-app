@@ -28,26 +28,17 @@ class CompatibilityBottomSheet extends StatelessWidget {
     (label: 'Thú cưng', score: item.criteriaDetail.petMatch),
   ];
 
-  List<String> get _highlights {
-    if (item.matchedReasons.isNotEmpty) return item.matchedReasons;
-    return _criteria
-        .where((criterion) => criterion.score >= 80)
-        .map((criterion) => '${criterion.label} rất tương đồng')
-        .toList();
-  }
-
   List<String> get _attentionPoints => _criteria
-      .where((criterion) => criterion.score < 60)
+      .where((criterion) => criterion.score < 90)
       .map(
         (criterion) => 'Nên trao đổi thêm về ${criterion.label.toLowerCase()}',
       )
       .toList();
 
-  Color _scoreColor(double score) => score >= 80 ? _primary : _warning;
+  Color _scoreColor(double score) => score >= 90 ? _primary : _warning;
 
   @override
   Widget build(BuildContext context) {
-    final highlights = _highlights;
     final attentionPoints = _attentionPoints;
 
     return SafeArea(
@@ -95,7 +86,7 @@ class CompatibilityBottomSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Đối chiếu với ${item.fullName} theo từng tiêu chí.',
+                          'Giải thích minh bạch cho từng tiêu chí với ${item.fullName}.',
                           style: const TextStyle(color: Color(0xFF62736F)),
                         ),
                       ],
@@ -115,19 +106,9 @@ class CompatibilityBottomSheet extends StatelessWidget {
                   score: criterion.score,
                   color: _scoreColor(criterion.score),
                 ),
-              if (highlights.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _InsightPanel(
-                  title: 'Điểm nổi bật',
-                  icon: Icons.auto_awesome,
-                  color: _primary,
-                  backgroundColor: const Color(0xFFE1F5F0),
-                  items: highlights,
-                ),
-              ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               _InsightPanel(
-                title: 'Điểm cần lưu ý',
+                title: 'Điểm cần trao đổi',
                 icon: Icons.chat_bubble_outline,
                 color: const Color(0xFF9A5B00),
                 backgroundColor: const Color(0xFFFFF0E8),
