@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/auth_user.dart';
@@ -42,6 +43,27 @@ class ApiService {
 
   static void configureUnauthorizedHandler(void Function() handler) {
     _onUnauthorized = handler;
+  }
+
+  @visibleForTesting
+  static Map<String, Object> createRegistrationPayload({
+    required String email,
+    required String password,
+    required String fullName,
+    required String gender,
+    required String phone,
+    required DateTime birthDate,
+    required String university,
+  }) {
+    return {
+      'email': email,
+      'password': password,
+      'fullName': fullName,
+      'gender': gender,
+      'phone': phone,
+      'birthDate': birthDate.toIso8601String().split('T').first,
+      'university': university,
+    };
   }
 
   void setAuthToken(String token) {
@@ -206,18 +228,22 @@ class ApiService {
     String fullName,
     String gender,
     String phone,
+    DateTime birthDate,
+    String university,
   ) async {
     final response = await _request(
       'POST',
       '/auth/register',
       authenticated: false,
-      body: {
-        'email': email,
-        'password': password,
-        'fullName': fullName,
-        'gender': gender,
-        'phone': phone,
-      },
+      body: createRegistrationPayload(
+        email: email,
+        password: password,
+        fullName: fullName,
+        gender: gender,
+        phone: phone,
+        birthDate: birthDate,
+        university: university,
+      ),
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = _decodeData(response);

@@ -19,6 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _birthDateCtrl = TextEditingController();
+  final _universityCtrl = TextEditingController();
+  DateTime? _birthDate;
   String _gender = 'MALE';
 
   @override
@@ -27,7 +30,28 @@ class _LoginScreenState extends State<LoginScreen> {
     _passCtrl.dispose();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
+    _birthDateCtrl.dispose();
+    _universityCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectBirthDate() async {
+    final now = DateTime.now();
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 18),
+      firstDate: DateTime(now.year - 100),
+      lastDate: now.subtract(const Duration(days: 1)),
+      helpText: 'Chọn ngày sinh',
+    );
+    if (selectedDate == null || !mounted) return;
+
+    setState(() {
+      _birthDate = selectedDate;
+      _birthDateCtrl.text = MaterialLocalizations.of(
+        context,
+      ).formatMediumDate(selectedDate);
+    });
   }
 
   Future<void> _submit() async {
@@ -36,6 +60,29 @@ class _LoginScreenState extends State<LoginScreen> {
         const SnackBar(content: Text('Vui lòng nhập đầy đủ email và mật khẩu')),
       );
       return;
+    }
+
+    if (!_isLogin) {
+      if (_nameCtrl.text.trim().isEmpty ||
+          _phoneCtrl.text.trim().isEmpty ||
+          _universityCtrl.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin đăng ký')),
+        );
+        return;
+      }
+      if (_passCtrl.text.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mật khẩu phải có ít nhất 6 ký tự')),
+        );
+        return;
+      }
+      if (_birthDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng chọn ngày sinh')),
+        );
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -50,6 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
           _nameCtrl.text.trim(),
           _gender,
           _phoneCtrl.text.trim(),
+          _birthDate!,
+          _universityCtrl.text.trim(),
         );
       }
 
@@ -108,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 TextField(
+                  key: const Key('email_field'),
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
@@ -120,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  key: const Key('password_field'),
                   controller: _passCtrl,
                   obscureText: true,
                   autocorrect: false,
@@ -133,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (!_isLogin) ...[
                   const SizedBox(height: 12),
                   TextField(
+                    key: const Key('register_name_field'),
                     controller: _nameCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Họ và tên',
@@ -142,11 +194,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextField(
+                    key: const Key('register_phone_field'),
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
                       labelText: 'Số điện thoại',
                       prefixIcon: Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('register_birth_date_field'),
+                    controller: _birthDateCtrl,
+                    readOnly: true,
+                    onTap: _selectBirthDate,
+                    decoration: const InputDecoration(
+                      labelText: 'Ngày sinh',
+                      prefixIcon: Icon(Icons.calendar_today_outlined),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('register_university_field'),
+                    controller: _universityCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Trường đại học',
+                      prefixIcon: Icon(Icons.school_outlined),
                       border: OutlineInputBorder(),
                     ),
                   ),

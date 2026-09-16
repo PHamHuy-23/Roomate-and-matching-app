@@ -26,8 +26,18 @@ class AuthSession extends ChangeNotifier {
     String fullName,
     String gender,
     String phone,
+    DateTime birthDate,
+    String university,
   ) async {
-    final user = await _api.register(email, password, fullName, gender, phone);
+    final user = await _api.register(
+      email,
+      password,
+      fullName,
+      gender,
+      phone,
+      birthDate,
+      university,
+    );
     _user = user;
     notifyListeners();
     return user;
