@@ -181,6 +181,18 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách phòng');
   }
 
+  Future<RoomPost> getRoomPostDetail(int postId) async {
+    final response = await _request('GET', '/posts/$postId');
+    if (response.statusCode == 200) {
+      final data = _decodeData(response);
+      if (data is Map<String, dynamic>) {
+        return RoomPost.fromJson(data);
+      }
+      throw const ApiException('Dữ liệu chi tiết phòng không hợp lệ');
+    }
+    throw _errorFrom(response, 'Không tải được chi tiết phòng');
+  }
+
   Future<AuthUser> login(String email, String password) async {
     final response = await _request(
       'POST',

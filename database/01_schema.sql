@@ -64,7 +64,13 @@ CREATE TABLE `room_posts` (
     `description` TEXT NOT NULL,
     `price` DOUBLE NOT NULL,
     `address` VARCHAR(255) NOT NULL,
+    `district` VARCHAR(100) DEFAULT NULL,
+    `deposit` DOUBLE DEFAULT NULL,
+    `electricity_water_cost` DOUBLE DEFAULT NULL,
+    `area` DOUBLE DEFAULT NULL,
     `max_occupants` INT NOT NULL DEFAULT 2,
+    `current_occupants` INT NOT NULL DEFAULT 0,
+    `amenities` VARCHAR(500) DEFAULT NULL COMMENT 'Danh sách tiện ích phân tách bằng dấu phẩy',
     `image_url` VARCHAR(255) DEFAULT NULL,
     `status` ENUM('AVAILABLE', 'PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'AVAILABLE',
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -163,6 +169,7 @@ CREATE TABLE `reports` (
 -- Giả sử bảng room_posts có các cột district và price (trong schema cũ có address và price)
 -- Nếu bảng chưa có cột district thì bạn có thể lập index trên cột address thay thế.
 CREATE INDEX `idx_room_posts_price` ON `room_posts`(`price`);
+CREATE INDEX `idx_room_posts_district` ON `room_posts`(`district`);
 -- Lưu ý: Index cho address có thể cần chỉ định độ dài nếu dùng VARCHAR dài
 -- CREATE INDEX `idx_room_posts_address` ON `room_posts`(`address`(100));
 

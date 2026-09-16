@@ -20,6 +20,12 @@ public class RoomPostResponseDTO {
     private String description;
     private Double price;
     private String address;
+    private String district;
+    private Double deposit;
+    private Double electricityWaterCost;
+    private Double area;
     private Integer maxOccupants;
+    private Integer currentOccupants;
+    private String amenities;
     private LocalDateTime createdAt;
-}
+}
