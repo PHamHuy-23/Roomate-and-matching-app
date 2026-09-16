@@ -5,6 +5,8 @@ class AuthUser {
   final String fullName;
   final String gender;
   final String role;
+  final String? phone;
+  final String? avatarUrl;
 
   AuthUser({
     required this.token,
@@ -13,6 +15,8 @@ class AuthUser {
     required this.fullName,
     required this.gender,
     required this.role,
+    this.phone,
+    this.avatarUrl,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
@@ -28,8 +32,32 @@ class AuthUser {
       userId: (user['id'] ?? user['userId']) as int,
       email: user['email'] as String,
       fullName: user['fullName'] as String,
-      gender: user['gender'] as String,
-      role: user['role'] as String,
+      gender: (user['gender'] as String?) ?? 'MALE',
+      role: (user['role'] as String?) ?? 'ROLE_USER',
+      phone: user['phone'] as String?,
+      avatarUrl: user['avatarUrl'] as String?,
+    );
+  }
+
+  AuthUser copyWith({
+    String? token,
+    int? userId,
+    String? email,
+    String? fullName,
+    String? gender,
+    String? role,
+    String? phone,
+    String? avatarUrl,
+  }) {
+    return AuthUser(
+      token: token ?? this.token,
+      userId: userId ?? this.userId,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      gender: gender ?? this.gender,
+      role: role ?? this.role,
+      phone: phone ?? this.phone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }

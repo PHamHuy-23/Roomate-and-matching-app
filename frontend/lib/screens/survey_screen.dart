@@ -4,14 +4,15 @@ import '../services/api_service.dart';
 
 class SurveyScreen extends StatefulWidget {
   final int userId;
-  const SurveyScreen({super.key, required this.userId});
+  final ApiService? apiService;
+  const SurveyScreen({super.key, required this.userId, this.apiService});
 
   @override
   State<SurveyScreen> createState() => _SurveyScreenState();
 }
 
 class _SurveyScreenState extends State<SurveyScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final NumberFormat fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   int _currentStep = 0;
@@ -81,6 +82,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadPreferences();
   }
 

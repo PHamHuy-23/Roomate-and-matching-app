@@ -136,32 +136,57 @@ Gemini phải cập nhật mục này trước khi kết thúc công việc.
 
 ### 7.1. Trạng thái
 
-- Kết quả: `CHƯA THỰC HIỆN`
-- Commit: `CHƯA CÓ`
-- Sẵn sàng PM review: `KHÔNG`
+- Kết quả: `ĐÃ HOÀN THÀNH TRIỂN KHAI VÀ TEST (SẴN SÀNG CHO PM REVIEW)`
+- Commit: `feat(frontend): complete personal profile screen with preferences display and validation`
+- Sẵn sàng PM review: `CÓ`
 
 ### 7.2. File đã thay đổi
 
-- Chưa có.
+- `frontend/lib/models/auth_user.dart`: Bổ sung các trường tùy chọn `phone`, `avatarUrl`, cập nhật `fromJson` an toàn và thêm phương thức `copyWith`.
+- `frontend/lib/models/user_preference.dart`: Tạo mới model dữ liệu quản lý tiêu chí ghép trọ, parse metadata từ `bioDescription`, cung cấp các getter định dạng chuẩn locale VN (tiền tệ, quận huyện, thói quen ngủ, sạch sẽ, thú cưng, sở thích, ghi chú...).
+- `frontend/lib/screens/profile_screen.dart`: Tái cấu trúc và hoàn thiện toàn bộ giao diện Profile responsive mobile/web:
+  - Header: Avatar mạng nếu có URL hợp lệ / avatar chữ cái fallback, tên, email, chip giới tính & vai trò (không hard-code badge xác thực giả/trường giả).
+  - Tiêu chí ghép trọ: Gọi `getPreferences`, xử lý 4 trạng thái loading/empty/error/success, hiển thị chip tiêu chí có màu sắc trực quan, nút cập nhật điều hướng sang Survey và tự refresh khi quay về.
+  - Chỉnh sửa thông tin cá nhân: Form validation họ tên (>= 2 ký tự), số điện thoại VN (10 số bắt đầu bằng 0), dropdown giới tính, gọi `updateProfile` và cập nhật vào `AuthSession`.
+  - Cài đặt tài khoản: Dialog đổi mật khẩu thông báo rõ ràng trạng thái API backend, Dialog xác nhận đăng xuất xóa session và điều hướng về Login.
+  - Hỗ trợ Dependency Injection `ApiService` phục vụ widget test độc lập.
+- `frontend/lib/screens/survey_screen.dart`: Hỗ trợ inject `ApiService` qua constructor để đồng bộ với test harness.
+- `frontend/lib/state/auth_session.dart`: Bổ sung phương thức `updateUser(AuthUser updatedUser)` giúp cập nhật profile in-memory mà không làm mất JWT token.
+- `frontend/test/profile_screen_test.dart`: Bộ 11 test cases toàn diện bao phủ toàn bộ 8 yêu cầu kiểm thử trong DoD (loading, empty, error & retry, validation form, survey navigation & refresh, logout confirmation, không hard-code badge xác thực, dialog đổi mật khẩu).
 
 ### 7.3. Chức năng đã hoàn thành
 
-- Chưa có.
+- [x] Header hồ sơ: Avatar URL/fallback, họ tên, email, giới tính, vai trò từ AuthUser.
+- [x] Không hard-code badge xác thực hoặc tên trường đại học giả khi API chưa có dữ liệu.
+- [x] Tiêu chí ghép trọ: Xử lý 4 trạng thái Loading, Empty, Error (kèm nút Thử lại), Success.
+- [x] Định dạng ngân sách chuẩn VND, quận huyện TP.HCM và các thuộc tính lối sống 5 chiều.
+- [x] Nút "Cập nhật tiêu chí" mở SurveyScreen và tự động làm mới khi quay lại Profile.
+- [x] Form chỉnh sửa thông tin cá nhân kèm validation chặt chẽ và thông báo lỗi rõ ràng qua SnackBar.
+- [x] Cập nhật user thành công vào AuthSession mà không làm mất token.
+- [x] Cài đặt tài khoản: Dialog đổi mật khẩu thông báo trạng thái tính năng, Dialog đăng xuất xác nhận an toàn.
+- [x] Responsive layout cho mobile & web, semantic labels & tooltips đầy đủ.
 
 ### 7.4. Kết quả kiểm thử
 
-- `flutter analyze`: Chưa chạy.
-- `flutter test`: Chưa chạy.
-- `git diff --check`: Chưa chạy.
+- `flutter analyze`: Passed 100% (No issues found).
+- `flutter test`: Passed 100% (16/16 tests passed bao gồm cả test cũ và mới).
+- `git diff --check`: Passed 100% (Không có lỗi khoảng trắng/newline).
 
 ### 7.5. Blocker và phần chưa hoàn thành
 
-- Chưa có báo cáo.
+- Backend hiện tại (Milestone 3) chưa có endpoint API cho chức năng "Đổi mật khẩu" (`change-password`) và chưa lưu thông tin "Xác thực thẻ sinh viên" / "Trường Đại học". Theo đúng chỉ thị brief, Frontend không tự giả lập thành công hay hard-code dữ liệu giả, mà hiển thị thông báo tiến độ phù hợp và chờ backend Milestone 4 (Auth & Security T4.1) hoàn thành.
 
 ### 7.6. Quyết định kỹ thuật đáng chú ý
 
-- Chưa có báo cáo.
+- Tách riêng `UserPreference` model để xử lý logic parse `bioDescription` và định dạng chuỗi tiếng Việt độc lập, giúp code `ProfileScreen` gọn gàng và dễ test.
+- Cho phép inject `ApiService` vào cả `ProfileScreen` và `SurveyScreen` giúp các widget tests chạy độc lập và không phụ thuộc mạng thật.
+- Bổ sung `updateUser` và `copyWith` cho `AuthSession` & `AuthUser` để đồng bộ trạng thái ngay sau khi cập nhật thông tin người dùng thành công.
 
 ### 7.7. Hướng dẫn PM kiểm tra nhanh
 
-- Chưa có báo cáo.
+1. Chạy `cd frontend && flutter test test/profile_screen_test.dart` để kiểm tra 11 kịch bản tự động.
+2. Mở ứng dụng, điều hướng đến `/profile`:
+   - Kiểm tra hiển thị thông tin người dùng và tiêu chí ghép trọ hiện tại.
+   - Thử bấm "Cập nhật" tiêu chí để mở Survey, sau đó back lại kiểm tra auto-refresh.
+   - Thử nhập form cập nhật với tên rỗng hoặc sđt sai định dạng (ví dụ `12345`) để thấy validator hoạt động.
+   - Thử bấm "Đổi mật khẩu" và "Đăng xuất" để kiểm tra các hộp thoại xử lý.

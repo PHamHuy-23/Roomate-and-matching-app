@@ -33,6 +33,11 @@ class AuthSession extends ChangeNotifier {
     return user;
   }
 
+  void updateUser(AuthUser updatedUser) {
+    _user = updatedUser;
+    notifyListeners();
+  }
+
   void signOut() {
     _api.clearAuthToken();
     _user = null;
