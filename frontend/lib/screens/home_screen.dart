@@ -5,6 +5,7 @@ import '../models/match_recommendation.dart';
 import '../models/room_post.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
+import '../widgets/compatibility_bottom_sheet.dart';
 import '../widgets/match_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const _discoveryPrimary = Color(0xFF008F7A);
+
   final ApiService _api = ApiService();
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
@@ -28,6 +31,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingPosts = true;
   String _searchKeyword = '';
   double _maxPriceFilter = 10000000; // Bộ lọc giá tối đa (mặc định 10 triệu)
+
+  // Trạng thái tìm kiếm và lọc ứng viên bạn trọ.
+  String _matchSearchKeyword = '';
+  double _minimumMatchScore = 0;
+  String _districtFilter = 'Tất cả';
+  final Set<int> _connectingUserIds = {};
+  final Set<int> _sentRequestUserIds = {};
 
   @override
   void initState() {
@@ -61,15 +71,193 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _applyPostFilters() {
-    setState(() {
-      _filteredPosts = _allPosts.where((p) {
-        final matchAddress =
-            p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
-            p.title.toLowerCase().contains(_searchKeyword.toLowerCase());
-        final matchPrice = p.price <= _maxPriceFilter;
-        return matchAddress && matchPrice;
-      }).toList();
-    });
+    _filteredPosts = _allPosts.where((p) {
+      final matchAddress =
+          p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
+          p.title.toLowerCase().contains(_searchKeyword.toLowerCase());
+      final matchPrice = p.price <= _maxPriceFilter;
+      return matchAddress && matchPrice;
+    }).toList();
+  }
+
+  Future<void> _refreshMatches() async {
+    final refreshed = _api.getRecommendations(_currentUserId);
+    setState(() => _matchesFuture = refreshed);
+    await refreshed;
+  }
+
+  Future<void> _sendMatchRequest(MatchRecommendation item) async {
+    if (_connectingUserIds.contains(item.userId) ||
+        _sentRequestUserIds.contains(item.userId)) {
+      return;
+    }
+
+    setState(() => _connectingUserIds.add(item.userId));
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final sent = await _api.sendMatchRequest(
+        _currentUserId,
+        item.userId,
+        item.totalScore,
+      );
+      if (!mounted) return;
+      if (sent) {
+        setState(() => _sentRequestUserIds.add(item.userId));
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            sent
+                ? 'Đã gửi lời mời tới ${item.fullName}!'
+                : 'Không thể gửi lời mời, vui lòng thử lại.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Không thể gửi lời mời, vui lòng thử lại.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _connectingUserIds.remove(item.userId));
+      }
+    }
+  }
+
+  void _showCompatibility(MatchRecommendation item) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (sheetContext) => CompatibilityBottomSheet(
+        item: item,
+        requestSent: _sentRequestUserIds.contains(item.userId),
+        onConnect: () async {
+          Navigator.pop(sheetContext);
+          await _sendMatchRequest(item);
+        },
+      ),
+    );
+  }
+
+  List<MatchRecommendation> _filterMatches(List<MatchRecommendation> source) {
+    final query = _matchSearchKeyword.trim().toLowerCase();
+    final filtered = source.where((item) {
+      final matchesSearch =
+          query.isEmpty ||
+          item.fullName.toLowerCase().contains(query) ||
+          item.targetDistrict.toLowerCase().contains(query) ||
+          (item.university?.toLowerCase().contains(query) ?? false);
+      final matchesScore = item.totalScore >= _minimumMatchScore;
+      final matchesDistrict =
+          _districtFilter == 'Tất cả' || item.targetDistrict == _districtFilter;
+      return matchesSearch && matchesScore && matchesDistrict;
+    }).toList()..sort((a, b) => b.totalScore.compareTo(a.totalScore));
+    return filtered;
+  }
+
+  Widget _buildDiscoveryTab() {
+    return FutureBuilder<List<MatchRecommendation>>(
+      future: _matchesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: _discoveryPrimary),
+          );
+        }
+        if (snapshot.hasError) {
+          return _DiscoveryMessage(
+            icon: Icons.cloud_off_outlined,
+            title: 'Chưa tải được gợi ý',
+            description: '${snapshot.error}',
+            actionLabel: 'Thử lại',
+            onAction: _refreshMatches,
+          );
+        }
+
+        final allMatches = snapshot.data ?? const <MatchRecommendation>[];
+        final districts =
+            allMatches
+                .map((item) => item.targetDistrict)
+                .where((district) => district.trim().isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort();
+        if (_districtFilter != 'Tất cả' &&
+            !districts.contains(_districtFilter)) {
+          _districtFilter = 'Tất cả';
+        }
+        final matches = _filterMatches(allMatches);
+
+        return ColoredBox(
+          color: const Color(0xFFF5F8F7),
+          child: RefreshIndicator(
+            color: _discoveryPrimary,
+            onRefresh: _refreshMatches,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _DiscoveryHeader(
+                    userName: widget.currentUser.fullName,
+                    resultCount: matches.length,
+                    minimumScore: _minimumMatchScore,
+                    district: _districtFilter,
+                    districts: districts,
+                    onSearchChanged: (value) {
+                      setState(() => _matchSearchKeyword = value);
+                    },
+                    onMinimumScoreChanged: (value) {
+                      setState(() => _minimumMatchScore = value);
+                    },
+                    onDistrictChanged: (value) {
+                      setState(() => _districtFilter = value);
+                    },
+                  ),
+                ),
+                if (matches.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _DiscoveryMessage(
+                      icon: Icons.person_search_outlined,
+                      title: 'Không tìm thấy người phù hợp',
+                      description: 'Hãy giảm mức điểm hoặc chọn khu vực khác.',
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                    sliver: SliverList.builder(
+                      itemCount: matches.length,
+                      itemBuilder: (context, index) {
+                        final item = matches[index];
+                        return MatchCard(
+                          item: item,
+                          isConnecting: _connectingUserIds.contains(
+                            item.userId,
+                          ),
+                          requestSent: _sentRequestUserIds.contains(
+                            item.userId,
+                          ),
+                          onViewDetails: () => _showCompatibility(item),
+                          onConnect: () => _sendMatchRequest(item),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -136,50 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
         body: TabBarView(
           children: [
             // TAB 1: GỢI Ý BẠN TRỌ
-            FutureBuilder<List<MatchRecommendation>>(
-              future: _matchesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Lỗi: ${snapshot.error}'));
-                }
-                final list = snapshot.data ?? [];
-                if (list.isEmpty) {
-                  return const Center(
-                    child: Text('Không tìm thấy người phù hợp'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: list.length,
-                  itemBuilder: (_, i) {
-                    final item = list[i];
-                    return MatchCard(
-                      item: item,
-                      onConnect: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        final ok = await _api.sendMatchRequest(
-                          _currentUserId,
-                          item.userId,
-                          item.totalScore,
-                        );
-                        if (!mounted) return;
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              ok
-                                  ? 'Đã gửi kết nối tới ${item.fullName}! Trạng thái: Đang chờ.'
-                                  : 'Gửi kết nối thất bại!',
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+            _buildDiscoveryTab(),
 
             // TAB 2: BÀI ĐĂNG PHÒNG CÓ BỘ LỌC TÌM KIẾM
             Column(
@@ -214,8 +359,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         onChanged: (val) {
-                          _searchKeyword = val.trim();
-                          _applyPostFilters();
+                          setState(() {
+                            _searchKeyword = val.trim();
+                            _applyPostFilters();
+                          });
                         },
                       ),
                       const SizedBox(height: 8),
@@ -360,6 +507,218 @@ class _HomeScreenState extends State<HomeScreen> {
               _loadData();
             }
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _DiscoveryHeader extends StatelessWidget {
+  const _DiscoveryHeader({
+    required this.userName,
+    required this.resultCount,
+    required this.minimumScore,
+    required this.district,
+    required this.districts,
+    required this.onSearchChanged,
+    required this.onMinimumScoreChanged,
+    required this.onDistrictChanged,
+  });
+
+  final String userName;
+  final int resultCount;
+  final double minimumScore;
+  final String district;
+  final List<String> districts;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<double> onMinimumScoreChanged;
+  final ValueChanged<String> onDistrictChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final nameParts = userName.trim().split(RegExp(r'\s+'));
+    final firstName = nameParts.isEmpty ? userName : nameParts.last;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Chào $firstName 👋',
+            style: const TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF17342F),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$resultCount người phù hợp với bộ lọc hiện tại',
+            style: const TextStyle(color: Color(0xFF687873)),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            key: const Key('match-search-field'),
+            onChanged: onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Tìm theo tên, trường hoặc khu vực...',
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF61746F)),
+              filled: true,
+              fillColor: Colors.white,
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                PopupMenuButton<double>(
+                  key: const Key('minimum-score-filter'),
+                  initialValue: minimumScore,
+                  onSelected: onMinimumScoreChanged,
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 0, child: Text('Tất cả mức điểm')),
+                    PopupMenuItem(value: 60, child: Text('Từ 60% phù hợp')),
+                    PopupMenuItem(value: 70, child: Text('Từ 70% phù hợp')),
+                    PopupMenuItem(value: 80, child: Text('Từ 80% phù hợp')),
+                  ],
+                  child: _FilterPill(
+                    icon: Icons.bolt,
+                    label: minimumScore == 0
+                        ? 'Mức phù hợp'
+                        : 'Từ ${minimumScore.toStringAsFixed(0)}%',
+                    active: minimumScore > 0,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  key: const Key('district-filter'),
+                  initialValue: district,
+                  onSelected: onDistrictChanged,
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'Tất cả',
+                      child: Text('Tất cả khu vực'),
+                    ),
+                    for (final value in districts)
+                      PopupMenuItem(value: value, child: Text(value)),
+                  ],
+                  child: _FilterPill(
+                    icon: Icons.location_on_outlined,
+                    label: district == 'Tất cả' ? 'Khu vực' : district,
+                    active: district != 'Tất cả',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.icon,
+    required this.label,
+    required this.active,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    const primary = Color(0xFF008F7A);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFFDDF4EE) : Colors.white,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: active ? primary : const Color(0xFFD8E3E0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 17,
+            color: active ? primary : const Color(0xFF526761),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? primary : const Color(0xFF425A54),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(Icons.keyboard_arrow_down, size: 17),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiscoveryMessage extends StatelessWidget {
+  const _DiscoveryMessage({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final String? actionLabel;
+  final Future<void> Function()? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 46, color: const Color(0xFF7A918B)),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF687873)),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: onAction,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF008F7A),
+                ),
+                child: Text(actionLabel!),
+              ),
+            ],
+          ],
         ),
       ),
     );
