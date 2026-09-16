@@ -387,7 +387,7 @@ void main() {
       expect(session.user!.fullName, 'Phạm Quốc Huy Đã Sửa');
     });
 
-    testWidgets('8.2 (P2): Xoá số điện thoại rồi lưu: request gửi chuỗi rỗng và AuthSession.user.phone phản ánh giá trị null',
+    testWidgets('8.2 (P2): Xoá số điện thoại rồi lưu: request gửi chuỗi rỗng và AuthSession.user.phone phản ánh đúng chuỗi rỗng',
         (tester) async {
       final authPayload = {
         'token': 'jwt-token',
@@ -424,7 +424,7 @@ void main() {
 
       expect(api.updateProfileCalls, 1);
       expect(api.lastUpdatedPhone, ''); // Gửi chuỗi rỗng lên backend
-      expect(session.user!.phone, isNull); // Session được cập nhật null, không giữ số cũ
+      expect(session.user!.phone, ''); // Session được cập nhật đúng newPhone (''), không giữ số cũ
     });
 
     testWidgets('6. Điều hướng sang Survey và refresh khi quay lại',

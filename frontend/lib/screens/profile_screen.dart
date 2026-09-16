@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted && ok) {
         final updatedUser = _currentUser.copyWith(
           fullName: newName,
-          phone: newPhone.isNotEmpty ? newPhone : null,
+          phone: newPhone,
           gender: newGender,
         );
 

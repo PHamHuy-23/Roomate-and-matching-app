@@ -136,8 +136,8 @@ Gemini phải cập nhật mục này trước khi kết thúc công việc.
 
 ### 7.1. Trạng thái
 
-- Kết quả: `ĐÃ HOÀN THÀNH TOÀN BỘ YÊU CẦU PM REVIEW VÒNG 2 (P1, P2, REGRESSION TESTS, QUALITY GATES)`
-- Commit: `fix(profile): preserve phone data and sync session state`
+- Kết quả: `ĐÃ HOÀN THÀNH TOÀN BỘ YÊU CẦU PM REVIEW VÒNG 2 VÀ VÒNG 3 (PR #7)`
+- Commit: `fix(profile): remove test hardcoded credentials and fix session sync`
 - Sẵn sàng PM review: `CÓ`
 
 ### 7.2. File đã thay đổi
@@ -147,7 +147,7 @@ Gemini phải cập nhật mục này trước khi kết thúc công việc.
 - `frontend/lib/screens/profile_screen.dart`: Tái cấu trúc và hoàn thiện toàn bộ giao diện Profile responsive mobile/web:
   - Header: Avatar mạng nếu có URL hợp lệ / avatar chữ cái fallback, tên, email, chip giới tính & vai trò (không hard-code badge xác thực giả/trường giả).
   - Tiêu chí ghép trọ: Gọi `getPreferences`, xử lý 4 trạng thái loading/empty/error/success, hiển thị chip tiêu chí có màu sắc trực quan, nút cập nhật điều hướng sang Survey và tự refresh khi quay về.
-  - Chỉnh sửa thông tin cá nhân: Form validation họ tên (>= 2 ký tự), số điện thoại VN (10 số bắt đầu bằng 0), dropdown giới tính, gọi `updateProfile` và cập nhật vào `AuthSession`.
+  - Chỉnh sửa thông tin cá nhân: Form validation họ tên (>= 2 ký tự), số điện thoại VN (10 số bắt đầu bằng 0), dropdown giới tính, gọi `updateProfile` và cập nhật trực tiếp `phone: newPhone` vào `AuthSession`.
   - Cài đặt tài khoản: Dialog đổi mật khẩu thông báo rõ ràng trạng thái API backend, Dialog xác nhận đăng xuất xóa session và điều hướng về Login.
   - Hỗ trợ Dependency Injection `ApiService` phục vụ widget test độc lập.
 - `frontend/lib/screens/survey_screen.dart`: Hỗ trợ inject `ApiService` qua constructor để đồng bộ với test harness.
@@ -157,6 +157,7 @@ Gemini phải cập nhật mục này trước khi kết thúc công việc.
 - `backend/src/main/java/com/roommate/hub/service/AuthService.java`: Map `phone` trong `login()` và `register()`.
 - `backend/src/main/java/com/roommate/hub/config/DataInitializer.java`: Thêm profile `!test` để test chạy độc lập không phụ thuộc DB seeding.
 - `backend/src/test/java/com/roommate/hub/service/AuthServiceTest.java`: 4 unit tests backend cho AuthService.
+- `backend/src/test/resources/application.properties`: Loại bỏ hoàn toàn credential hardcode, sử dụng biến môi trường an toàn và cấu hình `MySQLDialect` để Hibernate chạy test độc lập.
 
 ### 7.3. Chức năng đã hoàn thành
 
@@ -170,13 +171,14 @@ Gemini phải cập nhật mục này trước khi kết thúc công việc.
 - [x] Cài đặt tài khoản: Dialog đổi mật khẩu thông báo trạng thái tính năng, Dialog đăng xuất xác nhận an toàn.
 - [x] Responsive layout cho mobile & web, semantic labels & tooltips đầy đủ.
 - [x] P1: Đăng nhập/đăng ký trả đủ số điện thoại, sửa tên không làm mất số điện thoại.
-- [x] P2: Xóa số điện thoại đồng bộ cả backend và frontend session state.
+- [x] P2: Xóa số điện thoại đồng bộ cả backend và frontend session state (`""`).
+- [x] P1 Security: Không hard-code MySQL credential trong `application.properties` test.
 
 ### 7.4. Kết quả kiểm thử
 
-- `flutter analyze`: `PASSED` — exit code `0` (No issues found).
-- `flutter test`: `PASSED` — exit code `0` (20/20 tests passed).
-- `.\mvnw.cmd test`: `PASSED` — exit code `0` (5/5 tests passed).
+- `flutter analyze`: `PASSED` — exit code `0` (No issues found! ran in 8.5s).
+- `flutter test`: `PASSED` — exit code `0` (20/20 tests passed in 11s).
+- `.\mvnw.cmd test`: `PASSED` — exit code `0` (5/5 tests passed in 51.669s).
 - `git diff --check master...HEAD`: `PASSED` — không có lỗi format hay trailing whitespace.
 
 ### 7.5. Blocker và phần chưa hoàn thành
@@ -325,7 +327,7 @@ Chỉ được báo hoàn thành khi tất cả checkbox sau đạt:
 Gemini phải điền đầy đủ trước khi kết thúc:
 
 - Commit sửa lỗi: `fix(profile): preserve phone data and sync session state`
-- PR: `https://github.com/PHamHuy-23/Roomate-and-matching-app/pull/new/feature/profile-quochuy`
+- PR: `https://github.com/PHamHuy-23/Roomate-and-matching-app/pull/7`
 - File đã sửa:
   - `backend/src/main/java/com/roommate/hub/dto/AuthResponse.java`
   - `backend/src/main/java/com/roommate/hub/service/AuthService.java`
@@ -343,3 +345,51 @@ Gemini phải điền đầy đủ trước khi kết thúc:
 - Flutter tests: `cd frontend; flutter test` — exit code `0`, `20/20 tests passed` (bao gồm 15 unit/widget/regression tests trong `profile_screen_test.dart`).
 - Git diff check: `git diff --check master...HEAD` — exit code `0` (sau commit).
 - Phần còn thiếu/blocker: Không có blocker trong phạm vi T3.5a. Backend Milestone 3 chưa hỗ trợ endpoint đổi mật khẩu (`change-password`) và dữ liệu xác thực trường ĐH/thẻ sinh viên (thuộc phạm vi Milestone 4 T4.1).
+
+---
+
+## 9. PM REVIEW VÒNG 3 (PR #7) — KHẮC PHỤC VÀ BÀN GIAO
+
+> Trạng thái quyết định: **CHANGES REQUESTED TRÊN PR #7 ĐÃ ĐƯỢC XỬ LÝ TOÀN BỘ**
+> PR hiện có: `https://github.com/PHamHuy-23/Roomate-and-matching-app/pull/7`
+> Branch: `feature/profile-quochuy` (push commit mới trực tiếp vào branch này)
+
+### 9.1. P1 — Xoá thông tin MySQL hardcode trong test config
+
+- **Khắc phục**:
+  - File `backend/src/test/resources/application.properties`: Xoá bỏ hoàn toàn mật khẩu `123456` và credential database thật.
+  - Sử dụng biến môi trường với giá trị fallback an toàn: `${DB_URL:jdbc:mysql://localhost:3306/roommate_hub_test}`, `${DB_USERNAME:test_user}`, `${DB_PASSWORD:}`.
+  - Cấu hình `spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect` để Hibernate khởi tạo offline khi database không chạy mà không đòi hỏi JDBC connection metadata.
+  - Đảm bảo kiểm thử hoàn toàn độc lập, không vi phạm bảo mật, không phụ thuộc database máy lập trình viên.
+
+### 9.2. P2 — Đồng bộ xoá số điện thoại vào Session (`""`)
+
+- **Khắc phục**:
+  - File `frontend/lib/screens/profile_screen.dart`: Cập nhật phương thức `_handleUpdate()` truyền `phone: newPhone` trực tiếp vào `AuthUser.copyWith()`. Khi người dùng xoá ô số điện thoại (`newPhone = ""`), `AuthSession.user.phone` phản ánh đúng chuỗi rỗng `""` đã gửi lên backend.
+  - File `frontend/test/profile_screen_test.dart`: Cập nhật regression test `8.2 (P2)` assert `expect(session.user!.phone, '')` và `expect(api.lastUpdatedPhone, '')`.
+
+### 9.3. Báo cáo kết quả kiểm thử thực tế và tooling
+
+Tất cả các lệnh kiểm thử được chạy trực tiếp từ terminal và ghi nhận kết quả thật:
+
+1. **Backend Tests**:
+   - Lệnh: `cd backend; .\mvnw.cmd test`
+   - Exit code: `0`
+   - Thời gian thực thi: `51.669s`
+   - Chi tiết: `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0` (`HubApplicationTests`: 1, `AuthServiceTest`: 4).
+
+2. **Flutter Analyze**:
+   - Lệnh: `cd frontend; flutter analyze`
+   - Exit code: `0`
+   - Thời gian thực thi: `8.5s`
+   - Chi tiết: `Analyzing frontend... No issues found! (ran in 8.5s)`
+
+3. **Flutter Tests**:
+   - Lệnh: `cd frontend; flutter test`
+   - Exit code: `0`
+   - Thời gian thực thi: `11s`
+   - Chi tiết: `All tests passed! (20/20 tests passed)` bao gồm 15 bài test unit/widget/regression trong `profile_screen_test.dart`.
+
+4. **Git Diff Check**:
+   - Lệnh: `git diff --check master...HEAD`
+   - Exit code: `0` (Không có lỗi format, whitespace hay newline thừa).
