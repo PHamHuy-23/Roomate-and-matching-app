@@ -98,7 +98,9 @@ class ApiService {
     bool authenticated = true,
   }) async {
     final uri = Uri.parse('$baseUrl$path').replace(
-      queryParameters: queryParameters?.isEmpty == true ? null : queryParameters,
+      queryParameters: queryParameters?.isEmpty == true
+          ? null
+          : queryParameters,
     );
     final request = http.Request(method, uri)
       ..headers.addAll(_headers(authenticated: authenticated));
@@ -107,8 +109,12 @@ class ApiService {
     }
 
     try {
-      final streamedResponse = await _client.send(request).timeout(requestTimeout);
-      final response = await http.Response.fromStream(streamedResponse).timeout(requestTimeout);
+      final streamedResponse = await _client
+          .send(request)
+          .timeout(requestTimeout);
+      final response = await http.Response.fromStream(
+        streamedResponse,
+      ).timeout(requestTimeout);
       if (authenticated && response.statusCode == 401) {
         _handleUnauthorized();
         throw const ApiException('Phiên làm việc đã hết hạn', statusCode: 401);
@@ -169,17 +175,29 @@ class ApiService {
     return ApiException(fallbackMessage, statusCode: response.statusCode);
   }
 
-  Future<List<MatchRecommendation>> getRecommendations(int currentUserId) async {
-    final response = await _request('GET', '/matches/recommendations/$currentUserId');
+  Future<List<MatchRecommendation>> getRecommendations(
+    int currentUserId,
+  ) async {
+    final response = await _request(
+      'GET',
+      '/matches/recommendations/$currentUserId',
+    );
     if (response.statusCode == 200) {
       return _decodeList(response)
-          .map((json) => MatchRecommendation.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) =>
+                MatchRecommendation.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     }
     throw _errorFrom(response, 'Không tải được danh sách gợi ý');
   }
 
-  Future<bool> sendMatchRequest(int senderId, int receiverId, double score) async {
+  Future<bool> sendMatchRequest(
+    int senderId,
+    int receiverId,
+    double score,
+  ) async {
     final response = await _request(
       'POST',
       '/matches/requests',
@@ -196,9 +214,9 @@ class ApiService {
   Future<List<RoomPost>> getRoomPosts() async {
     final response = await _request('GET', '/posts');
     if (response.statusCode == 200) {
-      return _decodeList(response)
-          .map((json) => RoomPost.fromJson(json as Map<String, dynamic>))
-          .toList();
+      return _decodeList(
+        response,
+      ).map((json) => RoomPost.fromJson(json as Map<String, dynamic>)).toList();
     }
     throw _errorFrom(response, 'Không tải được danh sách phòng');
   }
@@ -278,10 +296,15 @@ class ApiService {
   }
 
   Future<List<MatchRequestItem>> getReceivedRequests(int userId) async {
-    final response = await _request('GET', '/matches/requests/received/$userId');
+    final response = await _request(
+      'GET',
+      '/matches/requests/received/$userId',
+    );
     if (response.statusCode == 200) {
       return _decodeList(response)
-          .map((json) => MatchRequestItem.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => MatchRequestItem.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     }
     throw _errorFrom(response, 'Không tải được yêu cầu đã nhận');
@@ -291,7 +314,9 @@ class ApiService {
     final response = await _request('GET', '/matches/requests/sent/$userId');
     if (response.statusCode == 200) {
       return _decodeList(response)
-          .map((json) => MatchRequestItem.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => MatchRequestItem.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     }
     throw _errorFrom(response, 'Không tải được yêu cầu đã gửi');
@@ -312,6 +337,8 @@ class ApiService {
     String fullName,
     String phone,
     String gender,
+    DateTime birthDate,
+    String university,
   ) async {
     final response = await _request(
       'PUT',
@@ -320,6 +347,8 @@ class ApiService {
         'fullName': fullName,
         'phone': phone,
         'gender': gender,
+        'birthDate': birthDate.toIso8601String().split('T').first,
+        'university': university,
       },
     );
     if (response.statusCode == 200) return true;
@@ -355,7 +384,10 @@ class ApiService {
   }
 
   Future<bool> toggleUserStatus(int userId) async {
-    final response = await _request('PUT', '/admin/users/$userId/toggle-status');
+    final response = await _request(
+      'PUT',
+      '/admin/users/$userId/toggle-status',
+    );
     if (response.statusCode == 200) return true;
     throw _errorFrom(response, 'Không thể thay đổi trạng thái người dùng');
   }

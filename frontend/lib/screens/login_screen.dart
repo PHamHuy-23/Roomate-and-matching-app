@@ -17,17 +17,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _birthDateCtrl = TextEditingController();
   final _universityCtrl = TextEditingController();
   DateTime? _birthDate;
   String _gender = 'MALE';
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _birthDateCtrl.dispose();
@@ -41,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       initialDate: _birthDate ?? DateTime(now.year - 18),
       firstDate: DateTime(now.year - 100),
-      lastDate: now.subtract(const Duration(days: 1)),
+      lastDate: DateTime(now.year - 18, now.month, now.day),
       helpText: 'Chọn ngày sinh',
     );
     if (selectedDate == null || !mounted) return;
@@ -55,25 +59,44 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.trim().isEmpty) {
+    final email = _emailCtrl.text.trim();
+    final password = _passCtrl.text;
+    final isLogin = _isLogin;
+
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập đầy đủ email và mật khẩu')),
       );
       return;
     }
 
-    if (!_isLogin) {
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email không đúng định dạng')),
+      );
+      return;
+    }
+
+    if (!isLogin) {
       if (_nameCtrl.text.trim().isEmpty ||
           _phoneCtrl.text.trim().isEmpty ||
           _universityCtrl.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin đăng ký')),
+          const SnackBar(
+            content: Text('Vui lòng nhập đầy đủ thông tin đăng ký'),
+          ),
         );
         return;
       }
-      if (_passCtrl.text.length < 6) {
+      if (password.length < 6) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Mật khẩu phải có ít nhất 6 ký tự')),
+        );
+        return;
+      }
+      if (_confirmPassCtrl.text != password) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mật khẩu xác nhận không khớp')),
         );
         return;
       }
@@ -88,12 +111,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final session = context.read<AuthSession>();
-      if (_isLogin) {
-        await session.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
+      if (isLogin) {
+        await session.login(email, password);
       } else {
         await session.register(
-          _emailCtrl.text.trim(),
-          _passCtrl.text.trim(),
+          email,
+          password,
           _nameCtrl.text.trim(),
           _gender,
           _phoneCtrl.text.trim(),
@@ -103,7 +126,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(
+          context,
+          isLogin ? AppRoutes.home : AppRoutes.survey,
+          arguments: isLogin ? null : const {'fromRegistration': true},
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -172,16 +199,55 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   key: const Key('password_field'),
                   controller: _passCtrl,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   autocorrect: false,
                   enableSuggestions: false,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Mật khẩu',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    border: OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      tooltip: _obscurePassword
+                          ? 'Hiện mật khẩu'
+                          : 'Ẩn mật khẩu',
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
                   ),
                 ),
                 if (!_isLogin) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('register_confirm_password_field'),
+                    controller: _confirmPassCtrl,
+                    obscureText: _obscureConfirmPassword,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    decoration: InputDecoration(
+                      labelText: 'Xác nhận mật khẩu',
+                      prefixIcon: const Icon(Icons.lock_reset_outlined),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        tooltip: _obscureConfirmPassword
+                            ? 'Hiện mật khẩu xác nhận'
+                            : 'Ẩn mật khẩu xác nhận',
+                        onPressed: () => setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        ),
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     key: const Key('register_name_field'),

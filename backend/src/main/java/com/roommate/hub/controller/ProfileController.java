@@ -6,8 +6,10 @@ import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.service.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -48,10 +50,23 @@ public class ProfileController {
         user.setPhone(phone);
         user.setGender(gender.toUpperCase());
         if (birthDate != null) {
+            if (birthDate.isAfter(LocalDate.now().minusYears(18))) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Người dùng phải đủ 18 tuổi"
+                );
+            }
             user.setBirthDate(birthDate);
         }
         if (university != null) {
-            user.setUniversity(university.trim());
+            String normalizedUniversity = university.trim();
+            if (normalizedUniversity.isEmpty() || normalizedUniversity.length() > 150) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Trường đại học không hợp lệ"
+                );
+            }
+            user.setUniversity(normalizedUniversity);
         }
         return ResponseEntity.ok(userRepository.save(user));
     }

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../models/auth_user.dart';
 import '../navigation/app_routes.dart';
-import '../services/api_service.dart';
 import '../state/auth_session.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -15,37 +14,101 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ApiService _api = ApiService();
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
+  late TextEditingController _birthDateCtrl;
+  late TextEditingController _universityCtrl;
+  DateTime? _birthDate;
   late String _gender;
   bool _isLoading = false;
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
 
   @override
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.currentUser.fullName);
     _phoneCtrl = TextEditingController();
+    _birthDate = widget.currentUser.birthDate;
+    _birthDateCtrl = TextEditingController(
+      text: _birthDate == null ? '' : _formatDate(_birthDate!),
+    );
+    _universityCtrl = TextEditingController(
+      text: widget.currentUser.university ?? '',
+    );
     _gender = widget.currentUser.gender;
   }
 
-  Future<void> _handleUpdate() async {
-    setState(() => _isLoading = true);
-    final ok = await _api.updateProfile(
-      widget.currentUser.userId,
-      _nameCtrl.text.trim(),
-      _phoneCtrl.text.trim(),
-      _gender,
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _birthDateCtrl.dispose();
+    _universityCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectBirthDate() async {
+    final now = DateTime.now();
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 18),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 18, now.month, now.day),
+      helpText: 'Chọn ngày sinh',
     );
-    if (mounted) {
-      setState(() => _isLoading = false);
+    if (selectedDate == null || !mounted) return;
+
+    setState(() {
+      _birthDate = selectedDate;
+      _birthDateCtrl.text = _formatDate(selectedDate);
+    });
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_nameCtrl.text.trim().isEmpty ||
+        _universityCtrl.text.trim().isEmpty ||
+        _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ok ? 'Cập nhật thông tin thành công!' : 'Cập nhật thất bại!',
-          ),
+        const SnackBar(
+          content: Text('Vui lòng nhập họ tên, ngày sinh và trường đại học'),
         ),
       );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final ok = await context.read<AuthSession>().updateProfile(
+        fullName: _nameCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim(),
+        gender: _gender,
+        birthDate: _birthDate!,
+        university: _universityCtrl.text.trim(),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ok ? 'Cập nhật thông tin thành công!' : 'Cập nhật thất bại!',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.toString().replaceAll('Exception: ', '')),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -146,6 +209,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.phone),
                     hintText: 'Nhập số điện thoại mới',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  key: const Key('profile_birth_date_field'),
+                  controller: _birthDateCtrl,
+                  readOnly: true,
+                  onTap: _selectBirthDate,
+                  decoration: const InputDecoration(
+                    labelText: 'Ngày sinh',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  key: const Key('profile_university_field'),
+                  controller: _universityCtrl,
+                  maxLength: 150,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Trường đại học',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.school_outlined),
                   ),
                 ),
                 const SizedBox(height: 14),

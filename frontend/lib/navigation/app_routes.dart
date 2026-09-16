@@ -41,7 +41,13 @@ class AppRoutes {
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
-            return SurveyScreen(userId: user.userId);
+            final arguments = settings.arguments;
+            final fromRegistration =
+                arguments is Map && arguments['fromRegistration'] == true;
+            return SurveyScreen(
+              userId: user.userId,
+              redirectToHomeOnComplete: fromRegistration,
+            );
           case createPost:
             return CreatePostScreen(authorId: user.userId);
           case admin:
