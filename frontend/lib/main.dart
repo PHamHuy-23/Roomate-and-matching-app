@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'navigation/app_routes.dart';
 import 'services/api_service.dart';
 import 'state/auth_session.dart';
+import 'theme/roommate_hub_theme.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
@@ -35,10 +36,7 @@ class RoommateHubApp extends StatelessWidget {
         scaffoldMessengerKey: appScaffoldMessengerKey,
         title: 'Roommate Hub',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-          useMaterial3: true,
-        ),
+        theme: RoommateHubTheme.light,
         initialRoute: AppRoutes.login,
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
