@@ -16,4 +16,5 @@ public class AuthResponse {
     private String fullName;
     private String gender;
     private String role;
+    private String phone;
 }

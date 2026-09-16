@@ -1,4 +1,6 @@
 class AuthUser {
+  static const Object _sentinel = Object();
+
   final String token;
   final int userId;
   final String email;
@@ -27,6 +29,9 @@ class AuthUser {
       throw const FormatException('Auth response không chứa access token');
     }
 
+    final rawPhone = user['phone'] ?? json['phone'];
+    final rawAvatar = user['avatarUrl'] ?? json['avatarUrl'];
+
     return AuthUser(
       token: tokenValue,
       userId: (user['id'] ?? user['userId']) as int,
@@ -34,8 +39,8 @@ class AuthUser {
       fullName: user['fullName'] as String,
       gender: (user['gender'] as String?) ?? 'MALE',
       role: (user['role'] as String?) ?? 'ROLE_USER',
-      phone: user['phone'] as String?,
-      avatarUrl: user['avatarUrl'] as String?,
+      phone: rawPhone is String && rawPhone.isNotEmpty ? rawPhone : null,
+      avatarUrl: rawAvatar is String && rawAvatar.isNotEmpty ? rawAvatar : null,
     );
   }
 
@@ -46,8 +51,8 @@ class AuthUser {
     String? fullName,
     String? gender,
     String? role,
-    String? phone,
-    String? avatarUrl,
+    Object? phone = _sentinel,
+    Object? avatarUrl = _sentinel,
   }) {
     return AuthUser(
       token: token ?? this.token,
@@ -56,8 +61,10 @@ class AuthUser {
       fullName: fullName ?? this.fullName,
       gender: gender ?? this.gender,
       role: role ?? this.role,
-      phone: phone ?? this.phone,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
+      phone: identical(phone, _sentinel) ? this.phone : (phone as String?),
+      avatarUrl: identical(avatarUrl, _sentinel)
+          ? this.avatarUrl
+          : (avatarUrl as String?),
     );
   }
 }

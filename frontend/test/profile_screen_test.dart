@@ -121,6 +121,53 @@ void main() {
         '[Yêu cầu giới tính: Nam | Ngân sách: 2.000.000 đ - 4.500.000 đ | Nấu ăn: Tự nấu ở nhà | Thú cưng: Thích / Nuôi thú cưng | Tính cách: Hướng nội | Sở thích: Thể thao, Đọc sách, Âm nhạc | Dọn vào: Dọn vào ở ngay | Ưu tiên: Ngân sách phù hợp]\nTìm bạn cùng phòng gọn gàng, tôn trọng không gian riêng.',
   };
 
+  group('AuthUser Model & Regression Tests', () {
+    test('8.3.3: AuthUser.fromJson parses real auth payload containing phone and token', () {
+      final realJson = {
+        'token': 'jwt-real-token',
+        'userId': 99,
+        'email': 'student@hcmute.edu.vn',
+        'fullName': 'Nguyễn Văn Đạt',
+        'gender': 'MALE',
+        'role': 'ROLE_USER',
+        'phone': '0912345678',
+        'avatarUrl': 'https://example.com/avatar.png',
+      };
+      final user = AuthUser.fromJson(realJson);
+      expect(user.token, 'jwt-real-token');
+      expect(user.userId, 99);
+      expect(user.email, 'student@hcmute.edu.vn');
+      expect(user.fullName, 'Nguyễn Văn Đạt');
+      expect(user.phone, '0912345678');
+      expect(user.avatarUrl, 'https://example.com/avatar.png');
+    });
+
+    test('8.2: AuthUser.copyWith sentinel semantics (omission retains, explicit null clears)', () {
+      final initial = AuthUser(
+        token: 'tk',
+        userId: 1,
+        email: 'e@e.com',
+        fullName: 'Name',
+        gender: 'MALE',
+        role: 'ROLE_USER',
+        phone: '0901234567',
+        avatarUrl: 'https://avatar.png',
+      );
+
+      // Omission retains phone and avatar
+      final updatedName = initial.copyWith(fullName: 'New Name');
+      expect(updatedName.fullName, 'New Name');
+      expect(updatedName.phone, '0901234567');
+      expect(updatedName.avatarUrl, 'https://avatar.png');
+
+      // Explicit null clears phone and avatar
+      final clearedPhone = initial.copyWith(phone: null, avatarUrl: null);
+      expect(clearedPhone.phone, isNull);
+      expect(clearedPhone.avatarUrl, isNull);
+      expect(clearedPhone.fullName, 'Name');
+    });
+  });
+
   group('UserPreference Model & Parsers', () {
     test('Parse full metadata correctly from bioDescription', () {
       final pref = UserPreference.fromJson(samplePreferences);
@@ -162,7 +209,7 @@ void main() {
     });
   });
 
-  group('ProfileScreen Widget Tests', () {
+  group('ProfileScreen Widget Tests & P1/P2 Regression', () {
     testWidgets('1. Hiển thị loading khi đang tải preference', (tester) async {
       final api = FakeProfileApi()
         ..pendingPreferences = Completer<Map<String, dynamic>?>();
@@ -298,6 +345,88 @@ void main() {
       expect(find.text('Nguyễn Văn Test'), findsWidgets);
     });
 
+    testWidgets('8.1 (P1): Profile khởi tạo số điện thoại từ AuthUser đăng nhập và chỉ sửa tên không làm mất số điện thoại',
+        (tester) async {
+      final authPayload = {
+        'token': 'jwt-token',
+        'userId': 10,
+        'email': 'sinhvien@hcmute.edu.vn',
+        'fullName': 'Phạm Quốc Huy',
+        'gender': 'MALE',
+        'role': 'ROLE_USER',
+        'phone': '0901234567',
+      };
+      final userFromLogin = AuthUser.fromJson(authPayload);
+      final api = FakeProfileApi()..preferencesData = samplePreferences;
+      final session = AuthSession(apiService: api);
+      session.updateUser(userFromLogin);
+
+      await tester.pumpWidget(
+        createProfileTestApp(
+          user: userFromLogin,
+          api: api,
+          session: session,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final nameField = find.widgetWithText(TextFormField, 'Họ và tên');
+      final saveButton = find.text('Lưu Thay Đổi');
+
+      // Người dùng chỉ sửa họ tên, không chạm vào ô điện thoại
+      await tester.ensureVisible(nameField);
+      await tester.enterText(nameField, 'Phạm Quốc Huy Đã Sửa');
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect(api.updateProfileCalls, 1);
+      expect(api.lastUpdatedName, 'Phạm Quốc Huy Đã Sửa');
+      expect(api.lastUpdatedPhone, '0901234567'); // Số điện thoại cũ vẫn giữ nguyên trong request
+      expect(session.user!.phone, '0901234567');
+      expect(session.user!.fullName, 'Phạm Quốc Huy Đã Sửa');
+    });
+
+    testWidgets('8.2 (P2): Xoá số điện thoại rồi lưu: request gửi chuỗi rỗng và AuthSession.user.phone phản ánh giá trị null',
+        (tester) async {
+      final authPayload = {
+        'token': 'jwt-token',
+        'userId': 10,
+        'email': 'sinhvien@hcmute.edu.vn',
+        'fullName': 'Phạm Quốc Huy',
+        'gender': 'MALE',
+        'role': 'ROLE_USER',
+        'phone': '0901234567',
+      };
+      final userFromLogin = AuthUser.fromJson(authPayload);
+      final api = FakeProfileApi()..preferencesData = samplePreferences;
+      final session = AuthSession(apiService: api);
+      session.updateUser(userFromLogin);
+
+      await tester.pumpWidget(
+        createProfileTestApp(
+          user: userFromLogin,
+          api: api,
+          session: session,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final phoneField = find.widgetWithText(TextFormField, 'Số điện thoại');
+      final saveButton = find.text('Lưu Thay Đổi');
+
+      // Người dùng chủ động xoá số điện thoại
+      await tester.ensureVisible(phoneField);
+      await tester.enterText(phoneField, '');
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect(api.updateProfileCalls, 1);
+      expect(api.lastUpdatedPhone, ''); // Gửi chuỗi rỗng lên backend
+      expect(session.user!.phone, isNull); // Session được cập nhật null, không giữ số cũ
+    });
+
     testWidgets('6. Điều hướng sang Survey và refresh khi quay lại',
         (tester) async {
       final api = FakeProfileApi()..preferencesData = samplePreferences;
@@ -316,14 +445,10 @@ void main() {
       // Kiểm tra đã điều hướng sang SurveyScreen
       expect(find.byType(SurveyScreen), findsOneWidget);
 
-      // Quay lại từ Survey
+      // Quay lại từ Survey (bấm AppBar BackButton)
       final backButton = find.byType(BackButton);
-      if (backButton.evaluate().isNotEmpty) {
-        await tester.tap(backButton);
-      } else {
-        final navigator = tester.state<NavigatorState>(find.byType(Navigator));
-        navigator.pop();
-      }
+      expect(backButton, findsOneWidget);
+      await tester.tap(backButton);
       await tester.pumpAndSettle();
 
       // ProfileScreen phải hiển thị lại và đã refresh tiêu chí
