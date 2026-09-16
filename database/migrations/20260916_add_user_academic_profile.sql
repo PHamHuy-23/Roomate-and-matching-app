@@ -6,9 +6,39 @@
 
 USE `roommate_hub`;
 
-ALTER TABLE `users`
-    ADD COLUMN IF NOT EXISTS `birth_date` DATE DEFAULT NULL AFTER `avatar_url`,
-    ADD COLUMN IF NOT EXISTS `university` VARCHAR(150) DEFAULT NULL AFTER `birth_date`;
+-- MySQL khong ho tro ADD COLUMN IF NOT EXISTS tren moi phien ban.
+-- Kiem tra metadata truoc de script co the chay lai an toan.
+SET @has_birth_date = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'users'
+      AND COLUMN_NAME = 'birth_date'
+);
+SET @birth_date_sql = IF(
+    @has_birth_date = 0,
+    'ALTER TABLE `users` ADD COLUMN `birth_date` DATE DEFAULT NULL AFTER `avatar_url`',
+    'SELECT 1'
+);
+PREPARE birth_date_statement FROM @birth_date_sql;
+EXECUTE birth_date_statement;
+DEALLOCATE PREPARE birth_date_statement;
+
+SET @has_university = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'users'
+      AND COLUMN_NAME = 'university'
+);
+SET @university_sql = IF(
+    @has_university = 0,
+    'ALTER TABLE `users` ADD COLUMN `university` VARCHAR(150) DEFAULT NULL AFTER `birth_date`',
+    'SELECT 1'
+);
+PREPARE university_statement FROM @university_sql;
+EXECUTE university_statement;
+DEALLOCATE PREPARE university_statement;
 
 -- Du lieu mau cho cac tai khoan co san.
 UPDATE `users`
