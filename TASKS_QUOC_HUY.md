@@ -5,7 +5,8 @@
 > **Vai trò nòng cốt**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
 > **Mảng Kỹ thuật Phụ trách Đầu mối (Lead)**: **Lead BA & Báo cáo Học thuật (Requirements & Documentation Lead)**  
 > **Dự án**: Nền tảng Tìm bạn cùng thuê trọ và Ghép bạn trọ theo tiêu chí (Roommate Matching Hub)  
-> **Công nghệ thực hiện**: Java 21 Spring Boot 3 (Backend) + Flutter Dart (Frontend) + MySQL 8.0  
+> **Công nghệ thực hiện**: Java 21 Spring Boot 4 (Backend) + Flutter Dart (Frontend) + MySQL 8.x
+> **Nguồn trạng thái chuẩn**: `TASK_ASSIGNMENTS.md` — cập nhật gần nhất 16/09/2026.
 > **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày / 2 tuần)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**
 
@@ -15,9 +16,9 @@
 
 | Phân hệ đảm nhiệm | File / Module cụ thể | Nhiệm vụ chính |
 | :--- | :--- | :--- |
-| **Backend (Spring Boot 3)** | `controller/ProfileController.java`<br>`service/ProfileService.java`<br>`repository/UserPreferenceRepository.java`<br>`dto/UserPreferenceDTO.java`<br>`controller/AdminController.java`<br>`service/AdminService.java` | Lập trình toàn bộ APIs khảo sát tiêu chí 5 chiều (`UserPreference`), xem/cập nhật hồ sơ cá nhân (`Profile`), và các APIs quản trị hệ thống của Admin (khóa/mở user, duyệt bài đăng, xử lý báo cáo). |
+| **Backend (Spring Boot 4)** | `controller/ProfileController.java`<br>`service/ProfileService.java`<br>`repository/UserPreferenceRepository.java`<br>`dto/UserPreferenceDTO.java`<br>`controller/AdminController.java`<br>`service/AdminService.java` | Lập trình toàn bộ APIs khảo sát tiêu chí 5 chiều (`UserPreference`), xem/cập nhật hồ sơ cá nhân (`Profile`), và các APIs quản trị hệ thống của Admin (khóa/mở user, duyệt bài đăng, xử lý báo cáo). |
 | **Frontend (Flutter Client)** | `screens/survey_screen.dart`<br>`screens/profile_screen.dart`<br>`screens/admin_screen.dart`<br>`services/api_service.dart` | Thiết kế giao diện đa bước Form khảo sát 5 chiều (Stepper/PageView), Màn hình hồ sơ cá nhân & chỉnh sửa tiêu chí, và Màn hình bảng điều khiển Quản trị viên (Admin Dashboard). |
-| **Lead BA & Tài liệu** | `docs/Nhom13_Mohinhhoayeucau.docx`<br>`docs/diagrams/use_cases/`<br>`docs/diagrams/sequences/`<br>`docs/SLIDE_PRESENTATION.pptx` | Chủ trì xây dựng 54 yêu cầu chức năng (FRs), vẽ 6 Lược đồ Use Case, Sequence Diagram luồng Khảo sát & Admin, biên soạn Slide báo cáo bảo vệ cuối kỳ. |
+| **Lead BA & Tài liệu** | `docs/Nhom13_Mohinhhoayeucau.docx`<br>`docs/diagrams/use_cases/`<br>`docs/diagrams/sequences/`<br>`docs/Trinh bay bao cao (new).PPT` | Chủ trì xây dựng 54 yêu cầu chức năng (FRs), vẽ 6 Lược đồ Use Case, Sequence Diagram luồng Khảo sát & Admin, biên soạn Slide báo cáo bảo vệ cuối kỳ. |
 
 ---
 
@@ -30,11 +31,11 @@ gantt
     section Giai đoạn 1
     54 FRs & Báo cáo Word Hoàn chỉnh (Xong)    :done, qh1, 2026-09-09, 2026-09-10
     section Giai đoạn 2
-    Vẽ 6 Use Case, Sequence & Spec 5 Chiều     :active, qh2, 2026-09-11, 2026-09-12
+    Vẽ 6 Use Case, Sequence & Spec 5 Chiều     :done, qh2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend Preference & Admin APIs       :qh3, 2026-09-13, 2026-09-15
+    Code Flutter Survey, Profile & Admin Screen:active, qh3, 2026-09-13, 2026-09-16
     section Giai đoạn 4
-    Code Flutter Survey, Profile & Admin Screen:qh4, 2026-09-16, 2026-09-19
+    Code Backend Preference & Admin APIs       :qh4, 2026-09-17, 2026-09-19
     section Giai đoạn 5
     Tích hợp E2E Survey, UAT Test & Slide PPT  :qh5, 2026-09-20, 2026-09-22
     section Giai đoạn 6
@@ -117,13 +118,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 3 (17/09 – 19/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 4 (17/09 – 19/09/2026)
 *Mục tiêu giai đoạn: Hoàn thiện 100% mã nguồn Java Spring Boot cho module Profile, Preference và Admin, viết Unit Test đạt độ phủ tốt.*  
-*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
 *Nhánh Git thực hiện*: `feature/preference-admin-backend`
 
 #### 📌 Task T4.3 (Mã: QH-3.1): Lập trình Backend Module `UserPreference` & `Profile`
-- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/dto/UserPreferenceDTO.java`:
     - Khai báo đầy đủ các trường: `minBudget`, `maxBudget`, `preferredLocation`, `sleepHabit`, `cookingHabit`, `cleanlinessLevel`, `smoking`, `petFriendly`, `personalityType`, `interests`.
@@ -145,7 +146,7 @@ gantt
   - Test dữ liệu sai (ngân sách âm): Trả về HTTP 400 Bad Request kèm message rõ ràng.
 
 #### 📌 Task T4.4 (Mã: QH-3.2): Lập trình Backend Module Quản trị viên (`AdminController` & `AdminService`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/AdminService.java`:
     - Hàm `getAllUsers(Pageable pageable, String status)`: Lấy danh sách người dùng kèm phân trang.
@@ -161,8 +162,8 @@ gantt
   - Tài khoản User thông thường gọi API Admin: Trả về HTTP 403 Forbidden.
   - Tài khoản Admin gọi API: Trả về dữ liệu đúng 100%.
 
-#### 📌 Task T4.x (Mã: QH-3.3): Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
+#### 📌 Task T4.7b (Mã: QH-3.3): Viết Bộ Unit Tests tự động cho `ProfileService` & `AdminService`
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/ProfileServiceTest.java`:
     - Test 1: Lưu tiêu chí mới thành công (Happy path).
@@ -180,13 +181,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 13/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 16/09/2026)
 *Mục tiêu giai đoạn: Xây dựng giao diện khảo sát tiêu chí mượt mà, màn hình hồ sơ cá nhân và trang quản trị Admin trực quan.*  
-*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Tư, 16/09/2026***
 *Nhánh Git thực hiện*: `feature/survey-profile-flutter`
 
 #### 📌 Task T3.4 (Mã: QH-4.1): Xây dựng Giao diện Form Khảo sát Tiêu chí 5 chiều (`survey_screen.dart`) [x] (✅ ĐÃ HOÀN THÀNH 14/09/2026)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026** — *Đã hoàn thành đúng hạn!*
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 14/09/2026** — *Đã hoàn thành đúng hạn!*
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/survey_screen.dart`, nâng cấp thành giao diện **Multi-step Stepper** gồm 5 bước:
     - *Bước 1: Ngân sách & Khu vực*:
@@ -207,7 +208,7 @@ gantt
   - Bắt lỗi Form (Validation): Nếu người dùng chưa chọn bước bắt buộc, hiển thị `SnackBar` cảnh báo.
 
 #### 📌 Task T3.5a (Mã: QH-4.2): Xây dựng Giao diện Màn hình Hồ sơ Cá nhân (`profile_screen.dart`) [ ] (⏳ ĐANG LÀM)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/profile_screen.dart`:
     - Header: `CircleAvatar` hiển thị ảnh đại diện, Tên hiển thị, Email sinh viên, Trường ĐH.
@@ -217,7 +218,7 @@ gantt
     - Section Cài đặt: Nút "Đổi mật khẩu" (mở Dialog nhập mật khẩu cũ/mới), Nút "Đăng xuất" (Xóa token trong `SharedPreferences` và chuyển về `login_screen.dart`).
 
 #### 📌 Task T3.5b (Mã: QH-4.3): Xây dựng Giao diện Bảng điều khiển Quản trị (`admin_screen.dart`) [ ] (⏳ ĐANG LÀM)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/admin_screen.dart`:
     - Cấu trúc `DefaultTabController` với 3 Tabs:
@@ -256,7 +257,7 @@ gantt
 #### 📌 Task QH-5.3: Hoàn thiện Slide Báo cáo & Bổ sung Tài liệu Word Đồ án
 - **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 22/09/2026**
 - **Nhiệm vụ cụ thể**:
-  - Thiết kế bộ Slide thuyết trình chính thức (`docs/SLIDE_PRESENTATION.pptx`):
+  - Hoàn thiện bộ Slide thuyết trình chính thức (`docs/Trinh bay bao cao (new).PPT`):
     - Slide 1-3: Giới thiệu đề tài Roommate Hub, thành viên nhóm và phân công vai trò.
     - Slide 4-6: Khảo sát hiện trạng, 54 Yêu cầu chức năng và 6 Lược đồ Use Case.
     - Slide 7-9: Kiến trúc hệ thống Fullstack (Spring Boot + Flutter + MySQL).
@@ -280,7 +281,7 @@ gantt
   - *Thời hạn*: ⏰ **18:00 Thứ Tư, 23/09/2026**
   - *Nhiệm vụ*: Đảm bảo các file tài liệu sau đã có bản hoàn thiện trong Git:
     - [`docs/Nhom13_Mohinhhoayeucau.docx`](docs/Nhom13_Mohinhhoayeucau.docx)
-    - `docs/SLIDE_PRESENTATION.pptx` (hoặc PDF)
+    - `docs/Trinh bay bao cao (new).PPT` (hoặc bản PDF xuất từ file này)
     - Toàn bộ sơ đồ trong `docs/diagrams/`
 
 ---
