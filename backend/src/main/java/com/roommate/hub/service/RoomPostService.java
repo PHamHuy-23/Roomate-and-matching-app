@@ -38,7 +38,13 @@ public class RoomPostService {
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .address(dto.getAddress())
+                .district(dto.getDistrict())
+                .deposit(dto.getDeposit())
+                .electricityWaterCost(dto.getElectricityWaterCost())
+                .area(dto.getArea())
                 .maxOccupants(dto.getMaxOccupants())
+                .currentOccupants(dto.getCurrentOccupants() != null ? dto.getCurrentOccupants() : 0)
+                .amenities(dto.getAmenities())
                 .status(RoomPost.PostStatus.PENDING) // Mặc định chờ duyệt
                 .build();
 
@@ -55,8 +61,14 @@ public class RoomPostService {
                 .description(post.getDescription())
                 .price(post.getPrice())
                 .address(post.getAddress())
+                .district(post.getDistrict())
+                .deposit(post.getDeposit())
+                .electricityWaterCost(post.getElectricityWaterCost())
+                .area(post.getArea())
                 .maxOccupants(post.getMaxOccupants())
+                .currentOccupants(post.getCurrentOccupants())
+                .amenities(post.getAmenities())
                 .createdAt(post.getCreatedAt())
                 .build();
     }
-}
+}

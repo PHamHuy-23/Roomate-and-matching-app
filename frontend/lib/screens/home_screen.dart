@@ -26,10 +26,21 @@ class _HomeScreenState extends State<HomeScreen> {
   List<RoomPost> _allPosts = [];
   List<RoomPost> _filteredPosts = [];
   bool _isLoadingPosts = true;
+  String? _postsError;
   String _searchKeyword = '';
   double _minPriceFilter = 0;
   double _maxPriceFilter = 10000000;
   String? _selectedDistrictFilter;
+  Set<String> _selectedAmenityFilters = {};
+
+  // Danh sách tiện ích cho bộ lọc
+  static const List<String> _filterAmenities = [
+    'Wifi', 'Máy lạnh', 'Nước nóng', 'Máy giặt', 'Giữ xe', 'Giờ tự do',
+  ];
+  static const Map<String, String> _amenityEmojis = {
+    'Wifi': '📶', 'Máy lạnh': '❄️', 'Nước nóng': '🚿',
+    'Máy giặt': '🧺', 'Giữ xe': '🛵', 'Giờ tự do': '🔑',
+  };
 
   // Danh sách quận cho bộ lọc
   static const List<String> _filterDistricts = [
@@ -60,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _matchesFuture = _api.getRecommendations(_currentUserId);
       _isLoadingPosts = true;
+      _postsError = null;
     });
 
     _api
@@ -75,7 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
         })
         .catchError((err) {
           if (mounted) {
-            setState(() => _isLoadingPosts = false);
+            setState(() {
+              _isLoadingPosts = false;
+              _postsError = err is Exception ? err.toString() : 'Lỗi không xác định';
+            });
           }
         });
   }
@@ -101,7 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
             p.district == _selectedDistrictFilter ||
             p.address.contains(_selectedDistrictFilter!);
 
-        return matchKeyword && matchPrice && matchDistrict;
+        // Lọc theo tiện ích (post phải chứa tất cả tiện ích đã chọn)
+        final matchAmenities = _selectedAmenityFilters.isEmpty ||
+            _selectedAmenityFilters.every((a) => p.amenities.contains(a));
+
+        return matchKeyword && matchPrice && matchDistrict && matchAmenities;
       }).toList();
     });
   }
@@ -112,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     double tempMin = _minPriceFilter;
     double tempMax = _maxPriceFilter;
     String? tempDistrict = _selectedDistrictFilter;
+    Set<String> tempAmenities = Set.from(_selectedAmenityFilters);
 
     showModalBottomSheet(
       context: context,
@@ -202,6 +222,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
+                  const SizedBox(height: 20),
+
+                  // Lọc theo Tiện ích
+                  const Text(
+                    'Tiện ích mong muốn',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _filterAmenities.map((a) {
+                      final isSelected = tempAmenities.contains(a);
+                      final emoji = _amenityEmojis[a] ?? '🔹';
+                      return FilterChip(
+                        label: Text('$emoji $a'),
+                        selected: isSelected,
+                        selectedColor: Colors.indigo.shade100,
+                        checkmarkColor: Colors.indigo,
+                        onSelected: (selected) {
+                          setModalState(() {
+                            if (selected) {
+                              tempAmenities.add(a);
+                            } else {
+                              tempAmenities.remove(a);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
                   const SizedBox(height: 24),
 
                   // Nút Áp dụng
@@ -214,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               tempMin = 0;
                               tempMax = 10000000;
                               tempDistrict = null;
+                              tempAmenities.clear();
                             });
                           },
                           style: OutlinedButton.styleFrom(
@@ -234,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               _minPriceFilter = tempMin;
                               _maxPriceFilter = tempMax;
                               _selectedDistrictFilter = tempDistrict;
+                              _selectedAmenityFilters = Set.from(tempAmenities);
                               _applyPostFilters();
                             });
                             Navigator.pop(context);
@@ -463,7 +516,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Badge(
                       isLabelVisible: _selectedDistrictFilter != null ||
                           _minPriceFilter > 0 ||
-                          _maxPriceFilter < 10000000,
+                          _maxPriceFilter < 10000000 ||
+                          _selectedAmenityFilters.isNotEmpty,
                       backgroundColor: Colors.deepOrange,
                       child: const Icon(
                         Icons.tune,
@@ -480,7 +534,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // Hiển thị bộ lọc đang áp dụng (nếu có)
         if (_selectedDistrictFilter != null ||
             _minPriceFilter > 0 ||
-            _maxPriceFilter < 10000000)
+            _maxPriceFilter < 10000000 ||
+            _selectedAmenityFilters.isNotEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -520,6 +575,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   ),
+                ..._selectedAmenityFilters.map((a) {
+                  final emoji = _amenityEmojis[a] ?? '🔹';
+                  return Chip(
+                    label: Text('$emoji $a',
+                        style: const TextStyle(fontSize: 12)),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedAmenityFilters.remove(a);
+                        _applyPostFilters();
+                      });
+                    },
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  );
+                }),
               ],
             ),
           ),
@@ -528,48 +599,93 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _isLoadingPosts
               ? const Center(child: CircularProgressIndicator())
-              : _filteredPosts.isEmpty
+              : _postsError != null
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.search_off,
-                              size: 64, color: Colors.grey.shade300),
+                          Icon(Icons.cloud_off,
+                              size: 64, color: Colors.red.shade300),
                           const SizedBox(height: 12),
                           Text(
-                            'Không tìm thấy phòng phù hợp',
+                            'Không thể tải danh sách phòng',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade700,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _searchKeyword = '';
-                                _minPriceFilter = 0;
-                                _maxPriceFilter = 10000000;
-                                _selectedDistrictFilter = null;
-                                _applyPostFilters();
-                              });
-                            },
-                            child: const Text('Xóa bộ lọc'),
+                          const SizedBox(height: 6),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Text(
+                              _postsError!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _loadData,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Thử lại'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: () async => _loadData(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _filteredPosts.length,
-                        itemBuilder: (context, i) {
-                          final p = _filteredPosts[i];
-                          return _buildRoomPostCard(p);
-                        },
-                      ),
-                    ),
+                  : _filteredPosts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off,
+                                  size: 64, color: Colors.grey.shade300),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Không tìm thấy phòng phù hợp',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _searchKeyword = '';
+                                    _minPriceFilter = 0;
+                                    _maxPriceFilter = 10000000;
+                                    _selectedDistrictFilter = null;
+                                    _selectedAmenityFilters = {};
+                                    _applyPostFilters();
+                                  });
+                                },
+                                child: const Text('Xóa bộ lọc'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async => _loadData(),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _filteredPosts.length,
+                            itemBuilder: (context, i) {
+                              final p = _filteredPosts[i];
+                              return _buildRoomPostCard(p);
+                            },
+                          ),
+                        ),
         ),
       ],
     );

@@ -111,6 +111,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       // Ghép địa chỉ đầy đủ: số nhà, đường + Quận
       final fullAddress = '${_addressCtrl.text.trim()}, $_selectedDistrict';
 
+      final maxOcc = int.tryParse(_maxOccupantsCtrl.text.trim()) ?? 1;
+      final curOcc = int.tryParse(_currentOccupantsCtrl.text.trim()) ?? 0;
+
+      if (curOcc > maxOcc) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Số người hiện tại không được vượt quá số người tối đa!'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final payload = {
         'authorId': widget.authorId,
         'title': _titleCtrl.text.trim(),
@@ -120,8 +136,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         'deposit': _parsePrice(_depositCtrl.text),
         'electricityWaterCost': _parsePrice(_electricWaterCtrl.text),
         'area': double.tryParse(_areaCtrl.text.trim()),
-        'maxOccupants': int.parse(_maxOccupantsCtrl.text.trim()),
-        'currentOccupants': int.parse(_currentOccupantsCtrl.text.trim()),
+        'maxOccupants': maxOcc,
+        'currentOccupants': curOcc,
         'description': _descCtrl.text.trim(),
         'amenities': selectedAmenities.join(','),
       };
@@ -407,6 +423,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.person),
                               ),
+                              validator: (v) {
+                                if (v != null && v.trim().isNotEmpty) {
+                                  final n = int.tryParse(v.trim());
+                                  if (n == null || n < 0) return 'Số không hợp lệ';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ],

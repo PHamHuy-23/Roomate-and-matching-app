@@ -23,7 +23,20 @@ public class CreateRoomPostDTO {
     @NotBlank(message = "Địa chỉ không được để trống")
     private String address;
 
+    private String district;
+
+    private Double deposit;
+
+    private Double electricityWaterCost;
+
+    private Double area;
+
     @NotNull(message = "Số lượng người tối đa không được để trống")
     @Min(value = 1, message = "Tối thiểu là 1 người")
     private Integer maxOccupants;
-}
+
+    @Min(value = 0, message = "Số người hiện tại không được âm")
+    private Integer currentOccupants;
+
+    private String amenities;
+}

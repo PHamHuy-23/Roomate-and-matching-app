@@ -35,8 +35,25 @@ public class RoomPost {
     @Column(nullable = false, length = 255)
     private String address;
 
+    @Column(length = 100)
+    private String district;
+
+    private Double deposit;
+
+    @Column(name = "electricity_water_cost")
+    private Double electricityWaterCost;
+
+    private Double area;
+
     @Column(nullable = false)
     private Integer maxOccupants;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer currentOccupants = 0;
+
+    @Column(length = 500)
+    private String amenities;
 
     @Column(length = 255)
     private String imageUrl;
@@ -55,4 +72,4 @@ public class RoomPost {
         REJECTED,   // Bị từ chối
         AVAILABLE   // Tương đương APPROVED
     }
-}
+}
