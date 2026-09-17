@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 
 class SurveyScreen extends StatefulWidget {
   final int userId;
+  final ApiService? apiService;
   final bool redirectToHomeOnComplete;
 
   const SurveyScreen({
     super.key,
     required this.userId,
+    this.apiService,
     this.redirectToHomeOnComplete = false,
   });
 
@@ -18,7 +19,7 @@ class SurveyScreen extends StatefulWidget {
 }
 
 class _SurveyScreenState extends State<SurveyScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final NumberFormat fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   int _currentStep = 0;
@@ -31,8 +32,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   String _targetGender = 'ANY'; // ANY, MALE, FEMALE (Theo UC-07)
 
   // Bước 2: Lối sống sinh hoạt (UC-08, FR-08)
-  int _sleepHabit =
-      1; // 1: Dậy sớm (Early Bird), 2: Bình thường, 3: Cú đêm (Night Owl)
+  int _sleepHabit = 1; // 1: Dậy sớm (Early Bird), 2: Bình thường, 3: Cú đêm (Night Owl)
   String _cookingHabit = 'COOK_HOME'; // COOK_HOME, EAT_OUT, FLEXIBLE
 
   // Bước 3: Thói quen cá nhân (UC-08, FR-08)
@@ -44,10 +44,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
   // Bước 4: Tính cách, Sở thích & Kế hoạch ở (UC-08, UC-25, UC-42 - FR-25, FR-42)
   String _personality = 'AMBIVERT'; // INTROVERT, EXTROVERT, AMBIVERT
   Set<String> _selectedInterests = {'Thể thao', 'Đọc sách', 'Âm nhạc'};
-  String _moveInTime =
-      'ASAP'; // ASAP: Dọn vào ngay, TWO_WEEKS: Trong 2 tuần, NEXT_MONTH: Đầu tháng sau, FLEXIBLE: Linh hoạt
-  String _topPriority =
-      'BUDGET'; // BUDGET, SLEEP, CLEAN, SMOKING (FR-25 Trọng số động)
+  String _moveInTime = 'ASAP'; // ASAP: Dọn vào ngay, TWO_WEEKS: Trong 2 tuần, NEXT_MONTH: Đầu tháng sau, FLEXIBLE: Linh hoạt
+  String _topPriority = 'BUDGET'; // BUDGET, SLEEP, CLEAN, SMOKING (FR-25 Trọng số động)
   final TextEditingController _bioCtrl = TextEditingController();
 
   static const Map<String, String> _districtMap = {
@@ -91,6 +89,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadPreferences();
   }
 
@@ -207,11 +206,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
             _district = targetDist;
           }
 
-          final loadedBudget =
-              (data['budgetAmount'] as num?)?.toDouble() ?? 3000000.0;
+          final loadedBudget = (data['budgetAmount'] as num?)?.toDouble() ?? 3000000.0;
           _sleepHabit = (data['sleepHabit'] as int?) ?? 1;
-          _cleanliness = ((data['cleanlinessLevel'] as num?)?.toDouble() ?? 4.0)
-              .clamp(1.0, 5.0);
+          _cleanliness = ((data['cleanlinessLevel'] as num?)?.toDouble() ?? 4.0).clamp(1.0, 5.0);
           _isSmoking = (data['isSmoking'] as bool?) ?? false;
           _allowPets = (data['allowPets'] as bool?) ?? false;
           _petHabit = _allowPets ? 'LOVE_PETS' : 'NO_PETS';
@@ -258,13 +255,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
           }
         } else if (part.startsWith('Ngân sách:')) {
           final numMatches = RegExp(r'([\d\.]+)').allMatches(part);
-          final nums = numMatches
-              .map((m) {
-                final clean = m.group(1)!.replaceAll('.', '');
-                return double.tryParse(clean);
-              })
-              .whereType<double>()
-              .toList();
+          final nums = numMatches.map((m) {
+            final clean = m.group(1)!.replaceAll('.', '');
+            return double.tryParse(clean);
+          }).whereType<double>().toList();
           if (nums.length >= 2) {
             parsedMin = nums[0].clamp(1000000.0, 14500000.0);
             parsedMax = nums[1].clamp(1500000.0, 15000000.0);
@@ -301,11 +295,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
           }
         } else if (part.startsWith('Sở thích:')) {
           final val = part.replaceFirst('Sở thích:', '').trim();
-          final list = val
-              .split(',')
-              .map((s) => s.trim())
-              .where((s) => s.isNotEmpty)
-              .toSet();
+          final list = val.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toSet();
           if (list.isNotEmpty) _selectedInterests = list;
         } else if (part.startsWith('Dọn vào:')) {
           final val = part.replaceFirst('Dọn vào:', '').trim();
@@ -355,8 +345,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
       'Nấu ăn: ${_cookingHabitLabel(_cookingHabit)}',
       'Thú cưng: ${_petHabitLabel(_petHabit)}',
       'Tính cách: ${_personalityLabel(_personality)}',
-      if (_selectedInterests.isNotEmpty)
-        'Sở thích: ${_selectedInterests.join(", ")}',
+      if (_selectedInterests.isNotEmpty) 'Sở thích: ${_selectedInterests.join(", ")}',
       'Dọn vào: ${_moveInTimeLabel(_moveInTime)}',
       'Ưu tiên: ${_topPriorityLabel(_topPriority)}',
     ].join(' | ');
@@ -375,9 +364,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
           return false;
         }
         if (_budgetRange.start >= _budgetRange.end) {
-          _showWarningSnackBar(
-            'Ngân sách tối thiểu phải nhỏ hơn ngân sách tối đa!',
-          );
+          _showWarningSnackBar('Ngân sách tối thiểu phải nhỏ hơn ngân sách tối đa!');
           return false;
         }
         return true;
@@ -393,9 +380,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         return true;
       case 2:
         if (_cleanliness < 1.0 || _cleanliness > 5.0) {
-          _showWarningSnackBar(
-            'Vui lòng đánh giá mức độ sạch sẽ từ 1 đến 5 sao!',
-          );
+          _showWarningSnackBar('Vui lòng đánh giá mức độ sạch sẽ từ 1 đến 5 sao!');
           return false;
         }
         if (_petHabit.isEmpty) {
@@ -409,9 +394,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
           return false;
         }
         if (_selectedInterests.isEmpty) {
-          _showWarningSnackBar(
-            'Vui lòng chọn ít nhất 1 sở thích để tìm bạn trọ phù hợp!',
-          );
+          _showWarningSnackBar('Vui lòng chọn ít nhất 1 sở thích để tìm bạn trọ phù hợp!');
           return false;
         }
         return true;
@@ -434,10 +417,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
               ),
             ),
           ],
@@ -508,10 +488,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 Expanded(
                   child: Text(
                     'Lưu tiêu chí thành công! Hệ thống đã tính toán lại gợi ý ghép đôi phù hợp nhất.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
               ],
@@ -555,10 +532,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text(
-                'Đang tải tiêu chí khảo sát...',
-                style: TextStyle(color: Colors.grey),
-              ),
+              Text('Đang tải tiêu chí khảo sát...', style: TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -590,108 +564,88 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 onStepContinue: _onStepContinue,
                 onStepCancel: _onStepCancel,
                 onStepTapped: _onStepTapped,
-                controlsBuilder:
-                    (BuildContext context, ControlsDetails details) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Row(
-                          children: [
-                            if (_currentStep < 4) ...[
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: details.onStepContinue,
-                                  icon: const Icon(Icons.arrow_forward),
-                                  label: const Text(
-                                    'TIẾP TỤC',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.indigo,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
+                controlsBuilder: (BuildContext context, ControlsDetails details) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Row(
+                      children: [
+                        if (_currentStep < 4) ...[
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: details.onStepContinue,
+                              icon: const Icon(Icons.arrow_forward),
+                              label: const Text(
+                                'TIẾP TỤC',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.indigo,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                            ] else ...[
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: _isSaving ? null : _save,
-                                  icon: _isSaving
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(Icons.check_circle_outline),
-                                  label: Text(
-                                    _isSaving
-                                        ? 'Đang lưu tiêu chí...'
-                                        : 'LƯU TIÊU CHÍ & TÌM BẠN TRỌ NGAY',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.indigo,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
+                            ),
+                          ),
+                        ] else ...[
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _isSaving ? null : _save,
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.check_circle_outline),
+                              label: Text(
+                                _isSaving ? 'Đang lưu tiêu chí...' : 'LƯU TIÊU CHÍ & TÌM BẠN TRỌ NGAY',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.indigo,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                            ],
-                            if (_currentStep > 0) ...[
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed: details.onStepCancel,
-                                icon: const Icon(Icons.arrow_back),
-                                label: const Text('Quay lại'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.indigo,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
+                            ),
+                          ),
+                        ],
+                        if (_currentStep > 0) ...[
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: details.onStepCancel,
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Quay lại'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.indigo,
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
                 steps: [
                   // BƯỚC 1: TIÊU CHÍ CỨNG (UC-07, FR-07)
                   Step(
                     title: const Text(
                       'Bước 1: Ngân sách & Khu vực',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: Text(
                       '${fmt.format(_budgetRange.start)} - ${fmt.format(_budgetRange.end)} • ${_districtDisplay(_district)}',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                     isActive: _currentStep >= 0,
                     state: _getStepState(0),
@@ -702,17 +656,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   Step(
                     title: const Text(
                       'Bước 2: Lối sống sinh hoạt',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: Text(
                       '${_sleepHabitLabel(_sleepHabit)} • ${_cookingHabitLabel(_cookingHabit)}',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                     isActive: _currentStep >= 1,
                     state: _getStepState(1),
@@ -723,17 +671,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   Step(
                     title: const Text(
                       'Bước 3: Thói quen cá nhân',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: Text(
                       '${_cleanliness.toInt()}★ • ${_isSmoking ? "Có hút thuốc" : "Không hút thuốc"} • ${_petHabitLabel(_petHabit)}',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                     isActive: _currentStep >= 2,
                     state: _getStepState(2),
@@ -744,17 +686,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   Step(
                     title: const Text(
                       'Bước 4: Tính cách & Sở thích',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: Text(
                       '${_personalityLabel(_personality)} • ${_selectedInterests.length} sở thích',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                     isActive: _currentStep >= 3,
                     state: _getStepState(3),
@@ -765,10 +701,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   Step(
                     title: const Text(
                       'Bước 5: Tổng quan & Xác nhận',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: const Text(
                       'Xem lại hồ sơ tiêu chí 5 chiều trước khi lưu',
@@ -851,14 +784,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '1.000.000 đ',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            Text(
-              '15.000.000 đ',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text('1.000.000 đ', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('15.000.000 đ', style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         const SizedBox(height: 14),
@@ -892,9 +819,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: _districtMap.containsKey(_district)
-              ? _district
-              : 'Thu Duc',
+          initialValue: _districtMap.containsKey(_district) ? _district : 'Thu Duc',
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -916,31 +841,28 @@ class _SurveyScreenState extends State<SurveyScreen> {
         Wrap(
           spacing: 8,
           runSpacing: 6,
-          children:
-              [
-                'Thu Duc',
-                'Binh Thanh',
-                'Quan 10',
-                'Go Vap',
-                'Quan 1',
-                'Quan 7',
-              ].map((key) {
-                final isSelected = _district == key;
-                return ChoiceChip(
-                  label: Text(_districtMap[key] ?? key),
-                  selected: isSelected,
-                  selectedColor: Colors.indigo.shade100,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.indigo.shade900 : Colors.black87,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                  onSelected: (selected) {
-                    if (selected) setState(() => _district = key);
-                  },
-                );
-              }).toList(),
+          children: [
+            'Thu Duc',
+            'Binh Thanh',
+            'Quan 10',
+            'Go Vap',
+            'Quan 1',
+            'Quan 7',
+          ].map((key) {
+            final isSelected = _district == key;
+            return ChoiceChip(
+              label: Text(_districtMap[key] ?? key),
+              selected: isSelected,
+              selectedColor: Colors.indigo.shade100,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.indigo.shade900 : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              onSelected: (selected) {
+                if (selected) setState(() => _district = key);
+              },
+            );
+          }).toList(),
         ),
         const SizedBox(height: 20),
         const Divider(),
@@ -993,9 +915,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
     final isSelected = (_budgetRange.start == start && _budgetRange.end == end);
     return ActionChip(
       label: Text(label),
-      backgroundColor: isSelected
-          ? Colors.indigo.shade100
-          : Colors.grey.shade100,
+      backgroundColor: isSelected ? Colors.indigo.shade100 : Colors.grey.shade100,
       labelStyle: TextStyle(
         fontSize: 12,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -1034,10 +954,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             segments: const [
               ButtonSegment<int>(
                 value: 1,
-                label: Text(
-                  'Dậy sớm (Early Bird)',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: Text('Dậy sớm (Early Bird)', style: TextStyle(fontSize: 12)),
                 icon: Icon(Icons.wb_sunny_outlined, size: 18),
               ),
               ButtonSegment<int>(
@@ -1047,10 +964,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
               ),
               ButtonSegment<int>(
                 value: 3,
-                label: Text(
-                  'Cú đêm (Night Owl)',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: Text('Cú đêm (Night Owl)', style: TextStyle(fontSize: 12)),
                 icon: Icon(Icons.nightlight_round_outlined, size: 18),
               ),
             ],
@@ -1065,13 +979,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
           _sleepHabit == 1
               ? 'Thường đi ngủ trước 23h và thức dậy sớm trước 6h30 sáng.'
               : _sleepHabit == 3
-              ? 'Thường thức khuya sau 1h sáng, học tập hoặc làm việc về đêm.'
-              : 'Giờ giấc linh hoạt theo lịch học và làm việc trong tuần.',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-            fontStyle: FontStyle.italic,
-          ),
+                  ? 'Thường thức khuya sau 1h sáng, học tập hoặc làm việc về đêm.'
+                  : 'Giờ giấc linh hoạt theo lịch học và làm việc trong tuần.',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
         ),
         const SizedBox(height: 20),
         const Divider(),
@@ -1098,10 +1008,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
               ),
               ButtonSegment<String>(
                 value: 'EAT_OUT',
-                label: Text(
-                  'Ăn ngoài / Tiện lợi',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: Text('Ăn ngoài / Tiện lợi', style: TextStyle(fontSize: 12)),
                 icon: Icon(Icons.fastfood_outlined, size: 18),
               ),
               ButtonSegment<String>(
@@ -1121,13 +1028,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
           _cookingHabit == 'COOK_HOME'
               ? 'Thường xuyên đi chợ và chuẩn bị bữa ăn tại phòng trọ.'
               : _cookingHabit == 'EAT_OUT'
-              ? 'Ưu tiên ăn ngoài, quán cơm bình dân hoặc đặt đồ ăn trực tuyến.'
-              : 'Thỉnh thoảng nấu ăn cuối tuần, trong tuần ăn ngoài tiện lợi.',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-            fontStyle: FontStyle.italic,
-          ),
+                  ? 'Ưu tiên ăn ngoài, quán cơm bình dân hoặc đặt đồ ăn trực tuyến.'
+                  : 'Thỉnh thoảng nấu ăn cuối tuần, trong tuần ăn ngoài tiện lợi.',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
         ),
       ],
     );
@@ -1146,11 +1049,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
           children: [
             const Row(
               children: [
-                Icon(
-                  Icons.cleaning_services_outlined,
-                  color: Colors.indigo,
-                  size: 20,
-                ),
+                Icon(Icons.cleaning_services_outlined, color: Colors.indigo, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Mức độ sạch sẽ / ngăn nắp:',
@@ -1201,17 +1100,13 @@ class _SurveyScreenState extends State<SurveyScreen> {
             _cleanliness == 1
                 ? 'Thoải mái, ít khi dọn dẹp thường xuyên'
                 : _cleanliness == 2
-                ? 'Mức trung bình, dọn dẹp khi cảm thấy cần thiết'
-                : _cleanliness == 3
-                ? 'Gọn gàng, có lịch dọn phòng định kỳ trong tuần'
-                : _cleanliness == 4
-                ? 'Rất sạch sẽ, lau chùi và giữ không gian luôn tinh tươm'
-                : 'Cực kỳ ngăn nắp & sạch sẽ tuyệt đối, đồ vật luôn đúng chỗ',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
-            ),
+                    ? 'Mức trung bình, dọn dẹp khi cảm thấy cần thiết'
+                    : _cleanliness == 3
+                        ? 'Gọn gàng, có lịch dọn phòng định kỳ trong tuần'
+                        : _cleanliness == 4
+                            ? 'Rất sạch sẽ, lau chùi và giữ không gian luôn tinh tươm'
+                            : 'Cực kỳ ngăn nắp & sạch sẽ tuyệt đối, đồ vật luôn đúng chỗ',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
           ),
         ),
         const SizedBox(height: 20),
@@ -1347,11 +1242,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
             Text(
               'Đã chọn ${_selectedInterests.length}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.indigo.shade700,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.indigo.shade700, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -1398,11 +1289,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         // UC-42: Kế hoạch thời gian dọn vào ở
         const Row(
           children: [
-            Icon(
-              Icons.event_available_outlined,
-              color: Colors.indigo,
-              size: 20,
-            ),
+            Icon(Icons.event_available_outlined, color: Colors.indigo, size: 20),
             SizedBox(width: 8),
             Text(
               'Dự kiến thời gian dọn vào ở (UC-42):',
@@ -1461,22 +1348,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
           items: const [
-            DropdownMenuItem(
-              value: 'BUDGET',
-              child: Text('Ngân sách phù hợp (Hệ số x 2.0)'),
-            ),
-            DropdownMenuItem(
-              value: 'SLEEP',
-              child: Text('Giờ giấc ngủ nghỉ tương đồng (Hệ số x 2.0)'),
-            ),
-            DropdownMenuItem(
-              value: 'CLEAN',
-              child: Text('Mức độ sạch sẽ ngăn nắp (Hệ số x 2.0)'),
-            ),
-            DropdownMenuItem(
-              value: 'SMOKING',
-              child: Text('Tuyệt đối không khói thuốc (Knock-out)'),
-            ),
+            DropdownMenuItem(value: 'BUDGET', child: Text('Ngân sách phù hợp (Hệ số x 2.0)')),
+            DropdownMenuItem(value: 'SLEEP', child: Text('Giờ giấc ngủ nghỉ tương đồng (Hệ số x 2.0)')),
+            DropdownMenuItem(value: 'CLEAN', child: Text('Mức độ sạch sẽ ngăn nắp (Hệ số x 2.0)')),
+            DropdownMenuItem(value: 'SMOKING', child: Text('Tuyệt đối không khói thuốc (Knock-out)')),
           ],
           onChanged: (val) {
             if (val != null) setState(() => _topPriority = val);
@@ -1502,8 +1377,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
           maxLines: 3,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            hintText:
-                'Ví dụ: Sinh viên năm 3 IT, tìm bạn ghép phòng sạch sẽ, hòa đồng, không ồn ào giờ khuya...',
+            hintText: 'Ví dụ: Sinh viên năm 3 IT, tìm bạn ghép phòng sạch sẽ, hòa đồng, không ồn ào giờ khuya...',
           ),
         ),
       ],
@@ -1537,11 +1411,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                         color: Colors.indigo.shade50,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.verified,
-                        color: Colors.indigo,
-                        size: 24,
-                      ),
+                      child: const Icon(Icons.verified, color: Colors.indigo, size: 24),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -1550,10 +1420,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                         children: [
                           Text(
                             'Tóm Tắt Hồ Sơ Tiêu Chí 5 Chiều',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           Text(
                             'Đối chiếu chuẩn theo biểu mẫu QLTC_BM1',
@@ -1579,8 +1446,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 _buildSummaryRow(
                   icon: Icons.nightlife_outlined,
                   title: 'Lối sống sinh hoạt:',
-                  content:
-                      '${_sleepHabitLabel(_sleepHabit)} • ${_cookingHabitLabel(_cookingHabit)}',
+                  content: '${_sleepHabitLabel(_sleepHabit)} • ${_cookingHabitLabel(_cookingHabit)}',
                 ),
                 const SizedBox(height: 12),
 
@@ -1661,11 +1527,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 13,
-                height: 1.4,
-              ),
+              style: const TextStyle(color: Colors.black87, fontSize: 13, height: 1.4),
               children: [
                 TextSpan(
                   text: '$title ',

@@ -43,6 +43,11 @@ class AuthSession extends ChangeNotifier {
     return user;
   }
 
+  void updateUser(AuthUser updatedUser) {
+    _user = updatedUser;
+    notifyListeners();
+  }
+
   Future<bool> updateProfile({
     required String fullName,
     required String phone,
@@ -62,13 +67,15 @@ class AuthSession extends ChangeNotifier {
       university,
     );
     if (updated) {
-      _user = currentUser.copyWith(
-        fullName: fullName,
-        gender: gender,
-        birthDate: birthDate,
-        university: university,
+      updateUser(
+        currentUser.copyWith(
+          fullName: fullName,
+          phone: phone,
+          gender: gender,
+          birthDate: birthDate,
+          university: university,
+        ),
       );
-      notifyListeners();
     }
     return updated;
   }

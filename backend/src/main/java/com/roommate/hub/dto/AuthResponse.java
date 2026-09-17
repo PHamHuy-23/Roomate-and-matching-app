@@ -20,4 +20,5 @@ public class AuthResponse {
     private LocalDate birthDate;
     private String university;
     private String role;
+    private String phone;
 }

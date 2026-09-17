@@ -5,11 +5,13 @@ import com.roommate.hub.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 
 @Configuration
+@Profile("!test")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
