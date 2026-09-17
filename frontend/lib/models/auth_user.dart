@@ -5,6 +5,8 @@ class AuthUser {
   final String fullName;
   final String gender;
   final String role;
+  final DateTime? birthDate;
+  final String? university;
 
   AuthUser({
     required this.token,
@@ -13,7 +15,27 @@ class AuthUser {
     required this.fullName,
     required this.gender,
     required this.role,
+    this.birthDate,
+    this.university,
   });
+
+  AuthUser copyWith({
+    String? fullName,
+    String? gender,
+    DateTime? birthDate,
+    String? university,
+  }) {
+    return AuthUser(
+      token: token,
+      userId: userId,
+      email: email,
+      fullName: fullName ?? this.fullName,
+      gender: gender ?? this.gender,
+      role: role,
+      birthDate: birthDate ?? this.birthDate,
+      university: university ?? this.university,
+    );
+  }
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     final nestedUser = json['user'];
@@ -30,6 +52,10 @@ class AuthUser {
       fullName: user['fullName'] as String,
       gender: user['gender'] as String,
       role: user['role'] as String,
+      birthDate: user['birthDate'] is String
+          ? DateTime.tryParse(user['birthDate'] as String)
+          : null,
+      university: user['university'] as String?,
     );
   }
 }
