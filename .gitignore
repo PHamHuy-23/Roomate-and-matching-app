@@ -30,3 +30,8 @@ MEMORY.md
 .claude/
 .cursor/
 .copilot/
+
+# Local AI review/worktree artifacts
+.codex-*/
+.bugbot-*/
+.bugbot-*.zip
