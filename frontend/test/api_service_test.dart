@@ -22,4 +22,19 @@ void main() {
     expect(service.authToken, isNull);
     expect(service.hasAuthToken, isFalse);
   });
+
+  test('payload đăng ký chứa ngày sinh và trường đại học', () {
+    final payload = ApiService.createRegistrationPayload(
+      email: 'new.user@example.com',
+      password: '123456',
+      fullName: 'Người dùng mới',
+      gender: 'MALE',
+      phone: '0901234567',
+      birthDate: DateTime(2004, 4, 12),
+      university: 'Đại học Quốc gia TP.HCM',
+    );
+
+    expect(payload['birthDate'], '2004-04-12');
+    expect(payload['university'], 'Đại học Quốc gia TP.HCM');
+  });
 }
