@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,6 +37,12 @@ public class User {
 
     @Column(length = 255)
     private String avatarUrl;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(length = 150)
+    private String university;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

@@ -6,6 +6,7 @@ Thư mục này chứa toàn bộ các script SQL để thiết kế bảng và 
 
 - `01_schema.sql`: Chứa mã DDL tạo Database `roommate_hub`, 4 bảng chính (`users`, `user_preferences`, `room_posts`, `match_requests`), các ràng buộc khóa ngoại (Foreign Keys) và chỉ mục (Indexes).
 - `02_seed_data.sql`: Chứa mã DML nạp dữ liệu mẫu bao gồm tài khoản Admin, tài khoản sinh viên, khảo sát phong cách sống, bài đăng tìm phòng trọ và yêu cầu kết nối ghép đôi.
+- `migrations/20260916_add_user_academic_profile.sql`: Migration một lần cho database cũ, bổ sung ngày sinh và trường đại học vào hồ sơ người dùng.
 - `roommate_hub.sql`: File SQL trọn gói (gồm cả Schema và Seed Data) giúp khởi tạo CSDL hoàn chỉnh chỉ với 1 lần thực thi.
 
 ---
@@ -36,6 +37,11 @@ Hoặc chạy tuần tự 2 file:
 ```bash
 mysql -u root -p < database/01_schema.sql
 mysql -u root -p < database/02_seed_data.sql
+```
+
+Nếu database đã tồn tại từ phiên bản cũ, chạy migration trước khi dùng Discovery Feed:
+```bash
+mysql -u root -p < database/migrations/20260916_add_user_academic_profile.sql
 ```
 
 ### Cách 2: Sử dụng DBeaver / MySQL Workbench / phpMyAdmin

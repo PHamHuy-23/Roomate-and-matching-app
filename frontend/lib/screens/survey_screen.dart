@@ -4,14 +4,22 @@ import '../services/api_service.dart';
 
 class SurveyScreen extends StatefulWidget {
   final int userId;
-  const SurveyScreen({super.key, required this.userId});
+  final ApiService? apiService;
+  final bool redirectToHomeOnComplete;
+
+  const SurveyScreen({
+    super.key,
+    required this.userId,
+    this.apiService,
+    this.redirectToHomeOnComplete = false,
+  });
 
   @override
   State<SurveyScreen> createState() => _SurveyScreenState();
 }
 
 class _SurveyScreenState extends State<SurveyScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final NumberFormat fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   int _currentStep = 0;
@@ -81,6 +89,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadPreferences();
   }
 
@@ -486,7 +495,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
           ),
         );
-        Navigator.pop(context, true);
+        if (widget.redirectToHomeOnComplete) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        } else {
+          Navigator.pop(context, true);
+        }
       } else {
         _showWarningSnackBar('Lưu tiêu chí thất bại, vui lòng thử lại sau!');
       }
