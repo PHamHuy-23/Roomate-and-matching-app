@@ -1,0 +1,747 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2330" height="8800" viewBox="0 0 2330 8800">
+<rect x="0" y="0" width="2330" height="8800" rx="0" fill="#EAF1EF" stroke="none" stroke-width="1"/>
+<text x="70" y="70" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800" fill="#142523" text-anchor="start">ROOMMATE HUB — PENPOT MASTER BOARD</text>
+<text x="70" y="105" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#52625F" text-anchor="start">Editable SVG • Mobile 390×844 • Admin 1320×820 • Tokens aligned with Flutter</text>
+<text x="70" y="126" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">A01 / Welcome</text>
+<text x="70" y="143" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Điểm vào sản phẩm</text>
+<rect x="70" y="150" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="196" y="160" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="90" y="208" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="420" y="208" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<circle cx="265" cy="360" r="72" fill="#CDEFE7"/>
+<text x="265" y="374" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="800" fill="#087E6B" text-anchor="middle">RH</text>
+<text x="265" y="480" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="middle">Tìm người ở ghép phù hợp</text>
+<text x="265" y="513" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#52625F" text-anchor="middle">An toàn, minh bạch, không phải hẹn hò.</text>
+<rect x="100" y="800" width="330" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="265" y="830" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Bắt đầu</text>
+<rect x="100" y="864" width="330" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="265" y="894" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Tôi đã có tài khoản</text>
+<text x="520" y="126" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">A02 / Login</text>
+<text x="520" y="143" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-02</text>
+<rect x="520" y="150" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="646" y="160" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="540" y="208" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="870" y="208" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="542" y="254" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="578" y="249" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Đăng nhập</text>
+<line x1="538" y1="270" x2="892" y2="270" stroke="#DCE6E3" stroke-width="1"/>
+<text x="544" y="310" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Email</text>
+<rect x="544" y="320" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="558" y="350" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">sinhvien@university.edu</text>
+<text x="544" y="396" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Mật khẩu</text>
+<rect x="544" y="406" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="558" y="436" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">••••••••</text>
+<text x="886" y="494" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="650" fill="#087E6B" text-anchor="end">Quên mật khẩu?</text>
+<rect x="544" y="530" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="715" y="560" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Đăng nhập</text>
+<text x="715" y="620" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#087E6B" text-anchor="middle">Chưa có tài khoản? Đăng ký</text>
+<text x="970" y="126" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">A03 / Register</text>
+<text x="970" y="143" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-01</text>
+<rect x="970" y="150" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1096" y="160" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="990" y="208" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1320" y="208" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="992" y="254" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1028" y="249" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Tạo tài khoản</text>
+<line x1="988" y1="270" x2="1342" y2="270" stroke="#DCE6E3" stroke-width="1"/>
+<text x="994" y="295" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Họ và tên</text>
+<rect x="994" y="305" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1008" y="335" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">Nguyễn Minh Anh</text>
+<text x="994" y="375" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Email trường</text>
+<rect x="994" y="385" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1008" y="415" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">minhanh@university.edu</text>
+<text x="994" y="455" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Mật khẩu</text>
+<rect x="994" y="465" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1008" y="495" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">••••••••</text>
+<text x="994" y="535" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Xác nhận mật khẩu</text>
+<rect x="994" y="545" width="342" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1008" y="575" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">••••••••</text>
+<text x="994" y="645" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">✓ Tôi đồng ý Điều khoản và Chính sách riêng tư</text>
+<rect x="994" y="680" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1165" y="710" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Tạo tài khoản</text>
+<text x="1420" y="126" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">A04 / Verify Email</text>
+<text x="1420" y="143" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-22</text>
+<rect x="1420" y="150" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1546" y="160" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1440" y="208" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1770" y="208" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1442" y="254" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1478" y="249" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Xác minh email</text>
+<line x1="1438" y1="270" x2="1792" y2="270" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="1615" cy="380" r="64" fill="#EAF8F5"/>
+<text x="1615" y="395" font-family="Inter,Arial,sans-serif" font-size="40" font-weight="700" fill="#087E6B" text-anchor="middle">✉</text>
+<text x="1615" y="490" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="middle">Kiểm tra hộp thư của bạn</text>
+<text x="1615" y="525" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="middle">Chúng tôi đã gửi liên kết xác minh</text>
+<text x="1615" y="547" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#52625F" text-anchor="middle">tới minhanh@university.edu</text>
+<rect x="1450" y="670" width="330" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1615" y="700" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Mở ứng dụng email</text>
+<rect x="1450" y="734" width="330" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1615" y="764" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Gửi lại email</text>
+<text x="1870" y="126" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">B01 / Survey Intro</text>
+<text x="1870" y="143" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-07–09</text>
+<rect x="1870" y="150" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1996" y="160" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1890" y="208" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="2220" y="208" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1892" y="254" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1928" y="249" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Hồ sơ tương thích</text>
+<line x1="1888" y1="270" x2="2242" y2="270" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1894" y="315" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#087E6B" text-anchor="start">Bước 1/4</text>
+<rect x="1894" y="330" width="342" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="1894" y="330" width="86" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1894" y="400" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="start">Cùng tìm người ở ghép</text>
+<text x="1894" y="432" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="start">phù hợp với nhịp sống của bạn</text>
+<circle cx="1914" cy="505" r="18" fill="#EAF8F5"/>
+<text x="1914" y="511" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#087E6B" text-anchor="middle">1</text>
+<text x="1946" y="511" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Ngân sách</text>
+<circle cx="1914" cy="563" r="18" fill="#EAF8F5"/>
+<text x="1914" y="569" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#087E6B" text-anchor="middle">2</text>
+<text x="1946" y="569" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Thói quen sinh hoạt</text>
+<circle cx="1914" cy="621" r="18" fill="#EAF8F5"/>
+<text x="1914" y="627" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#087E6B" text-anchor="middle">3</text>
+<text x="1946" y="627" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Mức độ sạch sẽ</text>
+<circle cx="1914" cy="679" r="18" fill="#EAF8F5"/>
+<text x="1914" y="685" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#087E6B" text-anchor="middle">4</text>
+<text x="1946" y="685" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Thú cưng &amp; hút thuốc</text>
+<rect x="1894" y="850" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="2065" y="880" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Bắt đầu khảo sát</text>
+<text x="70" y="1066" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">B02 / Survey Budget</text>
+<text x="70" y="1083" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">30% trọng số</text>
+<rect x="70" y="1090" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="196" y="1100" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="90" y="1148" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="420" y="1148" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="92" y="1194" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="128" y="1189" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Ngân sách</text>
+<line x1="88" y1="1210" x2="442" y2="1210" stroke="#DCE6E3" stroke-width="1"/>
+<text x="94" y="1245" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#142523" text-anchor="start">Khoảng chi phí mỗi tháng</text>
+<text x="94" y="1285" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Từ</text>
+<rect x="94" y="1295" width="160" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="108" y="1325" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">2.500.000 đ</text>
+<text x="276" y="1285" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Đến</text>
+<rect x="276" y="1295" width="160" height="48" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="290" y="1325" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="400" fill="#142523" text-anchor="start">4.000.000 đ</text>
+<text x="94" y="1400" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#52625F" text-anchor="start">Khu vực ưu tiên</text>
+<rect x="94" y="1420" width="76" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="132" y="1439" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Cầu Giấy</text>
+<rect x="194" y="1420" width="97" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="242.5" y="1439" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Nam Từ Liêm</text>
+<rect x="320" y="1420" width="90" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="365" y="1439" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Thanh Xuân</text>
+<rect x="94" y="1790" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="265" y="1820" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Tiếp tục</text>
+<text x="520" y="1066" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">B03 / Survey Lifestyle</text>
+<text x="520" y="1083" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">25% + 20% + 15% + 10%</text>
+<rect x="520" y="1090" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="646" y="1100" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="540" y="1148" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="870" y="1148" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="542" y="1194" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="578" y="1189" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Lối sống</text>
+<line x1="538" y1="1210" x2="892" y2="1210" stroke="#DCE6E3" stroke-width="1"/>
+<text x="544" y="1245" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Giờ đi ngủ</text>
+<rect x="544" y="1264" width="97" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="592.5" y="1283" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Trước 23:00</text>
+<rect x="652" y="1264" width="97" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="700.5" y="1283" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">23:00–01:00</text>
+<rect x="760" y="1264" width="83" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="801.5" y="1283" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Sau 01:00</text>
+<text x="544" y="1395" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Mức độ sạch sẽ</text>
+<rect x="544" y="1414" width="83" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="585.5" y="1433" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Thoải mái</text>
+<rect x="652" y="1414" width="76" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="690" y="1433" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Gọn gàng</text>
+<rect x="760" y="1414" width="104" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="812" y="1433" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Rất ngăn nắp</text>
+<text x="544" y="1545" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Hút thuốc</text>
+<rect x="544" y="1564" width="55" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="571.5" y="1583" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Không</text>
+<rect x="652" y="1564" width="125" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="714.5" y="1583" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Có, ngoài phòng</text>
+<rect x="760" y="1564" width="52" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="786" y="1583" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Có</text>
+<rect x="544" y="1790" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="715" y="1820" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Tiếp tục</text>
+<text x="970" y="1066" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">B04 / Survey Complete</text>
+<text x="970" y="1083" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Lưu hồ sơ</text>
+<rect x="970" y="1090" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1096" y="1100" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="990" y="1148" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1320" y="1148" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="992" y="1189" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Hoàn tất</text>
+<line x1="988" y1="1210" x2="1342" y2="1210" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="1165" cy="1330" r="70" fill="#EAF8F5"/>
+<text x="1165" y="1347" font-family="Inter,Arial,sans-serif" font-size="48" font-weight="800" fill="#087E6B" text-anchor="middle">✓</text>
+<text x="1165" y="1445" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="middle">Hồ sơ đã sẵn sàng!</text>
+<text x="1165" y="1480" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="middle">Khám phá những người phù hợp nhất</text>
+<rect x="1000" y="1610" width="330" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1165" y="1640" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Xem gợi ý</text>
+<text x="1420" y="1066" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">C01 / Discover</text>
+<text x="1420" y="1083" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-10–12</text>
+<rect x="1420" y="1090" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1546" y="1100" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1440" y="1148" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1770" y="1148" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1442" y="1189" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Khám phá</text>
+<line x1="1438" y1="1210" x2="1792" y2="1210" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="1694" y="1168" width="62" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="1725" y="1187" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Bộ lọc</text>
+<rect x="1442" y="1235" width="346" height="154" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1484" cy="1280" r="26" fill="#E8EAFD"/>
+<circle cx="1484" cy="1275" r="7.280000000000001" fill="#087E6B"/>
+<path d="M 1471.52 1291.7 Q 1484 1278.7 1496.48 1291.7" fill="#087E6B"/>
+<text x="1524" y="1274" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Minh Anh</text>
+<text x="1524" y="1296" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">ĐHQG • Cầu Giấy</text>
+<rect x="1714" y="1255" width="52" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1740" y="1274" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">94%</text>
+<text x="1462" y="1329" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">3–4 triệu/tháng  •  Không hút thuốc</text>
+<rect x="1462" y="1343" width="97" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1510.5" y="1362" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Giờ ngủ hợp</text>
+<rect x="1570" y="1343" width="69" height="28" rx="14" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="1604.5" y="1362" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#F36F56" text-anchor="middle">Sạch sẽ</text>
+<rect x="1442" y="1405" width="346" height="154" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1484" cy="1450" r="26" fill="#CDEFE7"/>
+<circle cx="1484" cy="1445" r="7.280000000000001" fill="#087E6B"/>
+<path d="M 1471.52 1461.7 Q 1484 1448.7 1496.48 1461.7" fill="#087E6B"/>
+<text x="1524" y="1444" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Thu Hà</text>
+<text x="1524" y="1466" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">ĐHQG • Cầu Giấy</text>
+<rect x="1714" y="1425" width="52" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1740" y="1444" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">88%</text>
+<text x="1462" y="1499" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">3–4 triệu/tháng  •  Không hút thuốc</text>
+<rect x="1462" y="1513" width="97" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1510.5" y="1532" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Giờ ngủ hợp</text>
+<rect x="1570" y="1513" width="69" height="28" rx="14" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="1604.5" y="1532" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#F36F56" text-anchor="middle">Sạch sẽ</text>
+<rect x="1442" y="1575" width="346" height="154" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1484" cy="1620" r="26" fill="#E8EAFD"/>
+<circle cx="1484" cy="1615" r="7.280000000000001" fill="#087E6B"/>
+<path d="M 1471.52 1631.7 Q 1484 1618.7 1496.48 1631.7" fill="#087E6B"/>
+<text x="1524" y="1614" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Gia Huy</text>
+<text x="1524" y="1636" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">ĐHQG • Cầu Giấy</text>
+<rect x="1714" y="1595" width="52" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1740" y="1614" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">82%</text>
+<text x="1462" y="1669" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">3–4 triệu/tháng  •  Không hút thuốc</text>
+<rect x="1462" y="1683" width="97" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1510.5" y="1702" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Giờ ngủ hợp</text>
+<rect x="1570" y="1683" width="69" height="28" rx="14" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="1604.5" y="1702" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#F36F56" text-anchor="middle">Sạch sẽ</text>
+<rect x="1432" y="1864" width="366" height="58" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1475" y="1896" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#087E6B" text-anchor="middle">⌂</text>
+<text x="1568" y="1896" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">♡</text>
+<text x="1661" y="1896" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">✉</text>
+<text x="1754" y="1896" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">●</text>
+<text x="1870" y="1066" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">C02 / Filters</text>
+<text x="1870" y="1083" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-10, 26, 41, 42</text>
+<rect x="1870" y="1090" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1996" y="1100" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1890" y="1148" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="2220" y="1148" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1892" y="1194" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1928" y="1189" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Bộ lọc</text>
+<line x1="1888" y1="1210" x2="2242" y2="1210" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1894" y="1248" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Ngân sách</text>
+<text x="1894" y="1280" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">2,5 triệu</text>
+<text x="2236" y="1280" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="end">5 triệu</text>
+<line x1="1898" y1="1310" x2="2230" y2="1310" stroke="#087E6B" stroke-width="6"/>
+<circle cx="1980" cy="1310" r="10" fill="#087E6B"/>
+<circle cx="2160" cy="1310" r="10" fill="#087E6B"/>
+<text x="1894" y="1370" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Khu vực</text>
+<rect x="1894" y="1390" width="76" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1932" y="1409" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Cầu Giấy</text>
+<rect x="1994" y="1390" width="90" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="2039" y="1409" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Thanh Xuân</text>
+<text x="1894" y="1462" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Tương thích tối thiểu</text>
+<rect x="1894" y="1485" width="97" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1942.5" y="1504" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">80% trở lên</text>
+<text x="1894" y="1560" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Chỉ hiện hồ sơ đã xác minh  ✓</text>
+<rect x="1894" y="1790" width="165" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1976.5" y="1820" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Đặt lại</text>
+<rect x="2071" y="1790" width="165" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="2153.5" y="1820" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Áp dụng</text>
+<text x="70" y="2006" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">C03 / Candidate Detail</text>
+<text x="70" y="2023" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-13</text>
+<rect x="70" y="2030" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="196" y="2040" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="90" y="2088" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="420" y="2088" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="92" y="2134" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="128" y="2129" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Hồ sơ</text>
+<line x1="88" y1="2150" x2="442" y2="2150" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="265" cy="2225" r="58" fill="#FFF1ED"/>
+<circle cx="265" cy="2220" r="16.240000000000002" fill="#087E6B"/>
+<path d="M 237.16 2251.1 Q 265 2222.1 292.84 2251.1" fill="#087E6B"/>
+<text x="265" y="2315" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="middle">Minh Anh, 21</text>
+<text x="265" y="2342" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="middle">ĐHQG • Cầu Giấy</text>
+<rect x="215" y="2362" width="97" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="263.5" y="2381" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">94% phù hợp</text>
+<rect x="94" y="2420" width="342" height="155" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="112" y="2454" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Vì sao phù hợp</text>
+<text x="112" y="2486" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#142523" text-anchor="start">✓ Ngân sách trùng khớp</text>
+<text x="112" y="2514" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#142523" text-anchor="start">✓ Cùng giờ ngủ và mức sạch sẽ</text>
+<text x="112" y="2542" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#142523" text-anchor="start">✓ Đều không hút thuốc</text>
+<rect x="94" y="2710" width="342" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="265" y="2740" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Gửi lời mời kết nối</text>
+<text x="520" y="2006" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">C04 / Compatibility</text>
+<text x="520" y="2023" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Giải thích score</text>
+<rect x="520" y="2030" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="646" y="2040" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="540" y="2088" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="870" y="2088" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="542" y="2134" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="578" y="2129" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Độ tương thích</text>
+<line x1="538" y1="2150" x2="892" y2="2150" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="715" cy="2250" r="82" fill="#EAF8F5"/>
+<text x="715" y="2246" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="800" fill="#087E6B" text-anchor="middle">94%</text>
+<text x="715" y="2275" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#087E6B" text-anchor="middle">Rất phù hợp</text>
+<text x="550" y="2380" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Ngân sách</text>
+<text x="880" y="2380" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="end">30/30</text>
+<rect x="550" y="2392" width="330" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="550" y="2392" width="330" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="550" y="2438" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Giờ ngủ</text>
+<text x="880" y="2438" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="end">23/25</text>
+<rect x="550" y="2450" width="330" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="550" y="2450" width="303.6" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="550" y="2496" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Sạch sẽ</text>
+<text x="880" y="2496" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="end">18/20</text>
+<rect x="550" y="2508" width="330" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="550" y="2508" width="297" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="550" y="2554" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Hút thuốc</text>
+<text x="880" y="2554" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="end">15/15</text>
+<rect x="550" y="2566" width="330" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="550" y="2566" width="330" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="550" y="2612" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Thú cưng</text>
+<text x="880" y="2612" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="end">8/10</text>
+<rect x="550" y="2624" width="330" height="8" rx="4" fill="#DCE6E3" stroke="none" stroke-width="1"/>
+<rect x="550" y="2624" width="264" height="8" rx="4" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="970" y="2006" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">D02 / Requests</text>
+<text x="970" y="2023" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-15–16</text>
+<rect x="970" y="2030" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1096" y="2040" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="990" y="2088" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1320" y="2088" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="992" y="2129" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Lời mời kết nối</text>
+<line x1="988" y1="2150" x2="1342" y2="2150" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="990" y="2175" width="350" height="132" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1022" cy="2212" r="24" fill="#CDEFE7"/>
+<circle cx="1022" cy="2207" r="6.720000000000001" fill="#087E6B"/>
+<path d="M 1010.48 2222.8 Q 1022 2210.8 1033.52 2222.8" fill="#087E6B"/>
+<text x="1060" y="2210" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Minh Anh</text>
+<text x="1060" y="2232" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Muốn kết nối với bạn</text>
+<rect x="1060" y="2250" width="116" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1118" y="2280" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Chấp nhận</text>
+<rect x="1186" y="2250" width="116" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1244" y="2280" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Từ chối</text>
+<rect x="990" y="2325" width="350" height="132" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1022" cy="2362" r="24" fill="#FFF1ED"/>
+<circle cx="1022" cy="2357" r="6.720000000000001" fill="#087E6B"/>
+<path d="M 1010.48 2372.8 Q 1022 2360.8 1033.52 2372.8" fill="#087E6B"/>
+<text x="1060" y="2360" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Thu Hà</text>
+<text x="1060" y="2382" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Muốn kết nối với bạn</text>
+<rect x="1060" y="2400" width="116" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1118" y="2430" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Chấp nhận</text>
+<rect x="1186" y="2400" width="116" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1244" y="2430" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Từ chối</text>
+<rect x="990" y="2475" width="350" height="132" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="1022" cy="2512" r="24" fill="#E8EAFD"/>
+<circle cx="1022" cy="2507" r="6.720000000000001" fill="#087E6B"/>
+<path d="M 1010.48 2522.8 Q 1022 2510.8 1033.52 2522.8" fill="#087E6B"/>
+<text x="1060" y="2510" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Gia Huy</text>
+<text x="1060" y="2532" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Muốn kết nối với bạn</text>
+<rect x="1060" y="2550" width="116" height="48" rx="14" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="1118" y="2580" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Chấp nhận</text>
+<rect x="1186" y="2550" width="116" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1244" y="2580" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Từ chối</text>
+<rect x="982" y="2804" width="366" height="58" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1025" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">⌂</text>
+<text x="1118" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">♡</text>
+<text x="1211" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#087E6B" text-anchor="middle">✉</text>
+<text x="1304" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">●</text>
+<text x="1420" y="2006" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">E01 / Room Feed</text>
+<text x="1420" y="2023" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-21, 39, 46</text>
+<rect x="1420" y="2030" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1546" y="2040" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1440" y="2088" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1770" y="2088" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1442" y="2129" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Phòng trọ</text>
+<line x1="1438" y1="2150" x2="1792" y2="2150" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="1440" y="2170" width="350" height="166" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<rect x="1452" y="2182" width="112" height="96" rx="14" fill="#CDEFE7" stroke="none" stroke-width="1"/>
+<text x="1580" y="2208" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Phòng sáng gần ĐHQG</text>
+<text x="1580" y="2234" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#087E6B" text-anchor="start">3.500.000 đ/tháng</text>
+<text x="1580" y="2260" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">2 người • 18m²</text>
+<rect x="1580" y="2280" width="97" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1628.5" y="2299" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Đã xác minh</text>
+<rect x="1440" y="2354" width="350" height="166" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<rect x="1452" y="2366" width="112" height="96" rx="14" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="1580" y="2392" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Căn hộ 2PN Cầu Giấy</text>
+<text x="1580" y="2418" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#087E6B" text-anchor="start">3.500.000 đ/tháng</text>
+<text x="1580" y="2444" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">2 người • 18m²</text>
+<rect x="1580" y="2464" width="97" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1628.5" y="2483" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Đã xác minh</text>
+<rect x="1440" y="2538" width="350" height="166" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<rect x="1452" y="2550" width="112" height="96" rx="14" fill="#E8EAFD" stroke="none" stroke-width="1"/>
+<text x="1580" y="2576" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Tìm nữ ở ghép Mỹ Đình</text>
+<text x="1580" y="2602" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#087E6B" text-anchor="start">3.500.000 đ/tháng</text>
+<text x="1580" y="2628" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">2 người • 18m²</text>
+<rect x="1580" y="2648" width="97" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="1628.5" y="2667" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Đã xác minh</text>
+<rect x="1432" y="2804" width="366" height="58" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1475" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">⌂</text>
+<text x="1568" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#087E6B" text-anchor="middle">♡</text>
+<text x="1661" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">✉</text>
+<text x="1754" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">●</text>
+<text x="1870" y="2006" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">F02 / Profile</text>
+<text x="1870" y="2023" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-05–06, 24</text>
+<rect x="1870" y="2030" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1996" y="2040" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1890" y="2088" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="2220" y="2088" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1892" y="2129" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Hồ sơ của tôi</text>
+<line x1="1888" y1="2150" x2="2242" y2="2150" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="2065" cy="2215" r="54" fill="#E8EAFD"/>
+<circle cx="2065" cy="2210" r="15.120000000000001" fill="#087E6B"/>
+<path d="M 2039.08 2239.3 Q 2065 2212.3 2090.92 2239.3" fill="#087E6B"/>
+<text x="2065" y="2300" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="middle">Nguyễn Minh Anh</text>
+<text x="2065" y="2326" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="middle">ĐHQG Hà Nội</text>
+<rect x="1892" y="2380" width="346" height="56" rx="14" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1912" y="2415" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Thông tin cá nhân</text>
+<text x="2216" y="2415" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<rect x="1892" y="2450" width="346" height="56" rx="14" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1912" y="2485" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Tiêu chí ở ghép</text>
+<text x="2216" y="2485" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<rect x="1892" y="2520" width="346" height="56" rx="14" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1912" y="2555" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Quyền riêng tư liên hệ</text>
+<text x="2216" y="2555" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<rect x="1892" y="2590" width="346" height="56" rx="14" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1912" y="2625" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">An toàn &amp; báo cáo</text>
+<text x="2216" y="2625" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<rect x="1882" y="2804" width="366" height="58" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1925" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">⌂</text>
+<text x="2018" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">♡</text>
+<text x="2111" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">✉</text>
+<text x="2204" y="2836" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#087E6B" text-anchor="middle">●</text>
+<text x="70" y="2946" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">H01 / Chat Inbox</text>
+<text x="70" y="2963" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">FR-38 • chỉ connection ACTIVE</text>
+<rect x="70" y="2970" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="196" y="2980" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="90" y="3028" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="420" y="3028" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="92" y="3069" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Tin nhắn</text>
+<line x1="88" y1="3090" x2="442" y2="3090" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="122" cy="3140" r="27" fill="#CDEFE7"/>
+<circle cx="122" cy="3135" r="7.5600000000000005" fill="#087E6B"/>
+<path d="M 109.04 3152.15 Q 122 3138.65 134.96 3152.15" fill="#087E6B"/>
+<text x="164" y="3134" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Minh Anh</text>
+<text x="164" y="3158" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Bạn thấy phòng này thế nào?</text>
+<text x="420" y="3134" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="end">21:14</text>
+<circle cx="418" cy="3160" r="10" fill="#F36F56"/>
+<text x="418" y="3164" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+<line x1="162" y1="3180" x2="436" y2="3180" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="122" cy="3232" r="27" fill="#FFF1ED"/>
+<circle cx="122" cy="3227" r="7.5600000000000005" fill="#087E6B"/>
+<path d="M 109.04 3244.15 Q 122 3230.65 134.96 3244.15" fill="#087E6B"/>
+<text x="164" y="3226" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Thu Hà</text>
+<text x="164" y="3250" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Đã kết nối • Bắt đầu trò chuyện</text>
+<text x="420" y="3226" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="end">T.3</text>
+<line x1="162" y1="3272" x2="436" y2="3272" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="122" cy="3324" r="27" fill="#E8EAFD"/>
+<circle cx="122" cy="3319" r="7.5600000000000005" fill="#087E6B"/>
+<path d="M 109.04 3336.15 Q 122 3322.65 134.96 3336.15" fill="#087E6B"/>
+<text x="164" y="3318" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">Gia Huy</text>
+<text x="164" y="3342" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Đã kết nối • Bắt đầu trò chuyện</text>
+<text x="420" y="3318" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="end">T.3</text>
+<line x1="162" y1="3364" x2="436" y2="3364" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="82" y="3744" width="366" height="58" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="125" y="3776" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">⌂</text>
+<text x="218" y="3776" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">♡</text>
+<text x="311" y="3776" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#087E6B" text-anchor="middle">✉</text>
+<text x="404" y="3776" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#52625F" text-anchor="middle">●</text>
+<text x="520" y="2946" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">H02 / Conversation</text>
+<text x="520" y="2963" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Đang hoạt động</text>
+<rect x="520" y="2970" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="646" y="2980" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="540" y="3028" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="870" y="3028" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="542" y="3074" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="578" y="3069" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Minh Anh</text>
+<line x1="538" y1="3090" x2="892" y2="3090" stroke="#DCE6E3" stroke-width="1"/>
+<circle cx="857" cy="3064" r="5" fill="#2E9C65"/>
+<text x="870" y="3068" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="600" fill="#2E9C65" text-anchor="start">Online</text>
+<rect x="648" y="3106" width="69" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="682.5" y="3125" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Hôm nay</text>
+<rect x="544" y="3160" width="248" height="52" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="558" y="3183" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">Chào bạn, mình thấy hai đứa khá hợp</text>
+<text x="780" y="3202" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#52625F" text-anchor="end">21:12</text>
+<rect x="638" y="3230" width="248" height="52" rx="16" fill="#087E6B" stroke="none" stroke-width="1"/>
+<text x="652" y="3253" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#fff" text-anchor="start">Mình cũng nghĩ vậy 😊</text>
+<text x="874" y="3272" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#D7F2EC" text-anchor="end">21:14 ✓✓</text>
+<rect x="544" y="3300" width="274" height="52" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="558" y="3323" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">Bạn thấy phòng ở Cầu Giấy thế nào?</text>
+<text x="806" y="3342" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#52625F" text-anchor="end">21:12</text>
+<rect x="538" y="3678" width="354" height="58" rx="20" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="562" y="3713" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="500" fill="#087E6B" text-anchor="start">＋</text>
+<text x="596" y="3712" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">Nhập tin nhắn...</text>
+<circle cx="860" cy="3707" r="20" fill="#087E6B"/>
+<text x="860" y="3713" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">➤</text>
+<text x="970" y="2946" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">H03 / Attachment</text>
+<text x="970" y="2963" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Upload chưa có API</text>
+<rect x="970" y="2970" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1096" y="2980" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="990" y="3028" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1320" y="3028" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="992" y="3074" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1028" y="3069" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Minh Anh</text>
+<line x1="988" y1="3090" x2="1342" y2="3090" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="994" y="3140" width="274" height="52" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1008" y="3163" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">Mình gửi bạn ảnh căn phòng nhé</text>
+<text x="1256" y="3182" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#52625F" text-anchor="end">21:12</text>
+<rect x="988" y="3570" width="354" height="96" rx="20" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1008" y="3598" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Đính kèm</text>
+<rect x="1008" y="3614" width="52" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="1034" y="3633" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Ảnh</text>
+<rect x="1082" y="3614" width="76" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="1120" y="3633" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Tài liệu</text>
+<text x="1008" y="3658" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="600" fill="#E99A21" text-anchor="start">Tính năng đang phát triển</text>
+<rect x="988" y="3678" width="354" height="58" rx="20" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1046" y="3712" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">Nhập tin nhắn...</text>
+<text x="1420" y="2946" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">H04 / Safety Menu</text>
+<text x="1420" y="2963" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Chặn • Báo cáo • Huỷ kết nối</text>
+<rect x="1420" y="2970" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1546" y="2980" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1440" y="3028" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="1770" y="3028" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1442" y="3074" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1478" y="3069" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Minh Anh</text>
+<line x1="1438" y1="3090" x2="1792" y2="3090" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="1440" y="3130" width="350" height="250" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1462" y="3170" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Xem hồ sơ</text>
+<text x="1768" y="3170" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<line x1="1460" y1="3186" x2="1770" y2="3186" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1462" y="3224" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#142523" text-anchor="start">Chia sẻ quyền liên hệ</text>
+<text x="1768" y="3224" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<line x1="1460" y1="3240" x2="1770" y2="3240" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1462" y="3278" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#D9485F" text-anchor="start">Báo cáo người dùng</text>
+<text x="1768" y="3278" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<line x1="1460" y1="3294" x2="1770" y2="3294" stroke="#DCE6E3" stroke-width="1"/>
+<text x="1462" y="3332" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#D9485F" text-anchor="start">Chặn người dùng</text>
+<text x="1768" y="3332" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="500" fill="#52625F" text-anchor="end">›</text>
+<rect x="1444" y="3420" width="342" height="128" rx="16" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="1464" y="3454" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="700" fill="#142523" text-anchor="start">An toàn trước tiên</text>
+<text x="1464" y="3482" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Không gửi tiền hoặc thông tin nhạy cảm.</text>
+<text x="1464" y="3506" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Hẹn gặp tại nơi công cộng.</text>
+<text x="1870" y="2946" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">H05 / Conversation Ended</text>
+<text x="1870" y="2963" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Connection không còn ACTIVE</text>
+<rect x="1870" y="2970" width="390" height="844" rx="28" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1.5"/>
+<rect x="1996" y="2980" width="138" height="26" rx="13" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="1890" y="3028" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#142523" text-anchor="start">9:41</text>
+<text x="2220" y="3028" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#087E6B" text-anchor="start">●</text>
+<text x="1892" y="3074" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="500" fill="#142523" text-anchor="start">‹</text>
+<text x="1928" y="3069" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Minh Anh</text>
+<line x1="1888" y1="3090" x2="2242" y2="3090" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="1894" y="3150" width="274" height="52" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1908" y="3173" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">Chúc bạn sớm tìm được người phù hợp</text>
+<text x="2156" y="3192" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#52625F" text-anchor="end">21:12</text>
+<rect x="1977" y="3250" width="153" height="28" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<text x="2053.5" y="3269" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="middle">Kết nối đã kết thúc</text>
+<rect x="1894" y="3610" width="342" height="82" rx="18" fill="#F1F4F3" stroke="none" stroke-width="1"/>
+<text x="2065" y="3642" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="650" fill="#52625F" text-anchor="middle">Bạn không thể gửi tin nhắn</text>
+<text x="2065" y="3665" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="middle">khi kết nối không còn hoạt động.</text>
+<text x="70" y="3975" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="#142523" text-anchor="start">ADMIN DESKTOP — RESPONSIVE 1320×820</text>
+<text x="70" y="4012" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Tổng quan hệ thống</text>
+<rect x="70" y="4030" width="1320" height="820" rx="24" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1"/>
+<rect x="70" y="4030" width="230" height="820" rx="24" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="98" y="4080" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#fff" text-anchor="start">ROOMMATE HUB</text>
+<rect x="84" y="4118" width="202" height="44" rx="12" fill="#23413D" stroke="none" stroke-width="1"/>
+<text x="104" y="4146" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Tổng quan</text>
+<text x="104" y="4202" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Người dùng</text>
+<text x="104" y="4258" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Báo cáo</text>
+<text x="104" y="4314" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Bài đăng</text>
+<text x="104" y="4370" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Nhật ký</text>
+<text x="330" y="4088" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" fill="#142523" text-anchor="start">Tổng quan hệ thống</text>
+<text x="330" y="4118" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Trung tâm quản trị • cập nhật 2 phút trước</text>
+<rect x="330" y="4155" width="220" height="104" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="348" y="4187" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Người dùng</text>
+<text x="348" y="4225" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" fill="#142523" text-anchor="start">1.248</text>
+<rect x="475" y="4213" width="69" height="28" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="509.5" y="4232" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#087E6B" text-anchor="middle">Ổn định</text>
+<rect x="570" y="4155" width="220" height="104" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="588" y="4187" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Kết nối hoạt động</text>
+<text x="588" y="4225" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" fill="#142523" text-anchor="start">386</text>
+<rect x="715" y="4213" width="69" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="749.5" y="4232" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Ổn định</text>
+<rect x="810" y="4155" width="220" height="104" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="828" y="4187" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Báo cáo chờ xử lý</text>
+<text x="828" y="4225" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" fill="#142523" text-anchor="start">12</text>
+<rect x="955" y="4213" width="52" height="28" rx="14" fill="#FDECEF" stroke="none" stroke-width="1"/>
+<text x="981" y="4232" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#D9485F" text-anchor="middle">+8</text>
+<rect x="1050" y="4155" width="220" height="104" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1068" y="4187" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Bài đăng</text>
+<text x="1068" y="4225" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" fill="#142523" text-anchor="start">524</text>
+<rect x="1195" y="4213" width="69" height="28" rx="14" fill="#FFF6E7" stroke="none" stroke-width="1"/>
+<text x="1229.5" y="4232" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#E99A21" text-anchor="middle">Ổn định</text>
+<rect x="330" y="4285" width="700" height="300" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="352" y="4320" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Hoạt động 7 ngày</text>
+<rect x="365" y="4450" width="38" height="90" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="447" y="4400" width="38" height="140" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="529" y="4435" width="38" height="105" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="611" y="4350" width="38" height="190" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="693" y="4385" width="38" height="155" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="775" y="4315" width="38" height="225" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="857" y="4335" width="38" height="205" rx="8" fill="#087E6B" stroke="none" stroke-width="1"/>
+<rect x="1050" y="4285" width="310" height="300" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1072" y="4320" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Cần xử lý</text>
+<rect x="1072" y="4350" width="52" height="28" rx="14" fill="#FDECEF" stroke="none" stroke-width="1"/>
+<text x="1098" y="4369" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#D9485F" text-anchor="middle">Khẩn</text>
+<text x="1142" y="4370" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#142523" text-anchor="start">Báo cáo quấy rối</text>
+<rect x="1072" y="4418" width="52" height="28" rx="14" fill="#FFF6E7" stroke="none" stroke-width="1"/>
+<text x="1098" y="4437" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#E99A21" text-anchor="middle">Mới</text>
+<text x="1142" y="4438" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#142523" text-anchor="start">Bài đăng sai giá</text>
+<rect x="1072" y="4486" width="52" height="28" rx="14" fill="#FFF6E7" stroke="none" stroke-width="1"/>
+<text x="1098" y="4505" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#E99A21" text-anchor="middle">Mới</text>
+<text x="1142" y="4506" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#142523" text-anchor="start">Tài khoản giả mạo</text>
+<text x="70" y="4942" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Chi tiết báo cáo #RP-1048</text>
+<rect x="70" y="4960" width="1320" height="820" rx="24" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1"/>
+<rect x="70" y="4960" width="230" height="820" rx="24" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="98" y="5010" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#fff" text-anchor="start">ROOMMATE HUB</text>
+<rect x="84" y="5048" width="202" height="44" rx="12" fill="#23413D" stroke="none" stroke-width="1"/>
+<text x="104" y="5076" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Tổng quan</text>
+<text x="104" y="5132" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Người dùng</text>
+<text x="104" y="5188" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Báo cáo</text>
+<text x="104" y="5244" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Bài đăng</text>
+<text x="104" y="5300" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Nhật ký</text>
+<text x="330" y="5018" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" fill="#142523" text-anchor="start">Chi tiết báo cáo #RP-1048</text>
+<text x="330" y="5048" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Trung tâm quản trị • cập nhật 2 phút trước</text>
+<rect x="330" y="5080" width="650" height="590" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<rect x="352" y="5105" width="104" height="28" rx="14" fill="#FFF6E7" stroke="none" stroke-width="1"/>
+<text x="404" y="5124" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#E99A21" text-anchor="middle">Đang xem xét</text>
+<text x="352" y="5165" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="750" fill="#142523" text-anchor="start">Nội dung: Quấy rối qua tin nhắn</text>
+<text x="352" y="5204" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Người báo cáo</text>
+<circle cx="378" cy="5242" r="22" fill="#FFF1ED"/>
+<circle cx="378" cy="5237" r="6.16" fill="#087E6B"/>
+<path d="M 367.44 5251.9 Q 378 5240.9 388.56 5251.9" fill="#087E6B"/>
+<text x="412" y="5238" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Thu Hà</text>
+<text x="412" y="5258" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Gửi lúc 16:42 • 17/09/2026</text>
+<text x="352" y="5310" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Bằng chứng</text>
+<rect x="352" y="5330" width="576" height="150" rx="14" fill="#F5F8F7" stroke="none" stroke-width="1"/>
+<rect x="372" y="5355" width="250" height="52" rx="16" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="386" y="5378" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="500" fill="#142523" text-anchor="start">Tin nhắn có nội dung không phù hợp</text>
+<text x="610" y="5397" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="400" fill="#52625F" text-anchor="end">21:12</text>
+<text x="352" y="5535" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Ghi chú xử lý</text>
+<rect x="352" y="5550" width="576" height="70" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="368" y="5580" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Nhập lý do để lưu vào audit trail…</text>
+<rect x="1005" y="5080" width="355" height="330" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1030" y="5118" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Quyết định</text>
+<rect x="1030" y="5150" width="305" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1182.5" y="5180" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Cảnh báo tài khoản</text>
+<rect x="1030" y="5212" width="305" height="48" rx="14" fill="#D9485F" stroke="none" stroke-width="1"/>
+<text x="1182.5" y="5242" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Khóa tài khoản</text>
+<rect x="1030" y="5274" width="305" height="48" rx="14" fill="#EAF8F5" stroke="none" stroke-width="1"/>
+<text x="1182.5" y="5304" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Bỏ qua báo cáo</text>
+<text x="1030" y="5365" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Mọi hành động đều được ghi nhật ký.</text>
+<text x="70" y="5872" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Chi tiết người dùng</text>
+<rect x="70" y="5890" width="1320" height="820" rx="24" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1"/>
+<rect x="70" y="5890" width="230" height="820" rx="24" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="98" y="5940" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#fff" text-anchor="start">ROOMMATE HUB</text>
+<rect x="84" y="5978" width="202" height="44" rx="12" fill="#23413D" stroke="none" stroke-width="1"/>
+<text x="104" y="6006" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Tổng quan</text>
+<text x="104" y="6062" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Người dùng</text>
+<text x="104" y="6118" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Báo cáo</text>
+<text x="104" y="6174" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Bài đăng</text>
+<text x="104" y="6230" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Nhật ký</text>
+<text x="330" y="5948" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" fill="#142523" text-anchor="start">Chi tiết người dùng</text>
+<text x="330" y="5978" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Trung tâm quản trị • cập nhật 2 phút trước</text>
+<rect x="330" y="6010" width="1030" height="170" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="392" cy="6085" r="46" fill="#E8EAFD"/>
+<circle cx="392" cy="6080" r="12.88" fill="#087E6B"/>
+<path d="M 369.92 6105.7 Q 392 6082.7 414.08 6105.7" fill="#087E6B"/>
+<text x="460" y="6068" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="750" fill="#142523" text-anchor="start">Nguyễn Minh Anh</text>
+<text x="460" y="6095" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">minhanh@university.edu • Đã xác minh</text>
+<rect x="460" y="6115" width="118" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="519" y="6134" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Đang hoạt động</text>
+<rect x="1095" y="6070" width="235" height="48" rx="14" fill="#D9485F" stroke="none" stroke-width="1"/>
+<text x="1212.5" y="6100" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Khóa tài khoản</text>
+<rect x="330" y="6205" width="500" height="365" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="354" y="6242" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Thông tin &amp; hoạt động</text>
+<text x="354" y="6290" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Ngày tham gia</text>
+<text x="770" y="6290" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#142523" text-anchor="end">12/08/2026</text>
+<line x1="354" y1="6308" x2="774" y2="6308" stroke="#DCE6E3" stroke-width="1"/>
+<text x="354" y="6348" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Kết nối</text>
+<text x="770" y="6348" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#142523" text-anchor="end">7</text>
+<line x1="354" y1="6366" x2="774" y2="6366" stroke="#DCE6E3" stroke-width="1"/>
+<text x="354" y="6406" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Bài đăng</text>
+<text x="770" y="6406" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#142523" text-anchor="end">2</text>
+<line x1="354" y1="6424" x2="774" y2="6424" stroke="#DCE6E3" stroke-width="1"/>
+<text x="354" y="6464" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Báo cáo nhận được</text>
+<text x="770" y="6464" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" fill="#142523" text-anchor="end">1</text>
+<line x1="354" y1="6482" x2="774" y2="6482" stroke="#DCE6E3" stroke-width="1"/>
+<rect x="855" y="6205" width="505" height="365" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="880" y="6242" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Lịch sử quản trị</text>
+<circle cx="894" cy="6292" r="6" fill="#2E9C65"/>
+<text x="915" y="6296" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Xác minh email thành công</text>
+<text x="915" y="6317" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="start">16/09/2026 • Admin hệ thống</text>
+<circle cx="894" cy="6364" r="6" fill="#E99A21"/>
+<text x="915" y="6368" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Báo cáo #RP-1002 đã đóng</text>
+<text x="915" y="6389" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="start">16/09/2026 • Admin hệ thống</text>
+<circle cx="894" cy="6436" r="6" fill="#2E9C65"/>
+<text x="915" y="6440" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#142523" text-anchor="start">Cập nhật hồ sơ</text>
+<text x="915" y="6461" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="start">16/09/2026 • Admin hệ thống</text>
+<text x="70" y="6802" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Chi tiết bài đăng phòng #P-204</text>
+<rect x="70" y="6820" width="1320" height="820" rx="24" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1"/>
+<rect x="70" y="6820" width="230" height="820" rx="24" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="98" y="6870" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#fff" text-anchor="start">ROOMMATE HUB</text>
+<rect x="84" y="6908" width="202" height="44" rx="12" fill="#23413D" stroke="none" stroke-width="1"/>
+<text x="104" y="6936" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Tổng quan</text>
+<text x="104" y="6992" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Người dùng</text>
+<text x="104" y="7048" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Báo cáo</text>
+<text x="104" y="7104" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Bài đăng</text>
+<text x="104" y="7160" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Nhật ký</text>
+<text x="330" y="6878" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" fill="#142523" text-anchor="start">Chi tiết bài đăng phòng #P-204</text>
+<text x="330" y="6908" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Trung tâm quản trị • cập nhật 2 phút trước</text>
+<rect x="330" y="6940" width="680" height="590" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="352" y="6982" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="750" fill="#142523" text-anchor="start">Phòng sáng gần ĐHQG — Cầu Giấy</text>
+<rect x="830" y="6960" width="111" height="28" rx="14" fill="#EAF7F0" stroke="none" stroke-width="1"/>
+<text x="885.5" y="6979" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#2E9C65" text-anchor="middle">Đang hiển thị</text>
+<rect x="352" y="7010" width="260" height="180" rx="16" fill="#CDEFE7" stroke="none" stroke-width="1"/>
+<text x="632" y="7040" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="750" fill="#087E6B" text-anchor="start">3.500.000 đ/tháng</text>
+<text x="632" y="7070" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">18m² • 2 người • Cầu Giấy</text>
+<text x="632" y="7114" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#142523" text-anchor="start">Chủ bài: Nguyễn Minh Anh</text>
+<text x="352" y="7240" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Mô tả</text>
+<text x="352" y="7270" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">Phòng có cửa sổ lớn, nội thất cơ bản,</text>
+<text x="352" y="7294" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="start">gần trường và bến xe. Ưu tiên sinh viên.</text>
+<text x="352" y="7350" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#142523" text-anchor="start">Lý do bị báo cáo</text>
+<rect x="352" y="7368" width="606" height="78" rx="14" fill="#FFF1ED" stroke="none" stroke-width="1"/>
+<text x="370" y="7398" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="650" fill="#D9485F" text-anchor="start">Thông tin giá có dấu hiệu không chính xác</text>
+<text x="370" y="7422" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">2 báo cáo • gần nhất 15 phút trước</text>
+<rect x="1035" y="6940" width="325" height="310" rx="18" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="1060" y="6980" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Kiểm duyệt bài đăng</text>
+<rect x="1060" y="7015" width="275" height="48" rx="14" fill="#D9485F" stroke="none" stroke-width="1"/>
+<text x="1197.5" y="7045" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Ẩn bài đăng</text>
+<rect x="1060" y="7078" width="275" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="1197.5" y="7108" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Giữ bài đăng</text>
+<text x="1060" y="7155" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="400" fill="#52625F" text-anchor="start">Yêu cầu nhập lý do trước khi xác nhận.</text>
+<text x="70" y="7732" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700" fill="#142523" text-anchor="start">Xác nhận quyết định</text>
+<rect x="70" y="7750" width="1320" height="820" rx="24" fill="#F5F8F7" stroke="#B9C9C5" stroke-width="1"/>
+<rect x="70" y="7750" width="230" height="820" rx="24" fill="#142523" stroke="none" stroke-width="1"/>
+<text x="98" y="7800" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="800" fill="#fff" text-anchor="start">ROOMMATE HUB</text>
+<rect x="84" y="7838" width="202" height="44" rx="12" fill="#23413D" stroke="none" stroke-width="1"/>
+<text x="104" y="7866" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Tổng quan</text>
+<text x="104" y="7922" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Người dùng</text>
+<text x="104" y="7978" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Báo cáo</text>
+<text x="104" y="8034" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Bài đăng</text>
+<text x="104" y="8090" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600" fill="#DCE6E3" text-anchor="start">Nhật ký</text>
+<text x="330" y="7808" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" fill="#142523" text-anchor="start">Xác nhận quyết định</text>
+<text x="330" y="7838" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#52625F" text-anchor="start">Trung tâm quản trị • cập nhật 2 phút trước</text>
+<rect x="540" y="7900" width="610" height="470" rx="22" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<circle cx="845" cy="7970" r="42" fill="#FDECEF"/>
+<text x="845" y="7984" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800" fill="#D9485F" text-anchor="middle">!</text>
+<text x="845" y="8050" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="750" fill="#142523" text-anchor="middle">Ẩn bài đăng này?</text>
+<text x="845" y="8084" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="400" fill="#52625F" text-anchor="middle">Bài đăng sẽ không còn xuất hiện với người dùng.</text>
+<text x="590" y="8140" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#52625F" text-anchor="start">Lý do kiểm duyệt</text>
+<rect x="590" y="8155" width="510" height="82" rx="12" fill="#FFFFFF" stroke="#DCE6E3" stroke-width="1"/>
+<text x="606" y="8188" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="400" fill="#142523" text-anchor="start">Giá phòng không khớp thông tin xác minh…</text>
+<text x="606" y="8220" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="400" fill="#52625F" text-anchor="start">Lý do này sẽ được lưu vào audit trail.</text>
+<rect x="590" y="8275" width="245" height="48" rx="14" fill="#FFFFFF" stroke="#087E6B" stroke-width="1"/>
+<text x="712.5" y="8305" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#087E6B" text-anchor="middle">Quay lại</text>
+<rect x="855" y="8275" width="245" height="48" rx="14" fill="#D9485F" stroke="none" stroke-width="1"/>
+<text x="977.5" y="8305" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">Xác nhận ẩn</text>
+</svg>

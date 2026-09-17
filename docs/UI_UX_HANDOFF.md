@@ -3,6 +3,9 @@
 ## Nguồn thiết kế
 
 - Figma: https://www.figma.com/design/PmJPjVfAPQmcwVONgLmGDX
+- Penpot (nguồn thay thế, không phụ thuộc quota): `docs/penpot/roommate-hub-master-board.svg`.
+- Hướng dẫn import và tái tạo: `docs/penpot/README.md`.
+- Trạng thái Penpot: đã import master board, tạo Cover, Design System, 25 tokens và 14 component assets; QA trực quan hoàn tất.
 - Kích thước mobile chuẩn: `390 x 844`.
 - Dashboard quản trị: khung responsive `1320 x 820`.
 - Theme Flutter: `frontend/lib/theme/roommate_hub_theme.dart`.
@@ -105,10 +108,11 @@ File Figma dùng ba page do giới hạn của Figma Starter: `00 — Cover`, `0
 - Giá tiền hiển thị theo VND; dữ liệu gửi API vẫn là số nguyên.
 - Ngày giờ hiển thị theo múi giờ người dùng, payload API dùng ISO-8601 UTC.
 
-## Ghi chú Figma QA
+## Ghi chú Penpot QA
 
-Hạn mức Figma MCP của Starter plan đang chặn lượt chỉnh sửa tiếp theo. Nội dung chat và admin chi tiết đã được thêm vào file. Khi hạn mức được làm mới, cần thực hiện vòng cuối:
+Board Penpot/SVG đã bổ sung nội dung chat và admin chi tiết và đã được import vào workspace Penpot. Vòng QA trực quan đã hoàn tất:
 
-1. Sửa wrapping tiêu đề tại `I03 / Admin Room Post Detail`.
-2. Render riêng `H01–H05` và `I01–I04` để kiểm tra clipping.
-3. Kiểm tra naming, hard-coded fills và contrast trước khi coi Figma là final.
+1. `I03 / Admin Room Post Detail` hiển thị đúng, không còn lỗi wrapping đáng kể.
+2. `H01–H05` và `I01–I04` đã được kiểm tra trong bản export toàn board, không có clipping nghiêm trọng.
+3. Penpot có ba page chuẩn, token set `Core` đang active và component library đã được tạo.
+4. SVG import được Penpot giữ dưới dạng các layer `svg-raw`; Foundations và Components dùng object native của Penpot.
