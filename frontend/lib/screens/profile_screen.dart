@@ -29,12 +29,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
+  late TextEditingController _birthDateCtrl;
+  late TextEditingController _universityCtrl;
+  DateTime? _birthDate;
   late String _gender;
 
   bool _isUpdatingProfile = false;
   bool _isLoadingPreferences = true;
   String? _preferenceError;
   UserPreference? _preference;
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
 
   @override
   void initState() {
@@ -43,6 +52,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentUser = widget.currentUser;
     _nameCtrl = TextEditingController(text: _currentUser.fullName);
     _phoneCtrl = TextEditingController(text: _currentUser.phone ?? '');
+    _birthDate = _currentUser.birthDate;
+    _birthDateCtrl = TextEditingController(
+      text: _birthDate == null ? '' : _formatDate(_birthDate!),
+    );
+    _universityCtrl = TextEditingController(
+      text: _currentUser.university ?? '',
+    );
     _gender = _currentUser.gender;
     _loadPreferences();
   }
@@ -51,7 +67,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
+    _birthDateCtrl.dispose();
+    _universityCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectBirthDate() async {
+    final now = DateTime.now();
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 18),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 18, now.month, now.day),
+      helpText: 'Chọn ngày sinh',
+    );
+    if (selectedDate == null) return;
+
+    setState(() {
+      _birthDate = selectedDate;
+      _birthDateCtrl.text = _formatDate(selectedDate);
+    });
   }
 
   Future<void> _loadPreferences() async {
@@ -82,11 +117,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleUpdate() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_birthDate == null) return;
 
     setState(() => _isUpdatingProfile = true);
     final newName = _nameCtrl.text.trim();
     final newPhone = _phoneCtrl.text.trim();
     final newGender = _gender;
+    final newUniversity = _universityCtrl.text.trim();
 
     try {
       final ok = await _api.updateProfile(
@@ -94,6 +131,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         newName,
         newPhone,
         newGender,
+        _birthDate!,
+        newUniversity,
       );
 
       if (mounted && ok) {
@@ -101,6 +140,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           fullName: newName,
           phone: newPhone,
           gender: newGender,
+          birthDate: _birthDate,
+          university: newUniversity,
         );
 
         context.read<AuthSession>().updateUser(updatedUser);
@@ -586,6 +627,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              key: const Key('profile_birth_date_field'),
+              controller: _birthDateCtrl,
+              readOnly: true,
+              onTap: _selectBirthDate,
+              decoration: const InputDecoration(
+                labelText: 'Ngày sinh',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.calendar_today_outlined),
+              ),
+              validator: (_) => _birthDate == null
+                  ? 'Vui lòng chọn ngày sinh'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              key: const Key('profile_university_field'),
+              controller: _universityCtrl,
+              maxLength: 150,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Trường đại học',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.school_outlined),
+              ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Vui lòng nhập trường đại học'
+                  : null,
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(

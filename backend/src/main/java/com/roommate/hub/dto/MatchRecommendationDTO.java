@@ -10,6 +10,8 @@ public class MatchRecommendationDTO {
     private Long userId;
     private String fullName;
     private String avatarUrl;
+    private Integer age;
+    private String university;
     private String targetDistrict;
     private Double budgetAmount;
     private String bioDescription;

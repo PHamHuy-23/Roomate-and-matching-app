@@ -46,6 +46,8 @@ class FakeProfileApi implements ApiService {
     String fullName,
     String phone,
     String gender,
+    DateTime birthDate,
+    String university,
   ) async {
     updateProfileCalls++;
     lastUpdatedName = fullName;

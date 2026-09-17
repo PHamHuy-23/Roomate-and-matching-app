@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
+
 @Configuration
 @Profile("!test")
 @RequiredArgsConstructor
@@ -29,6 +31,8 @@ public class DataInitializer implements CommandLineRunner {
                     .fullName("Quang Huy")
                     .gender("MALE")
                     .phone("0901111222")
+                    .birthDate(LocalDate.of(2004, 4, 12))
+                    .university("Đại học Công nghệ Thông tin")
                     .role(User.Role.ROLE_USER)
                     .build());
 
@@ -43,6 +47,8 @@ public class DataInitializer implements CommandLineRunner {
                     .fullName("Văn Nam")
                     .gender("MALE")
                     .phone("0903333444")
+                    .birthDate(LocalDate.of(2003, 9, 18))
+                    .university("Đại học Sư phạm Kỹ thuật TP.HCM")
                     .role(User.Role.ROLE_USER)
                     .build());
 
@@ -57,6 +63,8 @@ public class DataInitializer implements CommandLineRunner {
                     .fullName("Minh Hoàng")
                     .gender("MALE")
                     .phone("0905555666")
+                    .birthDate(LocalDate.of(2002, 12, 3))
+                    .university("Đại học Quốc gia TP.HCM")
                     .role(User.Role.ROLE_USER)
                     .build());
 

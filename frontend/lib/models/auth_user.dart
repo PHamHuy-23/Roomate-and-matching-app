@@ -9,6 +9,8 @@ class AuthUser {
   final String role;
   final String? phone;
   final String? avatarUrl;
+  final DateTime? birthDate;
+  final String? university;
 
   AuthUser({
     required this.token,
@@ -19,6 +21,8 @@ class AuthUser {
     required this.role,
     this.phone,
     this.avatarUrl,
+    this.birthDate,
+    this.university,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,10 @@ class AuthUser {
       role: (user['role'] as String?) ?? 'ROLE_USER',
       phone: rawPhone is String && rawPhone.isNotEmpty ? rawPhone : null,
       avatarUrl: rawAvatar is String && rawAvatar.isNotEmpty ? rawAvatar : null,
+      birthDate: user['birthDate'] is String
+          ? DateTime.tryParse(user['birthDate'] as String)
+          : null,
+      university: user['university'] as String?,
     );
   }
 
@@ -53,6 +61,8 @@ class AuthUser {
     String? role,
     Object? phone = _sentinel,
     Object? avatarUrl = _sentinel,
+    Object? birthDate = _sentinel,
+    Object? university = _sentinel,
   }) {
     return AuthUser(
       token: token ?? this.token,
@@ -65,6 +75,12 @@ class AuthUser {
       avatarUrl: identical(avatarUrl, _sentinel)
           ? this.avatarUrl
           : (avatarUrl as String?),
+      birthDate: identical(birthDate, _sentinel)
+          ? this.birthDate
+          : (birthDate as DateTime?),
+      university: identical(university, _sentinel)
+          ? this.university
+          : (university as String?),
     );
   }
 }

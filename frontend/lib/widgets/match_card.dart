@@ -1,121 +1,225 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import '../models/match_recommendation.dart';
 
 class MatchCard extends StatelessWidget {
+  const MatchCard({super.key, required this.item, required this.onViewDetails});
+
+  static const _primary = Color(0xFF008F7A);
+
   final MatchRecommendation item;
-  final VoidCallback onConnect;
+  final VoidCallback onViewDetails;
 
-  const MatchCard({super.key, required this.item, required this.onConnect});
-
-  Color _getScoreColor(double score) {
-    if (score >= 80) return Colors.green.shade700;
-    if (score >= 60) return Colors.orange.shade800;
-    return Colors.red.shade700;
+  ({Color background, Color foreground}) _scoreColors(double score) {
+    if (score >= 80) {
+      return (
+        background: const Color(0xFFDDF4E8),
+        foreground: const Color(0xFF087443),
+      );
+    }
+    if (score >= 60) {
+      return (
+        background: const Color(0xFFFFE8C7),
+        foreground: const Color(0xFF9A5B00),
+      );
+    }
+    return (
+      background: const Color(0xFFE8ECEB),
+      foreground: const Color(0xFF596662),
+    );
   }
 
-  Widget _buildCriterionBar(String label, double score) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
-        children: [
-          SizedBox(width: 95, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.black87))),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (score / 100).clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(score)),
-                minHeight: 6,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text('${score.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ],
+  List<String> get _habitHighlights {
+    if (item.matchedReasons.isNotEmpty) {
+      return item.matchedReasons.take(2).toList();
+    }
+    final scores = <({String label, double score})>[
+      (label: 'Ngân sách tương đồng', score: item.criteriaDetail.budgetMatch),
+      (label: 'Giờ sinh hoạt phù hợp', score: item.criteriaDetail.sleepMatch),
+      (
+        label: 'Mức độ sạch sẽ tương đồng',
+        score: item.criteriaDetail.cleanlinessMatch,
       ),
-    );
+      (
+        label: 'Thói quen hút thuốc phù hợp',
+        score: item.criteriaDetail.smokingMatch,
+      ),
+      (
+        label: 'Quan điểm thú cưng phù hợp',
+        score: item.criteriaDetail.petMatch,
+      ),
+    ]..sort((a, b) => b.score.compareTo(a.score));
+    return scores.take(2).map((entry) => entry.label).toList();
+  }
+
+  String get _secondaryText {
+    final parts = <String>[item.fullName];
+    if (item.age != null) parts.add('${item.age}');
+    return parts.join(' · ');
+  }
+
+  String get _universityText {
+    if (item.university?.trim().isNotEmpty == true) {
+      return item.university!.trim();
+    }
+    return 'Sinh viên tại ${item.targetDistrict}';
+  }
+
+  String get _budgetText {
+    final millions = item.budgetAmount / 1000000;
+    final value = millions == millions.roundToDouble()
+        ? millions.toStringAsFixed(0)
+        : millions.toStringAsFixed(1);
+    return '$value triệu/tháng';
   }
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final colors = _scoreColors(item.totalScore);
+    final habits = _habitHighlights;
 
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE2EAE7)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14.0),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.indigo.shade50,
-                  child: Text(
-                    item.fullName.isNotEmpty ? item.fullName[0] : '?',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo.shade800),
-                  ),
-                ),
+                _Avatar(item: item),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.fullName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text('Khu vực: ${item.targetDistrict}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      Text(
+                        _secondaryText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF17342F),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _universityText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF687873),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item.totalScore.toStringAsFixed(0)}% phù hợp',
+                        style: TextStyle(
+                          color: colors.foreground,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getScoreColor(item.totalScore).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _getScoreColor(item.totalScore)),
-                  ),
-                  child: Text(
-                    '${item.totalScore}% Phù hợp',
-                    style: TextStyle(color: _getScoreColor(item.totalScore), fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 20),
-            Text('Ngân sách: ${fmt.format(item.budgetAmount)}/tháng', style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 11),
             Text(
-              item.bioDescription ?? 'Chưa cập nhật phần giới thiệu bản thân.',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic),
+              '${item.targetDistrict} · $_budgetText',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF52645F),
+                height: 1.35,
+              ),
             ),
-            const SizedBox(height: 10),
-            const Text('Chi tiết độ hòa hợp:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-            const SizedBox(height: 4),
-            _buildCriterionBar('Ngân sách (30%)', item.criteriaDetail.budgetMatch),
-            _buildCriterionBar('Giờ giấc (25%)', item.criteriaDetail.sleepMatch),
-            _buildCriterionBar('Vệ sinh (20%)', item.criteriaDetail.cleanlinessMatch),
-            _buildCriterionBar('Hút thuốc (15%)', item.criteriaDetail.smokingMatch),
-            _buildCriterionBar('Thú cưng (10%)', item.criteriaDetail.petMatch),
+            if (habits.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                habits.join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF52645F),
+                  height: 1.35,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onConnect,
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Gửi Yêu Cầu Kết Nối'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: FilledButton(
+                onPressed: onViewDetails,
+                style: FilledButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: const Color(0xFFE2F6F1),
+                  foregroundColor: _primary,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Xem lý do tương thích',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
-            )
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.item});
+
+  final MatchRecommendation item;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Container(
+      width: 52,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Color(0xFFCFF3EC),
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        item.fullName.trim().isEmpty
+            ? '?'
+            : item.fullName.trim()[0].toUpperCase(),
+        style: const TextStyle(
+          color: Color(0xFF007C6A),
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+
+    if (item.avatarUrl?.trim().isEmpty != false) {
+      return fallback;
+    }
+    return ClipOval(
+      child: Image.network(
+        item.avatarUrl!.trim(),
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
       ),
     );
   }

@@ -5,7 +5,14 @@ import '../services/api_service.dart';
 class SurveyScreen extends StatefulWidget {
   final int userId;
   final ApiService? apiService;
-  const SurveyScreen({super.key, required this.userId, this.apiService});
+  final bool redirectToHomeOnComplete;
+
+  const SurveyScreen({
+    super.key,
+    required this.userId,
+    this.apiService,
+    this.redirectToHomeOnComplete = false,
+  });
 
   @override
   State<SurveyScreen> createState() => _SurveyScreenState();
@@ -488,7 +495,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
           ),
         );
-        Navigator.pop(context, true);
+        if (widget.redirectToHomeOnComplete) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        } else {
+          Navigator.pop(context, true);
+        }
       } else {
         _showWarningSnackBar('Lưu tiêu chí thất bại, vui lòng thử lại sau!');
       }

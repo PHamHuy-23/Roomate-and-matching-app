@@ -26,8 +26,18 @@ class AuthSession extends ChangeNotifier {
     String fullName,
     String gender,
     String phone,
+    DateTime birthDate,
+    String university,
   ) async {
-    final user = await _api.register(email, password, fullName, gender, phone);
+    final user = await _api.register(
+      email,
+      password,
+      fullName,
+      gender,
+      phone,
+      birthDate,
+      university,
+    );
     _user = user;
     notifyListeners();
     return user;
@@ -36,6 +46,38 @@ class AuthSession extends ChangeNotifier {
   void updateUser(AuthUser updatedUser) {
     _user = updatedUser;
     notifyListeners();
+  }
+
+  Future<bool> updateProfile({
+    required String fullName,
+    required String phone,
+    required String gender,
+    required DateTime birthDate,
+    required String university,
+  }) async {
+    final currentUser = _user;
+    if (currentUser == null) return false;
+
+    final updated = await _api.updateProfile(
+      currentUser.userId,
+      fullName,
+      phone,
+      gender,
+      birthDate,
+      university,
+    );
+    if (updated) {
+      updateUser(
+        currentUser.copyWith(
+          fullName: fullName,
+          phone: phone,
+          gender: gender,
+          birthDate: birthDate,
+          university: university,
+        ),
+      );
+    }
+    return updated;
   }
 
   void signOut() {

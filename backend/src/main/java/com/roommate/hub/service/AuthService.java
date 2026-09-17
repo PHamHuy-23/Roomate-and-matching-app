@@ -29,6 +29,8 @@ public class AuthService {
                 .fullName(req.getFullName())
                 .gender(req.getGender().toUpperCase())
                 .phone(req.getPhone())
+                .birthDate(req.getBirthDate())
+                .university(req.getUniversity())
                 .role(User.Role.ROLE_USER)
                 .build();
 
@@ -41,6 +43,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .gender(user.getGender())
+                .birthDate(user.getBirthDate())
+                .university(user.getUniversity())
                 .role(user.getRole().name())
                 .phone(user.getPhone())
                 .build();
@@ -61,6 +65,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .gender(user.getGender())
+                .birthDate(user.getBirthDate())
+                .university(user.getUniversity())
                 .role(user.getRole().name())
                 .phone(user.getPhone())
                 .build();

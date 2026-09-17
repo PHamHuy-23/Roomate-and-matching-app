@@ -5,7 +5,8 @@
 > **Vai trò nòng cốt**: **Main Fullstack Developer** *(Lập trình viên chính tham gia toàn bộ vòng đời SDLC)*  
 > **Mảng Kỹ thuật Phụ trách Đầu mối (Lead)**: **Lead Kiến trúc Kỹ thuật & Prototype (Technical & Architecture Lead)**  
 > **Dự án**: Nền tảng Tìm bạn cùng thuê trọ và Ghép bạn trọ theo tiêu chí (Roommate Matching Hub)  
-> **Công nghệ thực hiện**: Java 21 Spring Boot 3 (Backend) + Flutter Dart (Frontend) + MySQL 8.0  
+> **Công nghệ thực hiện**: Java 21 Spring Boot 4 (Backend) + Flutter Dart (Frontend) + MySQL 8.x
+> **Nguồn trạng thái chuẩn**: `TASK_ASSIGNMENTS.md` — cập nhật gần nhất 16/09/2026.
 > **Thời gian thực hiện**: **09/09/2026 – 23/09/2026** (14 ngày / 2 tuần)  
 > **HẠN CHÓT BÀN GIAO TOÀN DIỆN (HARD DEADLINE)**: ⏰ **18:00 Thứ Tư, ngày 23/09/2026**
 
@@ -15,7 +16,7 @@
 
 | Phân hệ đảm nhiệm | File / Module cụ thể | Nhiệm vụ chính |
 | :--- | :--- | :--- |
-| **Backend (Spring Boot 3)** | `controller/AuthController.java`<br>`service/AuthService.java`<br>`config/SecurityConfig.java`<br>`config/JwtUtils.java`<br>`controller/MatchController.java`<br>`service/MatchingService.java`<br>`dto/MatchRecommendationDTO.java`<br>`dto/MatchCriteriaDetailDTO.java` | Xây dựng hệ thống bảo mật & phân quyền JWT (Đăng ký, Đăng nhập, Cấp token, Phân quyền endpoint). Lập trình **Lõi Thuật toán Gợi ý Ghép đôi (`MatchingService`)** tính toán % tương thích có trọng số theo tiêu chí 5 chiều. |
+| **Backend (Spring Boot 4)** | `controller/AuthController.java`<br>`service/AuthService.java`<br>`config/SecurityConfig.java`<br>`config/JwtUtils.java`<br>`controller/MatchController.java`<br>`service/MatchingService.java`<br>`dto/MatchRecommendationDTO.java`<br>`dto/MatchCriteriaDetailDTO.java` | Xây dựng hệ thống bảo mật & phân quyền JWT (Đăng ký, Đăng nhập, Cấp token, Phân quyền endpoint). Lập trình **Lõi Thuật toán Gợi ý Ghép đôi (`MatchingService`)** tính toán % tương thích có trọng số theo tiêu chí 5 chiều. |
 | **Frontend (Flutter Client)** | `screens/login_screen.dart`<br>`screens/home_screen.dart`<br>`widgets/match_card.dart`<br>`models/match_recommendation.dart`<br>`services/api_service.dart` | Thiết lập kiến trúc mạng (`api_service.dart` đính kèm Token), Màn hình Đăng nhập/Đăng ký với validation, Màn hình Khám phá bạn trọ (Discovery Feed) hiển thị thẻ ứng viên kèm % Match và bảng đối chiếu tiêu chí. |
 | **Lead Technical & DevOps** | `docs/API_SPECIFICATION.md`<br>`docs/diagrams/sequences/`<br>`build/app/outputs/flutter-apk/`<br>`build/web/` | Chủ trì xây dựng tài liệu chuẩn REST API Specification (OpenAPI/Swagger), vẽ Sequence Diagram luồng Auth & Matching, hỗ trợ gỡ lỗi kỹ thuật/xung đột Git cho nhóm, đóng gói bản phát hành APK và Web. |
 
@@ -32,9 +33,9 @@ gantt
     section Giai đoạn 2
     Sequence Diagram Auth & API Specs Contract :done, qh2, 2026-09-11, 2026-09-12
     section Giai đoạn 3
-    Code Backend Auth JWT & Matching Engine API:active, qh3, 2026-09-13, 2026-09-15
+    Code Flutter Login, Register & Discovery UI:active, qh3, 2026-09-13, 2026-09-16
     section Giai đoạn 4
-    Code Flutter Login, Register & Discovery UI:qh4, 2026-09-16, 2026-09-19
+    Code Backend Auth JWT & Matching Engine API:qh4, 2026-09-17, 2026-09-19
     section Giai đoạn 5
     Tích hợp E2E Auth, Matching & Sửa Conflict Git:qh5, 2026-09-20, 2026-09-22
     section Giai đoạn 6
@@ -50,7 +51,7 @@ gantt
 ### GIAI ĐOẠN 1: THIẾT LẬP NỀN TẢNG PROTOTYPE (09/09 – 10/09/2026)
 *Trạng thái: ✅ ĐÃ HOÀN THÀNH XUẤT SẮC*
 
-- [x] **Task QH2-1.1: Khởi tạo khung Backend Java Spring Boot 3 (`backend/`)**  
+- [x] **Task QH2-1.1: Khởi tạo khung Backend Java Spring Boot 4 (`backend/`)**
   - *Kết quả*: Cấu hình JDK 21, Spring Data JPA, Spring Security, MySQL Connector, Maven wrapper hoạt động trơn tru.
 - [x] **Task QH2-1.2: Khởi tạo khung ứng dụng đa nền tảng Flutter (`frontend/`)**  
   - *Kết quả*: Cấu hình `pubspec.yaml`, HTTP client, Routing cơ bản cho Web và Mobile.
@@ -118,13 +119,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 3 (17/09 – 19/09/2026)
+### GIAI ĐOẠN 4: LẬP TRÌNH BACKEND SPRING BOOT 4 (17/09 – 19/09/2026)
 *Mục tiêu giai đoạn: Hoàn thiện bảo mật Spring Security 6 với JWT và cài đặt thuật toán tính điểm tương thích Matching.*  
-*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Hai, 19/09/2026***  
+*Hạn chót toàn giai đoạn 4: ⏰ **23:59 Thứ Bảy, 19/09/2026***
 *Nhánh Git thực hiện*: `feature/auth-matching-backend`
 
 #### 📌 Task T4.1 (Mã: QH2-3.1): Lập trình Module Bảo mật Xác thực JWT (`AuthController` & `SecurityConfig`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Chủ Nhật, 18/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Sáu, 18/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/config/SecurityConfig.java`:
     - Cấu hình `SecurityFilterChain`:
@@ -149,7 +150,7 @@ gantt
   - Đăng nhập đúng email/pass -> trả về chuỗi JWT token dài. Đăng nhập sai pass -> trả về HTTP 401.
 
 #### 📌 Task T4.2 (Mã: QH2-3.2): Lập trình Lõi Thuật toán Matching Engine (`MatchingService`)
-- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Hai, 19/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **18:00 Thứ Bảy, 19/09/2026**
 - **Các file cần chỉnh sửa / tạo mới**:
   - `backend/src/main/java/com/roommate/hub/service/MatchingService.java`:
     - Xây dựng thuật toán tính độ tương thích $S \in [0, 100]\%$ giữa người tìm kiếm $A$ và ứng viên $B$:
@@ -175,8 +176,8 @@ gantt
     - `GET /api/v1/matching/compare/{candidateId}`: So sánh chi tiết tiêu chí 1-1.
 - **Tiêu chí nghiệm thu**: Thời gian tính toán cho 100 ứng viên dưới 200ms, không có lỗi chia cho 0 (`ArithmeticException`).
 
-#### 📌 Task T4.7 (Mã: QH2-3.3): Viết Bộ Unit Tests tự động cho `AuthService` & `MatchingService`
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 19/09/2026**
+#### 📌 Task T4.7a (Mã: QH2-3.3): Viết Bộ Unit Tests tự động cho `AuthService` & `MatchingService`
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Bảy, 19/09/2026**
 - **File tạo mới**:
   - `backend/src/test/java/com/roommate/hub/service/AuthServiceTest.java`:
     - Test đăng ký tài khoản thành công.
@@ -193,13 +194,13 @@ gantt
 
 ---
 
-### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 13/09/2026)
+### GIAI ĐOẠN 3: LẬP TRÌNH FRONTEND FLUTTER CLIENT (13/09 – 16/09/2026)
 *Mục tiêu giai đoạn: Xây dựng màn hình Đăng nhập/Đăng ký chuyên nghiệp và màn hình Khám phá bạn trọ hiển thị % tương thích trực quan.*  
-*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Sáu, 16/09/2026***  
+*Hạn chót toàn giai đoạn 3: ⏰ **23:59 Thứ Tư, 16/09/2026***
 *Nhánh Git thực hiện*: `feature/auth-discovery-flutter`
 
 #### 📌 Task T3.2a (Mã: QH2-4.1): Xây dựng Giao diện Đăng nhập & Đăng ký Tài khoản (`login_screen.dart`) [x] (✅ ĐÃ XONG 14/09/2026)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 14/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Hai, 14/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/login_screen.dart`:
     - Thiết kế giao diện hiện đại với Logo Roommate Hub, tông màu chủ đạo Indigo/Blue.
@@ -215,7 +216,7 @@ gantt
   - Hiển thị thông báo lỗi bằng `SnackBar` màu đỏ nếu tài khoản/mật khẩu không chính xác.
 
 #### 📌 Task T3.2b (Mã: QH2-4.2): Xây dựng Giao diện Khám phá Bạn trọ (`home_screen.dart` / Discovery Feed)
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Năm, 15/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Ba, 15/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Mở file `frontend/lib/screens/home_screen.dart`:
     - Thanh tìm kiếm & lọc nhanh trên AppBar: Nút Lọc theo % tương thích tối thiểu (ví dụ: chỉ hiện người trên 70% Match), lọc theo Quận mong muốn.
@@ -233,7 +234,7 @@ gantt
     2. Nút ElevatedButton "Gửi lời mời ghép đôi" (kết nối trực tiếp với API của Tiến Đạt).
 
 #### 📌 Task T3.3 (Mã: QH2-4.3): Xây dựng Modal / BottomSheet Đối chiếu Chi tiết 5 Tiêu chí
-- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Sáu, 16/09/2026**
+- **Thời hạn hoàn thành**: ⏰ **23:59 Thứ Tư, 16/09/2026**
 - **Chi tiết giao diện & Widget kỹ thuật**:
   - Khi bấm "Xem chi tiết đối chiếu", mở `showModalBottomSheet`:
     - Hiển thị 5 thanh tiến trình `LinearProgressIndicator` thể hiện điểm số tương thích của 5 chiều:
