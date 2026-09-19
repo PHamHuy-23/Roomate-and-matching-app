@@ -19,6 +19,7 @@ import '../screens/sent_request_screen.dart';
 import '../screens/received_requests_screen.dart';
 import '../screens/cancel_connection_screen.dart';
 import '../screens/blocked_users_screen.dart';
+import '../screens/notifications_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -44,6 +45,7 @@ class AppRoutes {
   static const receivedRequests = '/received-requests';
   static const cancelConnection = '/cancel-connection';
   static const blockedUsers = '/blocked-users';
+  static const notifications = '/notifications';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -86,6 +88,8 @@ class AppRoutes {
             return const CancelConnectionScreen();
           case blockedUsers:
             return const BlockedUsersScreen();
+          case notifications:
+            return const NotificationsScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
