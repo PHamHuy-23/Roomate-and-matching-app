@@ -233,7 +233,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                               if (_selectedTabIndex == 0) {
                                 Navigator.pushNamed(context, AppRoutes.contactDetails, arguments: {'contactId': item.partnerId});
                               } else if (_selectedTabIndex == 1) {
-                                // Navigator.pushNamed(context, '/received-request', arguments: {'requestId': item.requestId});
+                                Navigator.pushNamed(context, AppRoutes.receivedRequests);
                               } else {
                                 Navigator.pushNamed(context, AppRoutes.sentRequest, arguments: {'partnerId': item.partnerId});
                               }
