@@ -10,7 +10,7 @@ Quy trình phát triển (AI Rules):
    - Báo cáo với người dùng.
    - Commit code vào Git.
 
-## Tiến độ: 14/31 màn hình (45.2%)
+## Tiến độ: 15/31 màn hình (48.4%)
 
 ### 1. Module Hồ sơ cá nhân (Profile)
 - [x] 24 / Hồ sơ của tôi
@@ -29,7 +29,7 @@ Quy trình phát triển (AI Rules):
 - [x] 21 / Lời mời đã nhận
 - [x] 22 / Kết nối thành công
 - [x] 56 / Hủy kết nối
-- [ ] 57 / Người đã chặn
+- [x] 57 / Người đã chặn
 - [ ] 28 / Thông báo (và 58 / Thông báo)
 
 ### 3. Module Quyền riêng tư & Báo cáo (Privacy & Reports)
