@@ -124,7 +124,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       onChanged: (val) {
                         setState(() => _isSearchActive = val);
                       },
-                      activeColor: const Color(0xFF087E6B),
+                      activeTrackColor: const Color(0xFF087E6B),
                     ),
                   ),
                   

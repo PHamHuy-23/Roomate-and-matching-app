@@ -75,19 +75,19 @@ class AppRoutes {
   static const adminReports = '/admin/reports';
   static const adminReportResolved = '/admin/report-resolved';
 
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+  static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
     return MaterialPageRoute<dynamic>(
-      settings: settings,
+      settings: routeSettings,
       builder: (context) {
         final session = context.read<AuthSession>();
-        if (settings.name == login) return const LoginScreen();
+        if (routeSettings.name == login) return const LoginScreen();
 
         final user = session.user;
         if (!session.isAuthenticated || user == null) {
           return const LoginScreen();
         }
 
-        switch (settings.name) {
+        switch (routeSettings.name) {
           case home:
             return HomeScreen(currentUser: user);
           case profile:
@@ -149,7 +149,7 @@ class AppRoutes {
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
-            final arguments = settings.arguments;
+            final arguments = routeSettings.arguments;
             final fromRegistration =
                 arguments is Map && arguments['fromRegistration'] == true;
             return SurveyScreen(
@@ -166,7 +166,7 @@ class AppRoutes {
           default:
             return Scaffold(
               body: Center(
-                child: Text('Không tìm thấy trang: ${settings.name}'),
+                child: Text('Không tìm thấy trang: ${routeSettings.name}'),
               ),
             );
         }

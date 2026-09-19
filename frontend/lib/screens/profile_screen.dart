@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../models/auth_user.dart';
 import '../models/user_preference.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
-import '../state/auth_session.dart';
 
 class ProfileScreen extends StatefulWidget {
   final AuthUser currentUser;

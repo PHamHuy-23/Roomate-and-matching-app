@@ -146,9 +146,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
     ];
 
     List<MatchRequestItem> currentList = [];
-    if (_selectedTabIndex == 0) currentList = connected;
-    else if (_selectedTabIndex == 1) currentList = pendingReceived;
-    else currentList = pendingSent;
+    if (_selectedTabIndex == 0) {
+      currentList = connected;
+    } else if (_selectedTabIndex == 1) {
+      currentList = pendingReceived;
+    } else {
+      currentList = pendingSent;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
@@ -222,9 +226,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
                           
                         ...currentList.map((item) {
                           String subtitle = '';
-                          if (_selectedTabIndex == 0) subtitle = 'Đã kết nối · Xem thông tin liên hệ';
-                          else if (_selectedTabIndex == 1) subtitle = 'Lời mời mới · ${item.matchScore}% phù hợp';
-                          else subtitle = 'Chờ chấp nhận · ${item.matchScore}% phù hợp';
+                          if (_selectedTabIndex == 0) {
+                            subtitle = 'Đã kết nối · Xem thông tin liên hệ';
+                          } else if (_selectedTabIndex == 1) {
+                            subtitle = 'Lời mời mới · ${item.matchScore}% phù hợp';
+                          } else {
+                            subtitle = 'Chờ chấp nhận · ${item.matchScore}% phù hợp';
+                          }
                           
                           return _buildConnectionItem(
                             name: item.partnerName,
@@ -239,7 +247,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                               }
                             },
                           );
-                        }).toList(),
+                        }),
                         
                         const SizedBox(height: 16),
                         
