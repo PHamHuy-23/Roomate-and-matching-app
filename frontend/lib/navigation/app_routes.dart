@@ -21,6 +21,7 @@ import '../screens/cancel_connection_screen.dart';
 import '../screens/blocked_users_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/privacy_screen.dart';
+import '../screens/report_violation_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -48,6 +49,7 @@ class AppRoutes {
   static const blockedUsers = '/blocked-users';
   static const notifications = '/notifications';
   static const privacy = '/privacy';
+  static const reportViolation = '/report-violation';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -94,6 +96,8 @@ class AppRoutes {
             return const NotificationsScreen();
           case privacy:
             return const PrivacyScreen();
+          case reportViolation:
+            return const ReportViolationScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
