@@ -10,7 +10,7 @@ Quy trình phát triển (AI Rules):
    - Báo cáo với người dùng.
    - Commit code vào Git.
 
-## Tiến độ: 7/31 màn hình (22.6%)
+## Tiến độ: 8/31 màn hình (25.8%)
 
 ### 1. Module Hồ sơ cá nhân (Profile)
 - [x] 24 / Hồ sơ của tôi
@@ -20,7 +20,7 @@ Quy trình phát triển (AI Rules):
 - [x] 16 / Hồ sơ bạn ở ghép (Góc nhìn người khác)
 - [x] 23 / Người đăng phòng
 - [x] 79 / Liên hệ Hoàng Nam
-- [ ] 66 / Minh Anh
+- [x] 66 / Minh Anh
 
 ### 2. Module Kết nối & Thông báo (Connections & Notifications)
 - [ ] 18 / Lời mời kết nối
