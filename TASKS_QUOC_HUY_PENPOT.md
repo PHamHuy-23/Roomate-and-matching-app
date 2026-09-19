@@ -10,12 +10,12 @@ Quy trình phát triển (AI Rules):
    - Báo cáo với người dùng.
    - Commit code vào Git.
 
-## Tiến độ: 2/31 màn hình (6.4%)
+## Tiến độ: 3/31 màn hình (9.6%)
 
 ### 1. Module Hồ sơ cá nhân (Profile)
 - [x] 24 / Hồ sơ của tôi
 - [x] 25 / Chỉnh sửa hồ sơ
-- [ ] 26 / Ảnh đại diện
+- [x] 26 / Ảnh đại diện
 - [ ] 27 / Cài đặt
 - [ ] 16 / Hồ sơ bạn ở ghép (Góc nhìn người khác)
 - [ ] 23 / Người đăng phòng

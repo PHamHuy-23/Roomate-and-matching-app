@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../screens/admin_screen.dart';
+import '../screens/avatar_picker_screen.dart';
 import '../screens/create_post_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const createPost = '/create-post';
   static const admin = '/admin';
   static const editProfile = '/edit-profile';
+  static const avatarPicker = '/avatar-picker';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -42,6 +44,8 @@ class AppRoutes {
             return ProfileScreen(currentUser: user);
           case editProfile:
             return EditProfileScreen(currentUser: user);
+          case avatarPicker:
+            return AvatarPickerScreen(currentUser: user);
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:

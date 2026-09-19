@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/auth_user.dart';
+import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../state/auth_session.dart';
 
@@ -219,31 +220,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Center(
                       child: Column(
                         children: [
-                          CircleAvatar(
-                            radius: 41,
-                            backgroundColor: Colors.grey.shade300,
-                            backgroundImage: hasValidAvatar ? NetworkImage(avatarUrl) : null,
-                            child: !hasValidAvatar
-                                ? Text(
-                                    widget.currentUser.fullName.isNotEmpty
-                                        ? widget.currentUser.fullName[0].toUpperCase()
-                                        : 'U',
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Đổi ảnh đại diện',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'SourceSansPro',
-                              color: Colors.black,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.avatarPicker);
+                            },
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 41,
+                                  backgroundColor: Colors.grey.shade300,
+                                  backgroundImage: hasValidAvatar ? NetworkImage(avatarUrl) : null,
+                                  child: !hasValidAvatar
+                                      ? Text(
+                                          widget.currentUser.fullName.isNotEmpty
+                                              ? widget.currentUser.fullName[0].toUpperCase()
+                                              : 'U',
+                                          style: const TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Đổi ảnh đại diện',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
