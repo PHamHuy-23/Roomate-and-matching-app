@@ -11,6 +11,7 @@ import '../screens/edit_profile_screen.dart';
 import '../screens/requests_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/roommate_profile_screen.dart';
+import '../screens/poster_profile_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -28,6 +29,7 @@ class AppRoutes {
   static const avatarPicker = '/avatar-picker';
   static const settings = '/settings';
   static const roommateProfile = '/roommate-profile';
+  static const posterProfile = '/poster-profile';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -54,6 +56,8 @@ class AppRoutes {
             return const SettingsScreen();
           case roommateProfile:
             return const RoommateProfileScreen();
+          case posterProfile:
+            return const PosterProfileScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
