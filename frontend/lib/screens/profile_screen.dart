@@ -71,10 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToEditProfile() {
-    // TODO: Navigate to 25 / Chỉnh sửa hồ sơ
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng chỉnh sửa hồ sơ đang phát triển')),
-    );
+    Navigator.pushNamed(context, AppRoutes.editProfile);
   }
 
   void _navigateToCriteria() {
