@@ -31,6 +31,7 @@ import '../screens/admin/admin_confirm_lock_screen.dart';
 import '../screens/admin/admin_locked_account_screen.dart';
 import '../screens/admin/admin_moderate_post_screen.dart';
 import '../screens/admin/admin_post_approved_screen.dart';
+import '../screens/admin/admin_post_needs_edit_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -68,6 +69,7 @@ class AppRoutes {
   static const adminLockedAccount = '/admin/locked-account';
   static const adminModeratePost = '/admin/moderate-post';
   static const adminPostApproved = '/admin/post-approved';
+  static const adminPostNeedsEdit = '/admin/post-needs-edit';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -134,6 +136,8 @@ class AppRoutes {
             return const AdminModeratePostScreen();
           case adminPostApproved:
             return const AdminPostApprovedScreen();
+          case adminPostNeedsEdit:
+            return const AdminPostNeedsEditScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
