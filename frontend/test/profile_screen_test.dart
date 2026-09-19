@@ -24,6 +24,8 @@ class FakeProfileApi implements ApiService {
   String? lastUpdatedName;
   String? lastUpdatedPhone;
   String? lastUpdatedGender;
+  DateTime? lastUpdatedBirthDate;
+  String? lastUpdatedUniversity;
 
   @override
   Future<Map<String, dynamic>?> getPreferences(int userId) async {
@@ -53,6 +55,8 @@ class FakeProfileApi implements ApiService {
     lastUpdatedName = fullName;
     lastUpdatedPhone = phone;
     lastUpdatedGender = gender;
+    lastUpdatedBirthDate = birthDate;
+    lastUpdatedUniversity = university;
     if (shouldFailUpdate) {
       throw ApiException(
         updateErrorMessage ?? 'Cập nhật thất bại từ máy chủ',
@@ -110,6 +114,8 @@ void main() {
     gender: 'MALE',
     role: 'ROLE_USER',
     phone: '0901234567',
+    birthDate: DateTime(2002, 5, 20),
+    university: 'Đại học Sư phạm Kỹ thuật TP.HCM',
   );
 
   final samplePreferences = <String, dynamic>{
@@ -343,6 +349,8 @@ void main() {
       expect(api.updateProfileCalls, 1);
       expect(api.lastUpdatedName, 'Nguyễn Văn Test');
       expect(api.lastUpdatedPhone, '0987654321');
+      expect(api.lastUpdatedBirthDate, DateTime(2002, 5, 20));
+      expect(api.lastUpdatedUniversity, 'Đại học Sư phạm Kỹ thuật TP.HCM');
       expect(find.text('Cập nhật thông tin thành công!'), findsOneWidget);
       expect(find.text('Nguyễn Văn Test'), findsWidgets);
     });
@@ -357,6 +365,8 @@ void main() {
         'gender': 'MALE',
         'role': 'ROLE_USER',
         'phone': '0901234567',
+        'birthDate': '2002-05-20',
+        'university': 'Đại học Sư phạm Kỹ thuật TP.HCM',
       };
       final userFromLogin = AuthUser.fromJson(authPayload);
       final api = FakeProfileApi()..preferencesData = samplePreferences;
@@ -399,6 +409,8 @@ void main() {
         'gender': 'MALE',
         'role': 'ROLE_USER',
         'phone': '0901234567',
+        'birthDate': '2002-05-20',
+        'university': 'Đại học Sư phạm Kỹ thuật TP.HCM',
       };
       final userFromLogin = AuthUser.fromJson(authPayload);
       final api = FakeProfileApi()..preferencesData = samplePreferences;
