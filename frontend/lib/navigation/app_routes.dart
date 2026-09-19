@@ -29,6 +29,7 @@ import '../screens/admin/admin_users_screen.dart';
 import '../screens/admin/admin_user_details_screen.dart';
 import '../screens/admin/admin_confirm_lock_screen.dart';
 import '../screens/admin/admin_locked_account_screen.dart';
+import '../screens/admin/admin_moderate_post_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -64,6 +65,7 @@ class AppRoutes {
   static const adminUserDetails = '/admin/user-details';
   static const adminConfirmLock = '/admin/confirm-lock';
   static const adminLockedAccount = '/admin/locked-account';
+  static const adminModeratePost = '/admin/moderate-post';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -126,6 +128,8 @@ class AppRoutes {
             return const AdminConfirmLockScreen();
           case adminLockedAccount:
             return const AdminLockedAccountScreen();
+          case adminModeratePost:
+            return const AdminModeratePostScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
