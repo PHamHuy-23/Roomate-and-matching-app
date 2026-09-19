@@ -59,7 +59,9 @@ void main() {
     expect(item.matchedReasons, ['Cùng ngân sách']);
   });
 
-  testWidgets('MatchCard hiển thị đúng nội dung theo Figma', (tester) async {
+  testWidgets('MatchCard hiển thị nội dung theo Penpot và mở đối chiếu', (
+    tester,
+  ) async {
     var viewed = false;
 
     await tester.pumpWidget(
@@ -76,9 +78,10 @@ void main() {
     );
 
     expect(find.text('Tuấn Minh · 22'), findsOneWidget);
-    expect(find.text('Đại học Quốc gia'), findsOneWidget);
-    expect(find.text('88% phù hợp'), findsOneWidget);
-    expect(find.text('Thủ Đức · 2.2 triệu/tháng'), findsOneWidget);
+    expect(find.text('Đại học Quốc gia · Thủ Đức'), findsOneWidget);
+    expect(find.text('88%'), findsOneWidget);
+    expect(find.text('2.2 triệu/tháng · Thủ Đức'), findsOneWidget);
+    expect(find.text('Ngân sách hợp'), findsOneWidget);
     expect(find.text('Xem lý do tương thích'), findsOneWidget);
 
     await tester.tap(find.text('Xem lý do tương thích'));
@@ -102,9 +105,9 @@ void main() {
       ),
     );
 
-    expect(find.text('88% phù hợp'), findsOneWidget);
-    expect(find.text('68% phù hợp'), findsOneWidget);
-    expect(find.text('55% phù hợp'), findsOneWidget);
+    expect(find.text('88%'), findsOneWidget);
+    expect(find.text('68%'), findsOneWidget);
+    expect(find.text('55%'), findsOneWidget);
   });
 
   testWidgets('BottomSheet hiển thị 5 tiêu chí, nổi bật và lưu ý', (
@@ -129,19 +132,53 @@ void main() {
       ),
     );
 
-    expect(find.text('Vì sao 72%?'), findsOneWidget);
+    expect(find.text('Độ tương thích'), findsOneWidget);
+    expect(find.text('72%'), findsOneWidget);
+    expect(find.text('Khá phù hợp'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNWidgets(5));
     for (final label in [
       'Ngân sách',
-      'Giờ sinh hoạt',
+      'Giờ ngủ',
       'Sạch sẽ',
       'Hút thuốc',
       'Thú cưng',
     ]) {
       expect(find.text(label), findsOneWidget);
     }
+    expect(find.text('Điểm nổi bật'), findsOneWidget);
     expect(find.text('Điểm cần trao đổi'), findsOneWidget);
-    expect(find.textContaining('hút thuốc'), findsOneWidget);
-    expect(find.textContaining('thú cưng'), findsOneWidget);
+    expect(find.textContaining('Hút thuốc: 40%'), findsOneWidget);
+    expect(find.textContaining('Thú cưng: 55%'), findsOneWidget);
+  });
+
+  testWidgets('Thẻ và bảng đối chiếu không tràn ở màn hình 320px', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MatchCard(item: recommendation(), onViewDetails: () {}),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CompatibilityBottomSheet(
+            item: recommendation(),
+            onConnect: () async {},
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
   });
 }

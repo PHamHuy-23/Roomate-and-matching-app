@@ -5,6 +5,7 @@ import '../models/match_recommendation.dart';
 import '../models/room_post.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
+import '../theme/discovery_palette.dart';
 import '../widgets/compatibility_bottom_sheet.dart';
 import '../widgets/match_card.dart';
 
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _discoveryPrimary = Color(0xFF008F7A);
+  static const _discoveryPrimary = DiscoveryPalette.primary;
 
   final ApiService _api = ApiService();
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
@@ -222,14 +223,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _districtFilter = 'Tất cả';
         }
         final matches = _filterMatches(allMatches);
-        final nearbyLabel = _districtFilter != 'Tất cả'
-            ? _districtFilter
-            : districts.length == 1
-            ? districts.single
-            : 'khu vực của bạn';
-
         return ColoredBox(
-          color: const Color(0xFFF5F8F7),
+          color: DiscoveryPalette.canvas,
           child: RefreshIndicator(
             color: _discoveryPrimary,
             onRefresh: _refreshMatches,
@@ -240,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _DiscoveryHeader(
                     userName: widget.currentUser.fullName,
                     resultCount: matches.length,
-                    nearbyLabel: nearbyLabel,
+                    selectedDistrict: _districtFilter,
                     filtersActive:
                         _minimumMatchScore > 0 || _districtFilter != 'Tất cả',
                     onSearchChanged: (value) {
@@ -266,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(22, 4, 22, 96),
                     sliver: SliverList.builder(
                       itemCount: matches.length,
                       itemBuilder: (context, index) {
@@ -477,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F8F7),
+      backgroundColor: DiscoveryPalette.canvas,
       body: IndexedStack(
         index: _selectedHomeTab,
         children: [_buildDiscoveryTab(), _buildRoomTab()],
@@ -487,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _selectedHomeTab,
         onDestinationSelected: _selectHomeDestination,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFDDF4EE),
+        indicatorColor: DiscoveryPalette.primarySoft,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
@@ -529,7 +524,7 @@ class _DiscoveryHeader extends StatelessWidget {
   const _DiscoveryHeader({
     required this.userName,
     required this.resultCount,
-    required this.nearbyLabel,
+    required this.selectedDistrict,
     required this.filtersActive,
     required this.onSearchChanged,
     required this.onFiltersPressed,
@@ -539,7 +534,7 @@ class _DiscoveryHeader extends StatelessWidget {
 
   final String userName;
   final int resultCount;
-  final String nearbyLabel;
+  final String selectedDistrict;
   final bool filtersActive;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onFiltersPressed;
@@ -552,9 +547,9 @@ class _DiscoveryHeader extends StatelessWidget {
     final firstName = nameParts.isEmpty ? userName : nameParts.last;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        16,
+        22,
         MediaQuery.paddingOf(context).top + 16,
-        16,
+        22,
         12,
       ),
       child: Column(
@@ -564,17 +559,39 @@ class _DiscoveryHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Chào $firstName 👋',
+                  'Khám phá',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF17342F),
+                    color: DiscoveryPalette.text,
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                key: const Key('match-filter-button'),
+                onPressed: onFiltersPressed,
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text('Bộ lọc'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: filtersActive
+                      ? DiscoveryPalette.primary
+                      : DiscoveryPalette.muted,
+                  backgroundColor: filtersActive
+                      ? DiscoveryPalette.primarySoft
+                      : DiscoveryPalette.surface,
+                  side: const BorderSide(color: DiscoveryPalette.border),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
               ),
               PopupMenuButton<String>(
                 tooltip: 'Tùy chọn',
-                icon: const Icon(Icons.more_horiz, color: Color(0xFF52645F)),
+                icon: const Icon(
+                  Icons.more_horiz,
+                  color: DiscoveryPalette.muted,
+                ),
                 onSelected: (value) {
                   if (value == 'preferences') {
                     onPreferencesPressed();
@@ -598,51 +615,34 @@ class _DiscoveryHeader extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '$resultCount người phù hợp quanh $nearbyLabel',
-            style: const TextStyle(color: Color(0xFF687873), fontSize: 12.5),
+            selectedDistrict == 'Tất cả'
+                ? '$resultCount gợi ý dành cho $firstName'
+                : '$resultCount gợi ý tại $selectedDistrict',
+            style: const TextStyle(
+              color: DiscoveryPalette.muted,
+              fontSize: 12.5,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
             key: const Key('match-search-field'),
             onChanged: onSearchChanged,
             decoration: InputDecoration(
-              hintText: 'Tìm theo khu vực, ngân sách...',
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF61746F)),
-              suffixIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    key: const Key('match-filter-button'),
-                    tooltip: 'Bộ lọc tìm kiếm',
-                    onPressed: onFiltersPressed,
-                    icon: Icon(
-                      Icons.tune,
-                      color: filtersActive
-                          ? const Color(0xFF008F7A)
-                          : const Color(0xFF61746F),
-                    ),
-                  ),
-                  if (filtersActive)
-                    const Positioned(
-                      right: 9,
-                      top: 9,
-                      child: CircleAvatar(
-                        radius: 3.5,
-                        backgroundColor: Color(0xFFE7A400),
-                      ),
-                    ),
-                ],
+              hintText: 'Tìm tên, trường hoặc khu vực...',
+              prefixIcon: const Icon(
+                Icons.search,
+                color: DiscoveryPalette.muted,
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: DiscoveryPalette.surface,
               isDense: true,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: DiscoveryPalette.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: DiscoveryPalette.border),
               ),
             ),
           ),
@@ -670,7 +670,7 @@ class _DiscoveryFiltersSheet extends StatefulWidget {
 }
 
 class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
-  static const _primary = Color(0xFF008F7A);
+  static const _primary = DiscoveryPalette.primary;
 
   late String _district;
   late double _minimumScore;
@@ -700,8 +700,8 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         decoration: const BoxDecoration(
-          color: Color(0xFFF5F8F7),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          color: DiscoveryPalette.canvas,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -723,13 +723,13 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF17342F),
+                color: DiscoveryPalette.text,
               ),
             ),
             const SizedBox(height: 4),
             const Text(
               'Điều chỉnh để thu hẹp kết quả phù hợp.',
-              style: TextStyle(color: Color(0xFF687873)),
+              style: TextStyle(color: DiscoveryPalette.muted),
             ),
             const SizedBox(height: 22),
             const Text(
@@ -742,10 +742,10 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
               initialValue: _district,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: DiscoveryPalette.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+                  borderSide: const BorderSide(color: DiscoveryPalette.border),
                 ),
               ),
               items: [
@@ -811,7 +811,7 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text('Xem kết quả'),
@@ -849,7 +849,7 @@ class _DiscoveryMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 46, color: const Color(0xFF7A918B)),
+            Icon(icon, size: 46, color: DiscoveryPalette.muted),
             const SizedBox(height: 12),
             Text(
               title,
@@ -860,14 +860,14 @@ class _DiscoveryMessage extends StatelessWidget {
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF687873)),
+              style: const TextStyle(color: DiscoveryPalette.muted),
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 14),
               FilledButton(
                 onPressed: onAction,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF008F7A),
+                  backgroundColor: DiscoveryPalette.primary,
                 ),
                 child: Text(actionLabel!),
               ),

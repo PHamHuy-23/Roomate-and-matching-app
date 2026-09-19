@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/match_recommendation.dart';
+import '../theme/discovery_palette.dart';
 
 class MatchCard extends StatelessWidget {
   const MatchCard({super.key, required this.item, required this.onViewDetails});
-
-  static const _primary = Color(0xFF008F7A);
 
   final MatchRecommendation item;
   final VoidCallback onViewDetails;
@@ -13,13 +12,13 @@ class MatchCard extends StatelessWidget {
   ({Color background, Color foreground}) _scoreColors(double score) {
     if (score >= 80) {
       return (
-        background: const Color(0xFFDDF4E8),
-        foreground: const Color(0xFF087443),
+        background: const Color(0xFFEAF7F0),
+        foreground: DiscoveryPalette.primary,
       );
     }
     if (score >= 60) {
       return (
-        background: const Color(0xFFFFE8C7),
+        background: const Color(0xFFFFF6E7),
         foreground: const Color(0xFF9A5B00),
       );
     }
@@ -31,23 +30,24 @@ class MatchCard extends StatelessWidget {
 
   List<String> get _habitHighlights {
     if (item.matchedReasons.isNotEmpty) {
-      return item.matchedReasons.take(2).toList();
+      const shortLabels = {
+        'Ngân sách phù hợp': 'Ngân sách hợp',
+        'Giờ sinh hoạt phù hợp': 'Giờ ngủ hợp',
+        'Mức độ sạch sẽ tương đồng': 'Sạch sẽ',
+        'Thói quen hút thuốc phù hợp': 'Hút thuốc hợp',
+        'Quan điểm thú cưng phù hợp': 'Thú cưng hợp',
+      };
+      return item.matchedReasons
+          .take(2)
+          .map((reason) => shortLabels[reason] ?? reason)
+          .toList();
     }
     final scores = <({String label, double score})>[
-      (label: 'Ngân sách tương đồng', score: item.criteriaDetail.budgetMatch),
-      (label: 'Giờ sinh hoạt phù hợp', score: item.criteriaDetail.sleepMatch),
-      (
-        label: 'Mức độ sạch sẽ tương đồng',
-        score: item.criteriaDetail.cleanlinessMatch,
-      ),
-      (
-        label: 'Thói quen hút thuốc phù hợp',
-        score: item.criteriaDetail.smokingMatch,
-      ),
-      (
-        label: 'Quan điểm thú cưng phù hợp',
-        score: item.criteriaDetail.petMatch,
-      ),
+      (label: 'Ngân sách hợp', score: item.criteriaDetail.budgetMatch),
+      (label: 'Giờ ngủ hợp', score: item.criteriaDetail.sleepMatch),
+      (label: 'Sạch sẽ', score: item.criteriaDetail.cleanlinessMatch),
+      (label: 'Hút thuốc hợp', score: item.criteriaDetail.smokingMatch),
+      (label: 'Thú cưng hợp', score: item.criteriaDetail.petMatch),
     ]..sort((a, b) => b.score.compareTo(a.score));
     return scores.take(2).map((entry) => entry.label).toList();
   }
@@ -60,9 +60,9 @@ class MatchCard extends StatelessWidget {
 
   String get _universityText {
     if (item.university?.trim().isNotEmpty == true) {
-      return item.university!.trim();
+      return '${item.university!.trim()} · ${item.targetDistrict}';
     }
-    return 'Sinh viên tại ${item.targetDistrict}';
+    return item.targetDistrict;
   }
 
   String get _budgetText {
@@ -81,13 +81,13 @@ class MatchCard extends StatelessWidget {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
+      color: DiscoveryPalette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2EAE7)),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: DiscoveryPalette.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -107,7 +107,7 @@ class MatchCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF17342F),
+                          color: DiscoveryPalette.text,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -116,67 +116,108 @@ class MatchCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 11.5,
-                          color: Color(0xFF687873),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${item.totalScore.toStringAsFixed(0)}% phù hợp',
-                        style: TextStyle(
-                          color: colors.foreground,
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          color: DiscoveryPalette.muted,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.background,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${item.totalScore.toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      color: colors.foreground,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 11),
+            const SizedBox(height: 14),
             Text(
-              '${item.targetDistrict} · $_budgetText',
+              '$_budgetText · ${item.targetDistrict}',
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF52645F),
+                color: DiscoveryPalette.text,
                 height: 1.35,
               ),
             ),
             if (habits.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                habits.join(' · '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF52645F),
-                  height: 1.35,
-                ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var index = 0; index < habits.length; index++)
+                    _HabitChip(label: habits[index], accented: index.isOdd),
+                ],
               ),
             ],
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
                 onPressed: onViewDetails,
-                style: FilledButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: const Color(0xFFE2F6F1),
-                  foregroundColor: _primary,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.arrow_forward, size: 16),
+                label: const Text('Xem lý do tương thích'),
+                style: TextButton.styleFrom(
+                  foregroundColor: DiscoveryPalette.primary,
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                child: const Text(
-                  'Xem lý do tương thích',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HabitChip extends StatelessWidget {
+  const _HabitChip({required this.label, required this.accented});
+
+  final String label;
+  final bool accented;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: accented
+              ? DiscoveryPalette.accentSoft
+              : DiscoveryPalette.primarySoft,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: accented
+                ? DiscoveryPalette.accent
+                : DiscoveryPalette.primary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -195,7 +236,7 @@ class _Avatar extends StatelessWidget {
       height: 52,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
-        color: Color(0xFFCFF3EC),
+        color: DiscoveryPalette.primarySoftStrong,
         shape: BoxShape.circle,
       ),
       child: Text(
@@ -203,7 +244,7 @@ class _Avatar extends StatelessWidget {
             ? '?'
             : item.fullName.trim()[0].toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFF007C6A),
+          color: DiscoveryPalette.primary,
           fontSize: 20,
           fontWeight: FontWeight.w800,
         ),
