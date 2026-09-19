@@ -94,10 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToSettings() {
-    // TODO: Navigate to 27 / Cài đặt
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng cài đặt đang phát triển')),
-    );
+    Navigator.pushNamed(context, AppRoutes.settings);
   }
 
   Widget _buildMenuCard({

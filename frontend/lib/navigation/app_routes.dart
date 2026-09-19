@@ -9,6 +9,7 @@ import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/requests_screen.dart';
+import '../screens/settings_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -24,6 +25,7 @@ class AppRoutes {
   static const admin = '/admin';
   static const editProfile = '/edit-profile';
   static const avatarPicker = '/avatar-picker';
+  static const settings = '/settings';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -46,6 +48,8 @@ class AppRoutes {
             return EditProfileScreen(currentUser: user);
           case avatarPicker:
             return AvatarPickerScreen(currentUser: user);
+          case settings:
+            return const SettingsScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
