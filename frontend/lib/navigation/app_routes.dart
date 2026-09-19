@@ -23,6 +23,7 @@ import '../screens/notifications_screen.dart';
 import '../screens/privacy_screen.dart';
 import '../screens/report_violation_screen.dart';
 import '../screens/report_received_screen.dart';
+import '../screens/help_safety_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -52,6 +53,7 @@ class AppRoutes {
   static const privacy = '/privacy';
   static const reportViolation = '/report-violation';
   static const reportReceived = '/report-received';
+  static const helpSafety = '/help-safety';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -102,6 +104,8 @@ class AppRoutes {
             return const ReportViolationScreen();
           case reportReceived:
             return const ReportReceivedScreen();
+          case helpSafety:
+            return const HelpSafetyScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
