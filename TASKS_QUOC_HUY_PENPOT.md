@@ -10,7 +10,7 @@ Quy trình phát triển (AI Rules):
    - Báo cáo với người dùng.
    - Commit code vào Git.
 
-## Tiến độ: 28/31 màn hình (90.3%)
+## Tiến độ: 29/31 màn hình (93.5%)
 
 ### 1. Module Hồ sơ cá nhân (Profile)
 - [x] 24 / Hồ sơ của tôi
@@ -47,7 +47,7 @@ Quy trình phát triển (AI Rules):
 - [x] Admin / Kiểm duyệt tin đăng
 - [x] Admin / Tin đã được duyệt
 - [x] Admin / Tin cần được chỉnh sửa
-- [ ] Admin / Báo cáo vi phạm
+- [x] Admin / Báo cáo vi phạm
 - [ ] Admin / Đã xử lý báo cáo
 
 ---
