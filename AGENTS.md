@@ -45,3 +45,7 @@ Khi hai nguồn mâu thuẫn, không tự chọn phương án làm thay đổi p
 - Nêu branch/commit, file đã đổi, chức năng hoàn thành, kết quả từng lệnh test và phần còn thiếu/blocker.
 - Không ghi nội dung “đã xong” khi mới chỉ tạo khung, mock dữ liệu hoặc chưa kết nối luồng thực tế.
 - Không thêm asset, tool, dependency hay tài liệu không được sử dụng trực tiếp bởi task.
+
+## Quy tr�nh th?c hi?n m�n h�nh Frontend (Penpot)
+- B?t bu?c d�ng Penpot MCP d? xem thi?t k? g?c.
+- M?i khi t?o xong 1 m�n h�nh: 1) B�o c�o ti?n d? cho PM, 2) C?p nh?t file markdown tracking (vd: TASKS_QUOC_HUY_PENPOT.md), 3) Th?c hi?n git commit ngay l?p t?c.
