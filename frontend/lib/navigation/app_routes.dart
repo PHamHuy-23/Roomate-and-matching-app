@@ -26,6 +26,7 @@ import '../screens/report_received_screen.dart';
 import '../screens/help_safety_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/admin_users_screen.dart';
+import '../screens/admin/admin_user_details_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -58,6 +59,7 @@ class AppRoutes {
   static const helpSafety = '/help-safety';
   static const adminDashboard = '/admin/dashboard';
   static const adminUsers = '/admin/users';
+  static const adminUserDetails = '/admin/user-details';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -114,6 +116,8 @@ class AppRoutes {
             return const AdminDashboardScreen();
           case adminUsers:
             return const AdminUsersScreen();
+          case adminUserDetails:
+            return const AdminUserDetailsScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
