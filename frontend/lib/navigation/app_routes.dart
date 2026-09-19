@@ -15,6 +15,7 @@ import '../screens/poster_profile_screen.dart';
 import '../screens/contact_details_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/send_request_screen.dart';
+import '../screens/sent_request_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 
@@ -36,6 +37,7 @@ class AppRoutes {
   static const contactDetails = '/contact-details';
   static const chat = '/chat';
   static const sendRequest = '/send-request';
+  static const sentRequest = '/sent-request';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<dynamic>(
@@ -70,6 +72,8 @@ class AppRoutes {
             return const ChatScreen();
           case sendRequest:
             return const SendRequestScreen();
+          case sentRequest:
+            return const SentRequestScreen();
           case requests:
             return RequestsScreen(currentUserId: user.userId);
           case survey:
