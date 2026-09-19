@@ -12,8 +12,8 @@ void main() {
   ) async {
     await tester.pumpWidget(const RoommateHubApp());
 
-    expect(find.text('Đăng Nhập Roommate Hub'), findsOneWidget);
-    expect(find.text('ĐĂNG NHẬP'), findsOneWidget);
+    expect(find.text('Đăng nhập'), findsNWidgets(2));
+    expect(find.text('ROOMMATE HUB'), findsOneWidget);
   });
 
   testWidgets('Không thể mở màn hình cần đăng nhập khi chưa có phiên', (
@@ -24,8 +24,7 @@ void main() {
     appNavigatorKey.currentState!.pushNamed(AppRoutes.home);
     await tester.pumpAndSettle();
 
-    expect(find.text('Đăng Nhập Roommate Hub'), findsOneWidget);
-    expect(find.text('Roommate Hub'), findsNothing);
+    expect(find.text('Đăng nhập'), findsNWidgets(2));
   });
 
   testWidgets('Form đăng ký bắt buộc ngày sinh và trường đại học', (
@@ -61,8 +60,8 @@ void main() {
       'Đại học Quốc gia TP.HCM',
     );
 
-    await tester.ensureVisible(find.text('TẠO TÀI KHOẢN'));
-    await tester.tap(find.text('TẠO TÀI KHOẢN'));
+    await tester.ensureVisible(find.text('Tạo tài khoản').last);
+    await tester.tap(find.text('Tạo tài khoản').last);
     await tester.pump();
 
     expect(find.text('Vui lòng chọn ngày sinh'), findsOneWidget);
@@ -80,6 +79,49 @@ void main() {
       findsOneWidget,
     );
     expect(find.byTooltip('Hiện mật khẩu'), findsOneWidget);
+  });
+
+  testWidgets('Mật khẩu có thể ẩn hiện trên giao diện Penpot', (tester) async {
+    await tester.pumpWidget(const RoommateHubApp());
+
+    final password = find.byKey(const Key('password_field'));
+    expect(tester.widget<TextField>(password).obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('Hiện mật khẩu'));
+    await tester.pump();
+
+    expect(tester.widget<TextField>(password).obscureText, isFalse);
+  });
+
+  testWidgets(
+    'Giao diện mới vẫn kiểm tra định dạng email trước khi đăng nhập',
+    (tester) async {
+      await tester.pumpWidget(const RoommateHubApp());
+      await tester.enterText(find.byKey(const Key('email_field')), 'sai-email');
+      await tester.enterText(find.byKey(const Key('password_field')), '123456');
+
+      await tester.tap(find.text('Đăng nhập').last);
+      await tester.pump();
+
+      expect(find.text('Email không đúng định dạng'), findsOneWidget);
+    },
+  );
+
+  testWidgets('Form đăng ký cuộn được ở màn hình rộng 320px', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(const RoommateHubApp());
+    await tester.tap(find.text('Chưa có tài khoản? Đăng ký ngay'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const Key('register_university_field')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('register_university_field')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Hồ sơ cho phép cập nhật ngày sinh và trường đại học', (
