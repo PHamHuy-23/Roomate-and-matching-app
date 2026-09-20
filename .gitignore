@@ -10,6 +10,7 @@ Thumbs.db
 ~$*.doc*
 
 # Java/Maven
+.m2/
 backend/target/
 backend/*.log
 backend/.env
