@@ -1,6 +1,7 @@
 package com.roommate.hub.controller;
 
 import com.roommate.hub.dto.UserPreferenceDTO;
+import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.service.ProfileService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 
@@ -24,6 +26,7 @@ public class ProfileController {
 
     @GetMapping("/preferences/{userId}")
     public ResponseEntity<UserPreferenceDTO> getPreferences(@PathVariable Long userId) {
+        assertCurrentUser(userId);
         UserPreferenceDTO pref = profileService.getPreferences(userId);
         return ResponseEntity.ok(pref);
     }
@@ -32,11 +35,12 @@ public class ProfileController {
     public ResponseEntity<UserPreferenceDTO> savePreferences(
             @PathVariable Long userId,
             @Valid @RequestBody UserPreferenceDTO dto) {
+        assertCurrentUser(userId);
         return ResponseEntity.ok(profileService.saveOrUpdatePreferences(userId, dto));
     }
 
     @PutMapping("/user/{userId}")
-    public ResponseEntity<User> updateUserInfo(
+    public ResponseEntity<UserResponseDTO> updateUserInfo(
             @PathVariable Long userId,
             @RequestParam String fullName,
             @RequestParam String phone,
@@ -44,6 +48,7 @@ public class ProfileController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthDate,
             @RequestParam(required = false) String university) {
+        assertCurrentUser(userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
         user.setFullName(fullName);
@@ -68,6 +73,14 @@ public class ProfileController {
             }
             user.setUniversity(normalizedUniversity);
         }
-        return ResponseEntity.ok(userRepository.save(user));
+        return ResponseEntity.ok(UserResponseDTO.from(userRepository.save(user)));
+    }
+
+    private void assertCurrentUser(Long userId) {
+        User current = userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (!current.getId().equals(userId) && current.getRole() != User.Role.ROLE_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền truy cập tài khoản này");
+        }
     }
 }

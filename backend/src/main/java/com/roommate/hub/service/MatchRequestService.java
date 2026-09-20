@@ -8,6 +8,7 @@ import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.roommate.hub.exception.ForbiddenException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,9 +42,10 @@ public class MatchRequestService {
     }
 
     @Transactional
-    public Map<String, Object> respondRequest(Long requestId, boolean isAccepted) {
+    public Map<String, Object> respondRequest(Long requestId, boolean isAccepted, Long currentUserId) {
         MatchRequest request = matchRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại!"));
+        if (!request.getReceiver().getId().equals(currentUserId)) throw new ForbiddenException("Không có quyền xử lý yêu cầu này!");
 
         request.setStatus(isAccepted ? MatchRequest.MatchStatus.ACCEPTED : MatchRequest.MatchStatus.REJECTED);
         matchRequestRepository.save(request);

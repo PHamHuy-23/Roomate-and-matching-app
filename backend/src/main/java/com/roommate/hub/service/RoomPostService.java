@@ -69,7 +69,8 @@ public class RoomPostService {
 
     @Transactional(readOnly = true)
     public RoomPostResponseDTO getPost(Long postId) {
-        return convertToDTO(roomPostRepository.findById(postId)
+        return convertToDTO(roomPostRepository.findByIdAndStatusIn(postId,
+                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE))
                 .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!")));
     }
 
