@@ -19,8 +19,8 @@ class CompatibilityBottomSheet extends StatelessWidget {
 
   List<({String label, double score})> get _criteria => [
     (label: 'Ngân sách', score: item.criteriaDetail.budgetMatch),
-    (label: 'Giờ ngủ', score: item.criteriaDetail.sleepMatch),
-    (label: 'Sạch sẽ', score: item.criteriaDetail.cleanlinessMatch),
+    (label: 'Giờ giấc sinh hoạt', score: item.criteriaDetail.sleepMatch),
+    (label: 'Vệ sinh & ngăn nắp', score: item.criteriaDetail.cleanlinessMatch),
     (label: 'Hút thuốc', score: item.criteriaDetail.smokingMatch),
     (label: 'Thú cưng', score: item.criteriaDetail.petMatch),
   ];
@@ -48,7 +48,7 @@ class CompatibilityBottomSheet extends StatelessWidget {
       .toList();
 
   String get _scoreDescription {
-    if (item.totalScore >= 80) return 'Rất phù hợp';
+    if (item.totalScore >= 80) return 'Nhiều tiêu chí tương đồng';
     if (item.totalScore >= 60) return 'Khá phù hợp';
     return 'Cần trao đổi thêm';
   }
@@ -64,6 +64,7 @@ class CompatibilityBottomSheet extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Container(
+            height: MediaQuery.sizeOf(context).height * 0.92,
             decoration: const BoxDecoration(
               color: DiscoveryPalette.canvas,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -94,9 +95,9 @@ class CompatibilityBottomSheet extends StatelessWidget {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Độ tương thích',
+                          'Vì sao hai bạn phù hợp?',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
                             color: DiscoveryPalette.text,
                           ),
@@ -109,43 +110,29 @@ class CompatibilityBottomSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Text(
-                    'Với ${item.fullName}',
-                    style: const TextStyle(color: DiscoveryPalette.muted),
+                  const Text(
+                    'Điểm gợi ý, không phải sự đảm bảo',
+                    style: TextStyle(color: DiscoveryPalette.muted),
                   ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Container(
-                      width: 156,
-                      height: 156,
-                      decoration: const BoxDecoration(
-                        color: DiscoveryPalette.primarySoft,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${item.totalScore.toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w800,
-                              color: DiscoveryPalette.primary,
-                            ),
-                          ),
-                          Text(
-                            _scoreDescription,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: DiscoveryPalette.primary,
-                            ),
-                          ),
-                        ],
-                      ),
+                  const SizedBox(height: 34),
+                  Text(
+                    '${item.totalScore.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w800,
+                      color: DiscoveryPalette.primary,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 6),
+                  Text(
+                    _scoreDescription,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: DiscoveryPalette.text,
+                    ),
+                  ),
+                  const SizedBox(height: 26),
                   for (final criterion in _criteria)
                     _CriterionProgress(
                       label: criterion.label,

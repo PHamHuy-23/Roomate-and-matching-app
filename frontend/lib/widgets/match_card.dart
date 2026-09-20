@@ -53,24 +53,14 @@ class MatchCard extends StatelessWidget {
   }
 
   String get _secondaryText {
-    final parts = <String>[item.fullName];
-    if (item.age != null) parts.add('${item.age}');
-    return parts.join(' · ');
+    return item.age == null ? item.fullName : '${item.fullName}, ${item.age}';
   }
 
   String get _universityText {
     if (item.university?.trim().isNotEmpty == true) {
-      return '${item.university!.trim()} · ${item.targetDistrict}';
+      return '${item.university!.trim()} • ${item.targetDistrict}';
     }
     return item.targetDistrict;
-  }
-
-  String get _budgetText {
-    final millions = item.budgetAmount / 1000000;
-    final value = millions == millions.roundToDouble()
-        ? millions.toStringAsFixed(0)
-        : millions.toStringAsFixed(1);
-    return '$value triệu/tháng';
   }
 
   @override
@@ -80,61 +70,30 @@ class MatchCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 18),
       color: DiscoveryPalette.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: DiscoveryPalette.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Avatar(item: item),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _secondaryText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: DiscoveryPalette.text,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _universityText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: DiscoveryPalette.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              CandidatePhoto(item: item, height: 230),
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
                     color: colors.background,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${item.totalScore.toStringAsFixed(0)}%',
+                    '${item.totalScore.toStringAsFixed(0)}% phù hợp',
                     style: TextStyle(
                       color: colors.foreground,
                       fontSize: 12,
@@ -142,47 +101,78 @@ class MatchCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '$_budgetText · ${item.targetDistrict}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: DiscoveryPalette.text,
-                height: 1.35,
-              ),
-            ),
-            if (habits.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var index = 0; index < habits.length; index++)
-                    _HabitChip(label: habits[index], accented: index.isOdd),
-                ],
               ),
             ],
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: onViewDetails,
-                iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.arrow_forward, size: 16),
-                label: const Text('Xem lý do tương thích'),
-                style: TextButton.styleFrom(
-                  foregroundColor: DiscoveryPalette.primary,
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _secondaryText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: DiscoveryPalette.text,
                   ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  _universityText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: DiscoveryPalette.muted,
+                  ),
+                ),
+                if (habits.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var index = 0; index < habits.length; index++)
+                        _HabitChip(label: habits[index], accented: index.isOdd),
+                    ],
+                  ),
+                ],
+                if (item.bioDescription?.trim().isNotEmpty == true) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    '“${item.bioDescription!.trim()}”',
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: DiscoveryPalette.text,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: onViewDetails,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DiscoveryPalette.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Xem hồ sơ & độ phù hợp'),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -224,28 +214,35 @@ class _HabitChip extends StatelessWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.item});
+class CandidatePhoto extends StatelessWidget {
+  const CandidatePhoto({super.key, required this.item, required this.height});
 
   final MatchRecommendation item;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final fallback = Container(
-      width: 52,
-      height: 52,
+      width: double.infinity,
+      height: height,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
-        color: DiscoveryPalette.primarySoftStrong,
-        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            DiscoveryPalette.primarySoftStrong,
+            DiscoveryPalette.primarySoft,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
       child: Text(
         item.fullName.trim().isEmpty
             ? '?'
             : item.fullName.trim()[0].toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: DiscoveryPalette.primary,
-          fontSize: 20,
+          fontSize: (height * 0.32).clamp(24, 64).toDouble(),
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -254,14 +251,12 @@ class _Avatar extends StatelessWidget {
     if (item.avatarUrl?.trim().isEmpty != false) {
       return fallback;
     }
-    return ClipOval(
-      child: Image.network(
-        item.avatarUrl!.trim(),
-        width: 52,
-        height: 52,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => fallback,
-      ),
+    return Image.network(
+      item.avatarUrl!.trim(),
+      width: double.infinity,
+      height: height,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }
