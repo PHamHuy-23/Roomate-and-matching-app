@@ -2,7 +2,6 @@ package com.roommate.hub.controller;
 
 import com.roommate.hub.dto.MatchRecommendationDTO;
 import com.roommate.hub.dto.MatchRequestResponseDTO;
-import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.service.MatchRequestService;
@@ -47,7 +46,7 @@ public class MatchController {
 
     // Gửi yêu cầu kết nối[cite: 1]
     @PostMapping("/requests")
-    public ResponseEntity<MatchRequest> sendRequest(
+    public ResponseEntity<MatchRequestResponseDTO> sendRequest(
             @RequestParam Long receiverId,
             @RequestParam Double score) {
         return ResponseEntity.ok(matchRequestService.sendRequest(currentUserId(), receiverId, score));

@@ -22,7 +22,7 @@ public class MatchRequestService {
     private final MatchRequestRepository matchRequestRepository;
     private final UserRepository userRepository;
 
-    public MatchRequest sendRequest(Long senderId, Long receiverId, Double score) {
+    public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId, Double score) {
         if (senderId.equals(receiverId)) {
             throw new RuntimeException("Không thể tự ghép đôi với chính mình!");
         }
@@ -32,13 +32,20 @@ public class MatchRequestService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
-        return matchRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId)
+        MatchRequest request = matchRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId)
                 .orElseGet(() -> matchRequestRepository.save(MatchRequest.builder()
                         .sender(sender)
                         .receiver(receiver)
                         .matchScore(score)
                         .status(MatchRequest.MatchStatus.PENDING)
                         .build()));
+        boolean accepted = request.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
+        return MatchRequestResponseDTO.builder().requestId(request.getId()).partnerId(receiver.getId())
+                .partnerName(receiver.getFullName()).partnerAvatar(receiver.getAvatarUrl())
+                .matchScore(request.getMatchScore()).status(request.getStatus().name())
+                .createdAt(request.getCreatedAt())
+                .contactPhone(accepted ? receiver.getPhone() : null)
+                .contactEmail(accepted ? receiver.getEmail() : null).build();
     }
 
     @Transactional
