@@ -59,6 +59,13 @@ public class MatchController {
         return ResponseEntity.ok(matchRequestService.respondRequest(requestId, accept, currentUserId()));
     }
 
-    private Long currentUserId() { return userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow().getId(); }
+    private Long currentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED);
+        }
+        return userRepository.findByEmail(authentication.getName()).orElseThrow(
+                () -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED)).getId();
+    }
     private void assertCurrentUser(Long userId) { if (!currentUserId().equals(userId)) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN); }
 }
