@@ -6,7 +6,9 @@ import '../navigation/app_routes.dart';
 import '../state/auth_session.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.initialRegister = false});
+
+  final bool initialRegister;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -19,10 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _muted = Color(0xFF52625F);
   static const _border = Color(0xFFDCE6E3);
   static const _primary = Color(0xFF087E6B);
-  static const _primarySoft = Color(0xFFEAF8F5);
   static const _danger = Color(0xFFD9485F);
 
-  bool _isLogin = true;
+  late bool _isLogin;
   bool _isLoading = false;
 
   final _emailCtrl = TextEditingController();
@@ -36,6 +37,13 @@ class _LoginScreenState extends State<LoginScreen> {
   String _gender = 'MALE';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _acceptedTerms = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLogin = !widget.initialRegister;
+  }
 
   @override
   void dispose() {
@@ -109,10 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
-      if (password.length < 6) {
+      if (password.length < 8) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Mật khẩu phải có ít nhất 6 ký tự'),
+            content: Text('Mật khẩu phải có ít nhất 8 ký tự'),
             backgroundColor: _danger,
           ),
         );
@@ -131,6 +139,15 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Vui lòng chọn ngày sinh'),
+            backgroundColor: _danger,
+          ),
+        );
+        return;
+      }
+      if (!_acceptedTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng đồng ý với Điều khoản và Quyền riêng tư'),
             backgroundColor: _danger,
           ),
         );
@@ -155,11 +172,15 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      if (mounted) {
+      final hasPreferences = isLogin ? await session.hasPreferences() : null;
+      if (mounted && session.isAuthenticated) {
+        final needsSurvey = isLogin && hasPreferences == false;
         Navigator.pushReplacementNamed(
           context,
-          isLogin ? AppRoutes.home : AppRoutes.survey,
-          arguments: isLogin ? null : const {'fromRegistration': true},
+          needsSurvey || !isLogin ? AppRoutes.survey : AppRoutes.home,
+          arguments: needsSurvey || !isLogin
+              ? const {'fromRegistration': true}
+              : null,
         );
       }
     } catch (e) {
@@ -207,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           label,
           style: const TextStyle(
-            color: _muted,
+            color: _ink,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -223,49 +244,41 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: _canvas,
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: _primarySoft,
-                          shape: BoxShape.circle,
+                  if (_isLogin)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        tooltip: 'Quay lại bắt đầu',
+                        onPressed: () => Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.welcome,
                         ),
-                        child: const Text(
-                          'RH',
-                          style: TextStyle(
-                            color: _primary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'ROOMMATE HUB',
-                        style: TextStyle(
-                          color: _ink,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                        ),
+                    )
+                  else ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        tooltip: 'Quay lại đăng nhập',
+                        onPressed: () => setState(() => _isLogin = true),
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 34),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(
-                    _isLogin ? 'Đăng nhập' : 'Tạo tài khoản',
+                    _isLogin ? 'Chào bạn trở lại!' : 'Tạo tài khoản',
                     style: const TextStyle(
                       color: _ink,
                       fontSize: 26,
@@ -275,8 +288,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 6),
                   Text(
                     _isLogin
-                        ? 'Chào mừng bạn trở lại!'
-                        : 'Bắt đầu hành trình tìm người ở ghép phù hợp.',
+                        ? 'Đăng nhập để tiếp tục hành trình'
+                        : 'Cùng tìm một người ở ghép phù hợp',
                     style: const TextStyle(color: _muted, fontSize: 13),
                   ),
                   const SizedBox(height: 28),
@@ -288,11 +301,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _nameCtrl,
                         textCapitalization: TextCapitalization.words,
                         cursorColor: _primary,
-                        decoration: _inputDecoration('Nguyễn Minh Anh'),
+                        decoration: _inputDecoration('Nhập tên của bạn'),
                       ),
                     ),
                   _labeledField(
-                    _isLogin ? 'Email' : 'Email trường',
+                    'Email',
                     TextField(
                       key: const Key('email_field'),
                       controller: _emailCtrl,
@@ -300,7 +313,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       autocorrect: false,
                       enableSuggestions: false,
                       cursorColor: _primary,
-                      decoration: _inputDecoration('sinhvien@university.edu'),
+                      decoration: _inputDecoration(
+                        _isLogin ? 'huy@example.com' : 'ban@example.com',
+                      ),
                     ),
                   ),
                   _labeledField(
@@ -313,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       enableSuggestions: false,
                       cursorColor: _primary,
                       decoration: _inputDecoration(
-                        'Nhập mật khẩu',
+                        _isLogin ? 'Nhập mật khẩu' : 'Tối thiểu 8 ký tự',
                         suffixIcon: IconButton(
                           tooltip: _obscurePassword
                               ? 'Hiện mật khẩu'
@@ -331,6 +346,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                  if (_isLogin)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(foregroundColor: _primary),
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.forgotPassword,
+                        ),
+                        child: const Text('Quên mật khẩu?'),
+                      ),
+                    ),
                   if (!_isLogin) ...[
                     _labeledField(
                       'Xác nhận mật khẩu',
@@ -358,6 +385,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: _muted,
                             ),
                           ),
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 20),
+                      child: Text(
+                        'Mật khẩu gồm chữ hoa, chữ thường,\nchữ số và ký tự đặc biệt.',
+                        style: TextStyle(color: _muted, fontSize: 12),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 14),
+                      child: Text(
+                        'Thông tin để tìm bạn ở ghép phù hợp',
+                        style: TextStyle(
+                          color: _ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -412,7 +457,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
+                  if (!_isLogin)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Checkbox(
+                            key: const Key('register_terms_checkbox'),
+                            value: _acceptedTerms,
+                            activeColor: _primary,
+                            onChanged: (value) =>
+                                setState(() => _acceptedTerms = value ?? false),
+                          ),
+                          const Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 11),
+                              child: Text(
+                                'Tôi đồng ý Điều khoản & Quyền riêng tư',
+                                style: TextStyle(color: _ink, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 48),
                   SizedBox(
                     height: 48,
                     child: FilledButton(
@@ -441,19 +512,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TextButton(
                     onPressed: _isLoading
                         ? null
                         : () => setState(() => _isLogin = !_isLogin),
                     style: TextButton.styleFrom(foregroundColor: _primary),
                     child: Text(
-                      _isLogin
-                          ? 'Chưa có tài khoản? Đăng ký ngay'
-                          : 'Đã có tài khoản? Đăng nhập',
+                      _isLogin ? 'Tạo tài khoản' : 'Đã có tài khoản · Đăng nhập',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
+                  if (_isLogin) ...[
+                    const SizedBox(height: 80),
+                    const Text(
+                      'Bằng việc tiếp tục, bạn đồng ý với Điều khoản sử dụng và Chính sách quyền riêng tư.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: _muted, fontSize: 11),
+                    ),
+                  ],
                 ],
               ),
             ),
