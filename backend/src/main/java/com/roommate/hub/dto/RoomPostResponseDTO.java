@@ -16,6 +16,7 @@ public class RoomPostResponseDTO {
     private Long authorId;
     private String authorName;
     private String authorAvatar;
+    private String imageUrl;
     private String title;
     private String description;
     private Double price;

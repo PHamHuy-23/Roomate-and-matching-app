@@ -26,4 +26,15 @@ public class RoomPostController {
     public ResponseEntity<RoomPostResponseDTO> createPost(@Valid @RequestBody CreateRoomPostDTO dto) {
         return ResponseEntity.ok(roomPostService.createPost(dto));
     }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<RoomPostResponseDTO> getPost(@PathVariable Long postId) {
+        return ResponseEntity.ok(roomPostService.getPost(postId));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
+        roomPostService.deletePost(postId);
+        return ResponseEntity.noContent().build();
+    }
 }
