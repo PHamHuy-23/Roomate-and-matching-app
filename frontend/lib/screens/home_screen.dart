@@ -4,8 +4,14 @@ import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/room_post.dart';
 import '../navigation/app_routes.dart';
+import 'candidate_profile_screen.dart';
+import 'room_details_screen.dart';
+import 'room_filters_screen.dart';
+import 'saved_rooms_screen.dart';
+import 'listing_management_screen.dart';
 import '../services/api_service.dart';
-import '../widgets/compatibility_bottom_sheet.dart';
+import 'penpot_state_screens.dart';
+import '../theme/discovery_palette.dart';
 import '../widgets/match_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _discoveryPrimary = Color(0xFF008F7A);
+  static const _discoveryPrimary = DiscoveryPalette.primary;
 
   final ApiService _api = ApiService();
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
@@ -30,8 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
   List<RoomPost> _allPosts = [];
   List<RoomPost> _filteredPosts = [];
   bool _isLoadingPosts = true;
+  bool _postsLoadError = false;
   String _searchKeyword = '';
-  double _maxPriceFilter = 10000000; // Bộ lọc giá tối đa (mặc định 10 triệu)
+  double _minPriceFilter = 2000000;
+  double _maxPriceFilter = 4000000;
+  double _minAreaFilter = 20;
+  String _roomDistrictFilter = 'Bình Thạnh, TP.HCM';
+  final Set<String> _roomAmenitiesFilter = <String>{};
+  bool _quickPriceActive = false;
+  bool _quickNearbyActive = false;
 
   // Trạng thái tìm kiếm và lọc ứng viên bạn trọ.
   String _matchSearchKeyword = '';
@@ -39,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _districtFilter = 'Tất cả';
   final Set<int> _connectingUserIds = {};
   final Set<int> _sentRequestUserIds = {};
+  final Set<int> _savedPostIds = {};
 
   @override
   void initState() {
@@ -51,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _matchesFuture = _api.getRecommendations(_currentUserId);
       _isLoadingPosts = true;
+      _postsLoadError = false;
     });
 
     _api
@@ -61,12 +76,16 @@ class _HomeScreenState extends State<HomeScreen> {
               _allPosts = posts;
               _applyPostFilters();
               _isLoadingPosts = false;
+              _postsLoadError = false;
             });
           }
         })
         .catchError((err) {
           if (mounted) {
-            setState(() => _isLoadingPosts = false);
+            setState(() {
+              _isLoadingPosts = false;
+              _postsLoadError = true;
+            });
           }
         });
   }
@@ -76,8 +95,28 @@ class _HomeScreenState extends State<HomeScreen> {
       final matchAddress =
           p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
           p.title.toLowerCase().contains(_searchKeyword.toLowerCase());
-      final matchPrice = p.price <= _maxPriceFilter;
-      return matchAddress && matchPrice;
+      final matchPrice =
+          p.price >= _minPriceFilter && p.price <= _maxPriceFilter;
+      final districtKey = _roomDistrictFilter
+          .split(',')
+          .first
+          .trim()
+          .toLowerCase();
+      final matchDistrict =
+          _roomDistrictFilter == 'Tất cả khu vực' ||
+          p.address.toLowerCase().contains(districtKey);
+      // Older API payloads do not include area/amenities yet. Unknown values
+      // are kept visible so the frontend remains useful with those responses.
+      final matchArea = p.areaM2 == null || p.areaM2! >= _minAreaFilter;
+      final matchAmenities =
+          _roomAmenitiesFilter.isEmpty ||
+          p.amenities.isEmpty ||
+          _roomAmenitiesFilter.every(p.amenities.contains);
+      return matchAddress &&
+          matchPrice &&
+          matchDistrict &&
+          matchArea &&
+          matchAmenities;
     }).toList();
   }
 
@@ -87,10 +126,10 @@ class _HomeScreenState extends State<HomeScreen> {
     await refreshed;
   }
 
-  Future<void> _sendMatchRequest(MatchRecommendation item) async {
+  Future<bool> _sendMatchRequest(MatchRecommendation item) async {
     if (_connectingUserIds.contains(item.userId) ||
         _sentRequestUserIds.contains(item.userId)) {
-      return;
+      return false;
     }
 
     setState(() => _connectingUserIds.add(item.userId));
@@ -101,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         item.userId,
         item.totalScore,
       );
-      if (!mounted) return;
+      if (!mounted) return false;
       if (sent) {
         setState(() => _sentRequestUserIds.add(item.userId));
       }
@@ -114,16 +153,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       );
+      return sent;
     } on ApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       messenger.showSnackBar(SnackBar(content: Text(error.message)));
+      return false;
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted) return false;
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Không thể gửi lời mời, vui lòng thử lại.'),
         ),
       );
+      return false;
     } finally {
       if (mounted) {
         setState(() => _connectingUserIds.remove(item.userId));
@@ -131,19 +173,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _showCompatibility(MatchRecommendation item) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      builder: (sheetContext) => CompatibilityBottomSheet(
-        item: item,
-        requestSent: _sentRequestUserIds.contains(item.userId),
-        onConnect: () async {
-          Navigator.pop(sheetContext);
-          await _sendMatchRequest(item);
-        },
+  void _openCandidateProfile(MatchRecommendation item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => CandidateProfileScreen(
+          item: item,
+          requestSent: _sentRequestUserIds.contains(item.userId),
+          onConnect: () => _sendMatchRequest(item),
+        ),
       ),
     );
   }
@@ -222,14 +260,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _districtFilter = 'Tất cả';
         }
         final matches = _filterMatches(allMatches);
-        final nearbyLabel = _districtFilter != 'Tất cả'
-            ? _districtFilter
-            : districts.length == 1
-            ? districts.single
-            : 'khu vực của bạn';
-
         return ColoredBox(
-          color: const Color(0xFFF5F8F7),
+          color: DiscoveryPalette.canvas,
           child: RefreshIndicator(
             color: _discoveryPrimary,
             onRefresh: _refreshMatches,
@@ -240,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _DiscoveryHeader(
                     userName: widget.currentUser.fullName,
                     resultCount: matches.length,
-                    nearbyLabel: nearbyLabel,
+                    selectedDistrict: _districtFilter,
                     filtersActive:
                         _minimumMatchScore > 0 || _districtFilter != 'Tất cả',
                     onSearchChanged: (value) {
@@ -248,6 +280,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     onFiltersPressed: () => _showDiscoveryFilters(districts),
                     onPreferencesPressed: _openSurvey,
+                    onNotificationsPressed: () =>
+                        Navigator.pushNamed(context, AppRoutes.notifications),
                     onAdminPressed:
                         widget.currentUser.role == 'ROLE_ADMIN' ||
                             widget.currentUser.role == 'ADMIN'
@@ -266,14 +300,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(22, 4, 22, 96),
                     sliver: SliverList.builder(
                       itemCount: matches.length,
                       itemBuilder: (context, index) {
                         final item = matches[index];
                         return MatchCard(
                           item: item,
-                          onViewDetails: () => _showCompatibility(item),
+                          onViewDetails: () => _openCandidateProfile(item),
                         );
                       },
                     ),
@@ -291,164 +325,345 @@ class _HomeScreenState extends State<HomeScreen> {
       bottom: false,
       child: ColoredBox(
         color: const Color(0xFFF5F8F7),
-        child: Column(
-          children: [
-            // Khung tìm kiếm & Lọc theo giá
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
-              child: Column(
-                children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Tìm kiếm theo khu vực, đường, tên bài...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchKeyword.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                setState(() {
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Một nơi để gọi là nhà',
+                            style: TextStyle(
+                              color: Color(0xFF142523),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: _openRoomFilters,
+                              style: TextButton.styleFrom(
+                                foregroundColor: _discoveryPrimary,
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: const Text('Lọc'),
+                            ),
+                            IconButton(
+                              tooltip: 'Phòng đã lưu',
+                              onPressed: _openSavedRooms,
+                              icon: const Icon(
+                                Icons.bookmark_border,
+                                color: _discoveryPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          color: _discoveryPrimary,
+                          size: 17,
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'Bình Thạnh, TP. Hồ Chí Minh',
+                          style: TextStyle(
+                            color: Color(0xFF52625F),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFF52625F),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Tìm khu vực, trường học…',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchKeyword.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () => setState(() {
                                   _searchKeyword = '';
                                   _applyPostFilters();
-                                });
-                              },
-                            )
-                          : null,
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                                }),
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFDCE6E3),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFDCE6E3),
+                          ),
+                        ),
+                      ),
+                      onChanged: (value) => setState(() {
+                        _searchKeyword = value.trim();
+                        _applyPostFilters();
+                      }),
+                    ),
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _quickFilter(
+                            label: 'Dưới 4 triệu',
+                            selected: _quickPriceActive,
+                            onTap: () => setState(() {
+                              _quickPriceActive = !_quickPriceActive;
+                              if (_quickPriceActive) {
+                                _minPriceFilter = 0;
+                                _maxPriceFilter = 4000000;
+                              } else {
+                                _minPriceFilter = 0;
+                                _maxPriceFilter = 15000000;
+                              }
+                              _applyPostFilters();
+                            }),
+                          ),
+                          const SizedBox(width: 8),
+                          _quickFilter(
+                            label: 'Có nội thất',
+                            selected: _roomAmenitiesFilter.contains('Nội thất'),
+                            onTap: () => setState(() {
+                              if (!_roomAmenitiesFilter.add('Nội thất')) {
+                                _roomAmenitiesFilter.remove('Nội thất');
+                              }
+                              _applyPostFilters();
+                            }),
+                          ),
+                          const SizedBox(width: 8),
+                          _quickFilter(
+                            label: 'Gần bạn',
+                            selected: _quickNearbyActive,
+                            onTap: () => setState(() {
+                              _quickNearbyActive = !_quickNearbyActive;
+                              _roomDistrictFilter = _quickNearbyActive
+                                  ? 'Bình Thạnh, TP.HCM'
+                                  : 'Tất cả khu vực';
+                              _applyPostFilters();
+                            }),
+                          ),
+                        ],
                       ),
                     ),
-                    onChanged: (val) {
-                      setState(() {
-                        _searchKeyword = val.trim();
-                        _applyPostFilters();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text(
-                        'Giá tối đa: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'CÒN PHÒNG',
+                      style: TextStyle(
+                        color: _discoveryPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
                       ),
-                      Text(
-                        _maxPriceFilter >= 10000000
-                            ? 'Tất cả'
-                            : fmt.format(_maxPriceFilter),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
-                          fontSize: 13,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_isLoadingPosts)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: PenpotStateView(
+                  icon: Icons.home_work_outlined,
+                  title: 'Đang tìm những lựa chọn dành cho bạn',
+                  description: null,
+                  loading: true,
+                ),
+              )
+            else if (_postsLoadError)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: PenpotStateView(
+                  icon: Icons.priority_high_rounded,
+                  title: 'Chưa tải được dữ liệu',
+                  description:
+                      'Kiểm tra kết nối mạng rồi thử lại.\nCác thông tin bạn đã lưu vẫn được giữ.',
+                  actionLabel: 'Thử tải lại',
+                  onAction: _loadData,
+                ),
+              )
+            else if (_filteredPosts.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: PenpotStateView(
+                  icon: Icons.check_circle_outline,
+                  title: 'Chưa tìm thấy phòng phù hợp',
+                  description:
+                      'Thử tăng khoảng giá hoặc chọn thêm\nkhu vực lân cận để có nhiều lựa chọn hơn.',
+                  actionLabel: 'Điều chỉnh bộ lọc',
+                  onAction: _openRoomFilters,
+                  secondaryActionLabel: 'Xem tất cả phòng',
+                  onSecondaryAction: () => setState(() {
+                    _searchKeyword = '';
+                    _minPriceFilter = 0;
+                    _maxPriceFilter = 15000000;
+                    _minAreaFilter = 0;
+                    _roomDistrictFilter = 'Tất cả khu vực';
+                    _quickPriceActive = false;
+                    _quickNearbyActive = false;
+                    _roomAmenitiesFilter.clear();
+                    _applyPostFilters();
+                  }),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                sliver: SliverList.builder(
+                  itemCount: _filteredPosts.length,
+                  itemBuilder: (context, index) =>
+                      _roomCard(_filteredPosts[index]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickFilter({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: _discoveryPrimary.withValues(alpha: .14),
+      checkmarkColor: _discoveryPrimary,
+      side: BorderSide(
+        color: selected ? _discoveryPrimary : const Color(0xFFD3E0DC),
+      ),
+      labelStyle: TextStyle(
+        color: selected ? _discoveryPrimary : const Color(0xFF142523),
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+  }
+
+  Widget _roomCard(RoomPost post) {
+    final area = post.areaM2 == null ? '28 m²' : '${post.areaM2!.round()} m²';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: InkWell(
+        onTap: () => Navigator.push<void>(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => RoomDetailsScreen(post: post),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 170,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _roomImage(post.imageUrl),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Material(
+                      color: Colors.white.withValues(alpha: .92),
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        tooltip: _savedPostIds.contains(post.id)
+                            ? 'Bỏ lưu phòng'
+                            : 'Lưu phòng',
+                        icon: Icon(
+                          _savedPostIds.contains(post.id)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: _discoveryPrimary,
                         ),
+                        onPressed: () => setState(() {
+                          if (!_savedPostIds.add(post.id)) {
+                            _savedPostIds.remove(post.id);
+                          }
+                        }),
                       ),
-                      Expanded(
-                        child: Slider(
-                          value: _maxPriceFilter,
-                          min: 1000000,
-                          max: 10000000,
-                          divisions: 9,
-                          label: fmt.format(_maxPriceFilter),
-                          onChanged: (val) {
-                            setState(() {
-                              _maxPriceFilter = val;
-                              _applyPostFilters();
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
-
-            // Danh sách bài đăng sau khi lọc
-            Expanded(
-              child: _isLoadingPosts
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredPosts.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Không tìm thấy phòng phù hợp với tiêu chí lọc.',
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _filteredPosts.length,
-                      itemBuilder: (context, i) {
-                        final p = _filteredPosts[i];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  p.title,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Giá: ${fmt.format(p.price)}/tháng',
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Địa chỉ: ${p.address}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  p.description,
-                                  style: TextStyle(
-                                    color: Colors.grey.shade700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const Divider(height: 16),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Người đăng: ${p.authorName}',
-                                      style: const TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Tối đa: ${p.maxOccupants} người',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF142523),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${post.address} • $area • ${post.maxOccupants} người',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF52625F),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    fmt.format(post.price),
+                    style: const TextStyle(
+                      color: _discoveryPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Text(
+                    '/ tháng',
+                    style: TextStyle(color: Color(0xFF52625F)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -456,11 +671,87 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _createRoomPost() async {
-    final created = await Navigator.pushNamed(context, AppRoutes.createPost);
-    if (created == true) {
-      _loadData();
+  Widget _roomImage(String? imageUrl) {
+    final url = imageUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _roomImageFallback(),
+      );
     }
+    return _roomImageFallback();
+  }
+
+  Widget _roomImageFallback() => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFFD7EDE7), Color(0xFF9BC8BC)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: Center(
+      child: Icon(Icons.home_work_outlined, color: _discoveryPrimary, size: 64),
+    ),
+  );
+
+  Future<void> _createRoomPost() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => ListingManagementScreen(
+          mode: ListingFlowMode.myListings,
+          authorId: _currentUserId,
+          posts: _allPosts,
+        ),
+      ),
+    );
+    if (mounted) _loadData();
+  }
+
+  Future<void> _openRoomFilters() async {
+    final selection = await Navigator.push<RoomFilterSelection>(
+      context,
+      MaterialPageRoute<RoomFilterSelection>(
+        builder: (_) => RoomFiltersScreen(
+          initialMinPrice: _minPriceFilter,
+          initialMaxPrice: _maxPriceFilter,
+          initialDistrict: _roomDistrictFilter,
+          initialMinArea: _minAreaFilter,
+          initialAmenities: _roomAmenitiesFilter,
+        ),
+      ),
+    );
+    if (selection == null || !mounted) return;
+    setState(() {
+      _minPriceFilter = selection.minPrice;
+      _maxPriceFilter = selection.maxPrice;
+      _minAreaFilter = selection.minArea;
+      _roomDistrictFilter = selection.district;
+      _quickPriceActive =
+          selection.minPrice == 0 && selection.maxPrice <= 4000000;
+      _quickNearbyActive = selection.district == 'Bình Thạnh, TP.HCM';
+      _roomAmenitiesFilter
+        ..clear()
+        ..addAll(selection.amenities);
+      _applyPostFilters();
+    });
+  }
+
+  void _openSavedRooms() {
+    final saved = _allPosts
+        .where((post) => _savedPostIds.contains(post.id))
+        .toList();
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => SavedRoomsScreen(
+          posts: saved,
+          onUnsave: (postId) => setState(() => _savedPostIds.remove(postId)),
+        ),
+      ),
+    );
   }
 
   void _selectHomeDestination(int index) {
@@ -477,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F8F7),
+      backgroundColor: DiscoveryPalette.canvas,
       body: IndexedStack(
         index: _selectedHomeTab,
         children: [_buildDiscoveryTab(), _buildRoomTab()],
@@ -487,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _selectedHomeTab,
         onDestinationSelected: _selectHomeDestination,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFDDF4EE),
+        indicatorColor: DiscoveryPalette.primarySoft,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
@@ -498,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.home_work_outlined),
             selectedIcon: Icon(Icons.home_work, color: _discoveryPrimary),
-            label: 'Phòng',
+            label: 'Phòng trọ',
           ),
           NavigationDestination(
             icon: Icon(Icons.forum_outlined),
@@ -529,21 +820,23 @@ class _DiscoveryHeader extends StatelessWidget {
   const _DiscoveryHeader({
     required this.userName,
     required this.resultCount,
-    required this.nearbyLabel,
+    required this.selectedDistrict,
     required this.filtersActive,
     required this.onSearchChanged,
     required this.onFiltersPressed,
     required this.onPreferencesPressed,
+    required this.onNotificationsPressed,
     this.onAdminPressed,
   });
 
   final String userName;
   final int resultCount;
-  final String nearbyLabel;
+  final String selectedDistrict;
   final bool filtersActive;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onFiltersPressed;
   final VoidCallback onPreferencesPressed;
+  final VoidCallback onNotificationsPressed;
   final VoidCallback? onAdminPressed;
 
   @override
@@ -552,9 +845,9 @@ class _DiscoveryHeader extends StatelessWidget {
     final firstName = nameParts.isEmpty ? userName : nameParts.last;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        16,
+        22,
         MediaQuery.paddingOf(context).top + 16,
-        16,
+        22,
         12,
       ),
       child: Column(
@@ -564,17 +857,35 @@ class _DiscoveryHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Chào $firstName 👋',
+                  'Tìm bạn cùng nhịp sống',
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF17342F),
+                    color: DiscoveryPalette.text,
                   ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Thông báo',
+                onPressed: onNotificationsPressed,
+                icon: const Icon(
+                  Icons.notifications_none_outlined,
+                  color: DiscoveryPalette.primary,
                 ),
               ),
               PopupMenuButton<String>(
                 tooltip: 'Tùy chọn',
-                icon: const Icon(Icons.more_horiz, color: Color(0xFF52645F)),
+                icon: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: DiscoveryPalette.primarySoftStrong,
+                  child: Text(
+                    firstName.isEmpty ? '?' : firstName[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: DiscoveryPalette.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
                 onSelected: (value) {
                   if (value == 'preferences') {
                     onPreferencesPressed();
@@ -596,55 +907,82 @@ class _DiscoveryHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            '$resultCount người phù hợp quanh $nearbyLabel',
-            style: const TextStyle(color: Color(0xFF687873), fontSize: 12.5),
+          const SizedBox(height: 4),
+          const Text(
+            'Gợi ý dựa trên 5 tiêu chí của bạn',
+            style: TextStyle(color: DiscoveryPalette.muted, fontSize: 13),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('match-search-field'),
-            onChanged: onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Tìm theo khu vực, ngân sách...',
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF61746F)),
-              suffixIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    key: const Key('match-filter-button'),
-                    tooltip: 'Bộ lọc tìm kiếm',
-                    onPressed: onFiltersPressed,
-                    icon: Icon(
-                      Icons.tune,
-                      color: filtersActive
-                          ? const Color(0xFF008F7A)
-                          : const Color(0xFF61746F),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: DiscoveryPalette.primarySoft,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Một người hợp, một tổ ấm vui.',
+                  style: TextStyle(
+                    color: DiscoveryPalette.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: onPreferencesPressed,
+                  child: const Text(
+                    'Tiêu chí đã cập nhật · Điều chỉnh →',
+                    style: TextStyle(
+                      color: DiscoveryPalette.primary,
+                      fontSize: 12,
                     ),
                   ),
-                  if (filtersActive)
-                    const Positioned(
-                      right: 9,
-                      top: 9,
-                      child: CircleAvatar(
-                        radius: 3.5,
-                        backgroundColor: Color(0xFFE7A400),
-                      ),
-                    ),
-                ],
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            textColor: DiscoveryPalette.primary,
+            iconColor: DiscoveryPalette.primary,
+            title: Text(
+              filtersActive || selectedDistrict != 'Tất cả'
+                  ? 'Tìm kiếm và lọc · $resultCount gợi ý'
+                  : 'Tìm kiếm và lọc gợi ý',
+              style: const TextStyle(
+                color: DiscoveryPalette.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
+            children: [
+              TextField(
+                key: const Key('match-search-field'),
+                onChanged: onSearchChanged,
+                decoration: InputDecoration(
+                  hintText: 'Tìm tên, trường hoặc khu vực...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: DiscoveryPalette.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  key: const Key('match-filter-button'),
+                  onPressed: onFiltersPressed,
+                  icon: const Icon(Icons.tune, size: 18),
+                  label: const Text('Bộ lọc'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -670,7 +1008,7 @@ class _DiscoveryFiltersSheet extends StatefulWidget {
 }
 
 class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
-  static const _primary = Color(0xFF008F7A);
+  static const _primary = DiscoveryPalette.primary;
 
   late String _district;
   late double _minimumScore;
@@ -700,8 +1038,8 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         decoration: const BoxDecoration(
-          color: Color(0xFFF5F8F7),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          color: DiscoveryPalette.canvas,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -723,13 +1061,13 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF17342F),
+                color: DiscoveryPalette.text,
               ),
             ),
             const SizedBox(height: 4),
             const Text(
               'Điều chỉnh để thu hẹp kết quả phù hợp.',
-              style: TextStyle(color: Color(0xFF687873)),
+              style: TextStyle(color: DiscoveryPalette.muted),
             ),
             const SizedBox(height: 22),
             const Text(
@@ -742,10 +1080,10 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
               initialValue: _district,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: DiscoveryPalette.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFDDE7E4)),
+                  borderSide: const BorderSide(color: DiscoveryPalette.border),
                 ),
               ),
               items: [
@@ -811,7 +1149,7 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text('Xem kết quả'),
@@ -849,7 +1187,7 @@ class _DiscoveryMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 46, color: const Color(0xFF7A918B)),
+            Icon(icon, size: 46, color: DiscoveryPalette.muted),
             const SizedBox(height: 12),
             Text(
               title,
@@ -860,14 +1198,14 @@ class _DiscoveryMessage extends StatelessWidget {
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF687873)),
+              style: const TextStyle(color: DiscoveryPalette.muted),
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 14),
               FilledButton(
                 onPressed: onAction,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF008F7A),
+                  backgroundColor: DiscoveryPalette.primary,
                 ),
                 child: Text(actionLabel!),
               ),
