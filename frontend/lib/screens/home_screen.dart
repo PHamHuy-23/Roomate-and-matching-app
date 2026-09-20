@@ -136,9 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final sent = await _api.sendMatchRequest(
-        _currentUserId,
         item.userId,
-        item.totalScore,
       );
       if (!mounted) return false;
       if (sent) {
