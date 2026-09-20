@@ -21,8 +21,6 @@ import '../screens/send_request_screen.dart';
 import '../screens/sent_request_screen.dart';
 import '../screens/received_requests_screen.dart';
 import '../screens/cancel_connection_screen.dart';
-import '../screens/blocked_users_screen.dart';
-import '../screens/notifications_screen.dart';
 import '../screens/privacy_screen.dart';
 import '../screens/report_violation_screen.dart';
 import '../screens/report_received_screen.dart';
