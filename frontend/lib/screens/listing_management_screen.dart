@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
+import '../widgets/penpot_back_button.dart';
 
 enum ListingFlowMode {
   myListings,
@@ -125,11 +126,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Scaffold(
       backgroundColor: _canvas,
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: _history.isEmpty ? 'Quay lại màn hình trước' : 'Quay lại bước trước',
-          onPressed: _handleBack,
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: PenpotBackButton(onPressed: _handleBack),
         title: Text(_title),
         backgroundColor: _canvas,
         foregroundColor: _ink,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
+import '../widgets/penpot_back_button.dart';
 
 class SurveyScreen extends StatefulWidget {
   final int userId;
@@ -643,11 +644,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
         children: [
           Row(
             children: [
-              BackButton(
-                onPressed: _currentStep == 0
-                    ? () => Navigator.maybePop(context)
-                    : _onStepCancel,
-                color: _penpotInk,
+              PenpotBackButton(
+                onPressed: _currentStep == 0 ? null : _onStepCancel,
               ),
               const Spacer(),
               Text(

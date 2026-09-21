@@ -1,14 +1,73 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../widgets/penpot_back_button.dart';
 
-class SendRequestScreen extends StatelessWidget {
+class SendRequestScreen extends StatefulWidget {
+  final int currentUserId;
   final int? partnerId;
   final String? partnerName;
-  
-  const SendRequestScreen({super.key, this.partnerId, this.partnerName});
+
+  /// `matchScore` is supplied by discovery when the request is opened from a
+  /// recommendation. It is kept separate from the display copy so this screen
+  /// can also be opened directly from a deep link.
+  final double matchScore;
+
+  const SendRequestScreen({
+    super.key,
+    required this.currentUserId,
+    this.partnerId,
+    this.partnerName,
+    this.matchScore = 0,
+  });
+
+  @override
+  State<SendRequestScreen> createState() => _SendRequestScreenState();
+}
+
+class _SendRequestScreenState extends State<SendRequestScreen> {
+  final ApiService _api = ApiService();
+  bool _isSending = false;
+
+  Future<void> _sendRequest() async {
+    final partnerId = widget.partnerId;
+    if (partnerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không xác định được người nhận lời mời.')),
+      );
+      return;
+    }
+
+    setState(() => _isSending = true);
+    try {
+      await _api.sendMatchRequest(
+        widget.currentUserId,
+        partnerId,
+        widget.matchScore,
+      );
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.pop(context, true);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Đã gửi lời mời kết nối thành công!')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể gửi lời mời, vui lòng thử lại.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final name = partnerName ?? 'Minh Anh';
+    final name = widget.partnerName ?? 'Người dùng Roommate Hub';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
@@ -20,19 +79,8 @@ class SendRequestScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Lời mời kết nối',
                     style: TextStyle(
@@ -204,13 +252,7 @@ class SendRequestScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate back or to success screen
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã gửi lời mời kết nối thành công!')),
-                    );
-                  },
+                  onPressed: _isSending ? null : _sendRequest,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF087E6B),
                     foregroundColor: Colors.white,
@@ -219,7 +261,16 @@ class SendRequestScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: _isSending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
                     'Gửi lời mời',
                     style: TextStyle(
                       fontSize: 16,

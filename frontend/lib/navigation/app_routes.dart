@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../screens/admin_screen.dart';
 import '../screens/auth_support_screen.dart';
 import '../screens/avatar_picker_screen.dart';
 import '../screens/create_post_screen.dart';
+import '../screens/listing_management_screen.dart';
 import '../screens/conversation_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
@@ -57,6 +57,7 @@ class AppRoutes {
   static const requests = '/requests';
   static const survey = '/survey';
   static const createPost = '/create-post';
+  static const listingManagement = '/listing-management';
   static const settings = '/settings';
 
   // Social routes
@@ -137,13 +138,38 @@ class AppRoutes {
           return const LoginScreen();
         }
 
+        const adminRouteNames = {
+          admin,
+          adminDashboard,
+          adminUsers,
+          adminUserDetails,
+          adminConfirmLock,
+          adminLockedAccount,
+          adminModeratePost,
+          adminPostApproved,
+          adminPostNeedsEdit,
+          adminReports,
+          adminReportResolved,
+        };
+        final isAdmin = {
+          'ADMIN',
+          'ROLE_ADMIN',
+        }.contains(user.role.trim().toUpperCase());
+        if (adminRouteNames.contains(routeSettings.name) && !isAdmin) {
+          return HomeScreen(currentUser: user);
+        }
+
         switch (routeSettings.name) {
           case changePassword:
             return const AuthSupportScreen(
               mode: AuthSupportMode.changePassword,
             );
           case home:
-            return HomeScreen(currentUser: user);
+            final arguments = routeSettings.arguments;
+            final initialTab = arguments is Map && arguments['initialTab'] is int
+                ? arguments['initialTab'] as int
+                : 0;
+            return HomeScreen(currentUser: user, initialTab: initialTab);
           case profile:
             return ProfileScreen(currentUser: user);
           case editProfile:
@@ -153,37 +179,116 @@ class AppRoutes {
           case settings:
             return const SettingsScreen();
           case roommateProfile:
-            return const RoommateProfileScreen();
+            final arguments = routeSettings.arguments;
+            final userId = arguments is Map && arguments['userId'] is int
+                ? arguments['userId'] as int
+                : null;
+            final displayName = arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            return RoommateProfileScreen(
+              userId: userId,
+              displayName: displayName,
+            );
           case posterProfile:
-            return const PosterProfileScreen();
+            final arguments = routeSettings.arguments;
+            final userId = arguments is Map && arguments['userId'] is int
+                ? arguments['userId'] as int
+                : null;
+            final roomId = arguments is Map && arguments['roomId'] is int
+                ? arguments['roomId'] as int
+                : null;
+            return PosterProfileScreen(userId: userId, roomId: roomId);
           case contactDetails:
-            return const ContactDetailsScreen();
+            final arguments = routeSettings.arguments;
+            final contactId = arguments is Map && arguments['contactId'] is int
+                ? arguments['contactId'] as int
+                : null;
+            final contactName = arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            return ContactDetailsScreen(
+              contactId: contactId,
+              contactName: contactName,
+            );
           case chat:
-            return const ChatScreen();
+            final arguments = routeSettings.arguments;
+            final partnerId = arguments is Map && arguments['partnerId'] is int
+                ? arguments['partnerId'] as int
+                : null;
+            final partnerName = arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            return ChatScreen(partnerId: partnerId, partnerName: partnerName);
           case conversation:
             final contactName = routeSettings.arguments is String
                 ? routeSettings.arguments as String
                 : 'Minh Anh';
             return ConversationScreen(contactName: contactName);
           case sendRequest:
-            return const SendRequestScreen();
+            final arguments = routeSettings.arguments;
+            final partnerId = arguments is Map && arguments['partnerId'] is int
+                ? arguments['partnerId'] as int
+                : null;
+            final partnerName = arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            final matchScore = arguments is Map && arguments['matchScore'] is num
+                ? (arguments['matchScore'] as num).toDouble()
+                : 0.0;
+            return SendRequestScreen(
+              currentUserId: user.userId,
+              partnerId: partnerId,
+              partnerName: partnerName,
+              matchScore: matchScore,
+            );
           case sentRequest:
-            return const SentRequestScreen();
+            final arguments = routeSettings.arguments;
+            final partnerId = arguments is Map && arguments['partnerId'] is int
+                ? arguments['partnerId'] as int
+                : null;
+            final partnerName = arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            return SentRequestScreen(
+              currentUserId: user.userId,
+              partnerId: partnerId,
+              partnerName: partnerName,
+            );
           case receivedRequests:
-            return const ReceivedRequestsScreen();
+            return ReceivedRequestsScreen(currentUserId: user.userId);
           case cancelConnection:
-            return const CancelConnectionScreen();
+            final arguments = routeSettings.arguments;
+            final partnerId = arguments is Map && arguments['partnerId'] is int
+                ? arguments['partnerId'] as int
+                : null;
+            return CancelConnectionScreen(partnerId: partnerId);
           case blockedUsers:
             return const BlockedUsersScreen();
           case notifications:
             return NotificationsScreen(
-              onItemTap: (_) =>
-                  Navigator.pushNamed(context, conversation),
+              onItemTap: (item) {
+                if (item.title.contains('lời mời')) {
+                  Navigator.pushNamed(context, requests);
+                } else if (item.title.contains('Lịch xem phòng')) {
+                  Navigator.pushNamed(context, listingManagement);
+                } else {
+                  Navigator.pushNamed(
+                    context,
+                    conversation,
+                    arguments: item.title,
+                  );
+                }
+              },
             );
           case privacy:
             return const PrivacyScreen();
           case reportViolation:
-            return const ReportViolationScreen();
+            final arguments = routeSettings.arguments;
+            final targetUserId = arguments is Map && arguments['targetUserId'] is int
+                ? arguments['targetUserId'] as int
+                : null;
+            return ReportViolationScreen(targetUserId: targetUserId);
           case reportReceived:
             return const ReportReceivedScreen();
           case helpSafety:
@@ -203,9 +308,47 @@ class AppRoutes {
           case adminUsers:
             return const AdminUsersScreen();
           case adminUserDetails:
-            return const AdminUserDetailsScreen();
+            final arguments = routeSettings.arguments;
+            final rawDetailUser = arguments is Map && arguments['user'] is Map
+                ? arguments['user'] as Map
+                : arguments is Map
+                    ? arguments
+                    : null;
+            final detailUser = rawDetailUser == null
+                ? null
+                : <String, String>{
+                    for (final entry in rawDetailUser.entries)
+                      entry.key.toString(): entry.value.toString(),
+                  };
+            final onStatusChanged = arguments is Map &&
+                    arguments['onStatusChanged'] is void Function(String)
+                ? arguments['onStatusChanged'] as void Function(String)
+                : null;
+            return AdminUserDetailsScreen(
+              user: detailUser,
+              onStatusChanged: onStatusChanged,
+            );
           case adminConfirmLock:
-            return const AdminConfirmLockScreen();
+            final arguments = routeSettings.arguments;
+            final rawConfirmUser = arguments is Map && arguments['user'] is Map
+                ? arguments['user'] as Map
+                : arguments is Map
+                    ? arguments
+                    : null;
+            final confirmUser = rawConfirmUser == null
+                ? null
+                : <String, String>{
+                    for (final entry in rawConfirmUser.entries)
+                      entry.key.toString(): entry.value.toString(),
+                  };
+            final onStatusChanged = arguments is Map &&
+                    arguments['onStatusChanged'] is void Function(String)
+                ? arguments['onStatusChanged'] as void Function(String)
+                : null;
+            return AdminConfirmLockScreen(
+              user: confirmUser,
+              onStatusChanged: onStatusChanged,
+            );
           case adminLockedAccount:
             return const AdminLockedAccountScreen();
           case adminModeratePost:
@@ -230,9 +373,17 @@ class AppRoutes {
             );
           case createPost:
             return CreatePostScreen(authorId: user.userId);
+          case listingManagement:
+            return ListingManagementScreen(
+              mode: ListingFlowMode.myListings,
+              authorId: user.userId,
+            );
           case admin:
-            if (user.role == 'ROLE_ADMIN' || user.role == 'ADMIN') {
-              return const AdminScreen();
+            if ({
+              'ADMIN',
+              'ROLE_ADMIN',
+            }.contains(user.role.trim().toUpperCase())) {
+              return const AdminDashboardScreen();
             }
             return HomeScreen(currentUser: user);
           default:

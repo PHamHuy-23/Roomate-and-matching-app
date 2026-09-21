@@ -1,7 +1,100 @@
 import 'package:flutter/material.dart';
 
-class AdminUsersScreen extends StatelessWidget {
-  const AdminUsersScreen({super.key});
+import '../../navigation/app_routes.dart';
+import '../../services/api_service.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
+class AdminUsersScreen extends StatefulWidget {
+  const AdminUsersScreen({super.key, this.apiService});
+
+  final ApiService? apiService;
+
+  @override
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
+}
+
+class _AdminUsersScreenState extends State<AdminUsersScreen> {
+  late final ApiService _api;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, String>> _users = <Map<String, String>>[];
+  bool _isLoading = true;
+  String? _error;
+
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _api = widget.apiService ?? ApiService();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await _api.getAdminUsers();
+      if (!mounted) return;
+      setState(() {
+        _users = response.whereType<Map>().map(_mapUser).toList();
+        _isLoading = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Không thể tải danh sách người dùng, vui lòng thử lại.';
+      });
+    }
+  }
+
+  Map<String, String> _mapUser(Map<dynamic, dynamic> raw) {
+    final id = raw['id'] ?? raw['userId'];
+    final role = raw['role']?.toString().toUpperCase();
+    final status = raw['status']?.toString().toUpperCase();
+    final createdAt = DateTime.tryParse(raw['createdAt']?.toString() ?? '');
+    final createdLabel = createdAt == null
+        ? '—'
+        : '${createdAt.month.toString().padLeft(2, '0')} / ${createdAt.year}';
+    return {
+      'id': id == null ? '—' : '#$id',
+      'userId': id?.toString() ?? '',
+      'fullName': raw['fullName']?.toString() ?? 'Chưa đặt tên',
+      'email': raw['email']?.toString() ?? 'Chưa có email',
+      'role': role == 'ROLE_ADMIN' || role == 'ADMIN'
+          ? 'Quản trị viên'
+          : 'Thành viên',
+      'status': status == 'LOCKED' ? 'Đã khóa' : 'Hoạt động',
+      'createdAt': createdLabel,
+    };
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, String>> get _filteredUsers {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return _users;
+    return _users.where((user) {
+      final searchable = [
+        user['fullName'],
+        user['email'],
+        user['id'],
+      ].map((value) => value?.toString().toLowerCase() ?? '');
+      return searchable.any((value) => value.contains(query));
+    }).toList(growable: false);
+  }
 
   Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
     return GestureDetector(
@@ -35,12 +128,13 @@ class AdminUsersScreen extends StatelessWidget {
 
   Widget _buildUserRow(
     BuildContext context,
-    String name,
-    String email,
-    String role,
-    String status,
-    String date,
+    Map<String, String> user,
   ) {
+    final name = user['fullName'] ?? 'Chưa đặt tên';
+    final email = user['email'] ?? 'Chưa có email';
+    final role = user['role'] ?? 'Thành viên';
+    final status = user['status'] ?? 'Hoạt động';
+    final date = user['createdAt'] ?? '—';
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -136,7 +230,26 @@ class AdminUsersScreen extends StatelessWidget {
             flex: 1,
             child: GestureDetector(
               onTap: () {
-                // View details
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.adminUserDetails,
+                  arguments: {
+                    'user': user,
+                    'onStatusChanged': (String status) {
+                      final userId = user['id'];
+                      final index = _users.indexWhere(
+                        (item) => item['id'] == userId,
+                      );
+                      if (index == -1) return;
+                      setState(() {
+                        _users[index] = {
+                          ..._users[index],
+                          'status': status,
+                        };
+                      });
+                    },
+                  },
+                );
               },
               child: const Text(
                 'Chi tiết →',
@@ -197,8 +310,8 @@ class AdminUsersScreen extends StatelessWidget {
                 ),
                 _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
                 _buildSidebarItem(context, 'Người dùng', isActive: true),
-                _buildSidebarItem(context, 'Duyệt tin đăng'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm'),
+                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
                 
                 const Spacer(),
                 
@@ -254,15 +367,7 @@ class AdminUsersScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -277,12 +382,15 @@ class AdminUsersScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
-                      children: const [
-                        Icon(Icons.search, color: Color(0xFF65746F)),
-                        SizedBox(width: 12),
+                      children: [
+                        const Icon(Icons.search, color: Color(0xFF65746F)),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
-                            decoration: InputDecoration(
+                            controller: _searchController,
+                            onChanged: (value) => setState(() => _query = value),
+                            textInputAction: TextInputAction.search,
+                            decoration: const InputDecoration(
                               hintText: 'Tìm theo tên, email hoặc mã người dùng',
                               hintStyle: TextStyle(
                                 fontSize: 16,
@@ -292,13 +400,22 @@ class AdminUsersScreen extends StatelessWidget {
                               ),
                               border: InputBorder.none,
                             ),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontFamily: 'SourceSansPro',
                               color: Color(0xFF142523),
                             ),
                           ),
                         ),
+                        if (_query.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Xóa tìm kiếm',
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _query = '');
+                            },
+                            icon: const Icon(Icons.close, color: Color(0xFF65746F)),
+                          ),
                       ],
                     ),
                   ),
@@ -329,15 +446,7 @@ class AdminUsersScreen extends StatelessWidget {
                           const Divider(color: Color(0xFFEEEEEE)),
                           
                           // Table Body
-                          Expanded(
-                            child: ListView(
-                              children: [
-                                _buildUserRow(context, 'Minh Anh', 'anh@example.com', 'Thành viên', 'Hoạt động', '08 / 2026'),
-                                _buildUserRow(context, 'Quang Huy', 'huy@example.com', 'Thành viên', 'Hoạt động', '08 / 2026'),
-                                _buildUserRow(context, 'Tài khoản #028', 'user28@example.com', 'Thành viên', 'Đã khóa', '08 / 2026'),
-                              ],
-                            ),
-                          ),
+                          Expanded(child: _buildTableBody()),
                         ],
                       ),
                     ),
@@ -361,6 +470,45 @@ class AdminUsersScreen extends StatelessWidget {
         color: Color(0xFF65746F),
         letterSpacing: 1.0,
       ),
+    );
+  }
+
+  Widget _buildTableBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF087E6B)),
+      );
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF65746F)),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: _loadUsers,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    }
+    final users = _filteredUsers;
+    if (users.isEmpty) {
+      return const Center(
+        child: Text(
+          'Không tìm thấy người dùng phù hợp.',
+          style: TextStyle(color: Color(0xFF65746F)),
+        ),
+      );
+    }
+    return ListView(
+      children: [for (final user in users) _buildUserRow(context, user)],
     );
   }
 }

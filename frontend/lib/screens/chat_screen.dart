@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
 
-class ChatScreen extends StatelessWidget {
+import '../widgets/penpot_back_button.dart';
+
+class ChatScreen extends StatefulWidget {
   final int? partnerId;
   final String? partnerName;
   
   const ChatScreen({super.key, this.partnerId, this.partnerName});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<String> _sentMessages = [];
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final message = _messageController.text.trim();
+    if (message.isEmpty) return;
+    setState(() {
+      _sentMessages.add(message);
+      _messageController.clear();
+    });
+  }
 
   Widget _buildReceivedMessage(String text) {
     return Align(
@@ -89,7 +114,7 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = partnerName ?? 'Minh Anh';
+    final name = widget.partnerName ?? 'Người dùng Roommate Hub';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
@@ -101,19 +126,8 @@ class ChatScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                      const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,6 +206,20 @@ class ChatScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  for (final message in _sentMessages) ...[
+                    _buildSentMessage(message),
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Đang chờ đồng bộ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'SourceSansPro',
+                          color: Color(0xFF65746F),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -209,7 +237,10 @@ class ChatScreen extends StatelessWidget {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(25.5),
                       ),
-                      child: const TextField(
+                      child: TextField(
+                        controller: _messageController,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
                           hintText: 'Nhập tin nhắn…',
                           hintStyle: TextStyle(
@@ -226,9 +257,7 @@ class ChatScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   GestureDetector(
-                    onTap: () {
-                      // Send action
-                    },
+                    onTap: _sendMessage,
                     child: Container(
                       width: 50,
                       height: 51,

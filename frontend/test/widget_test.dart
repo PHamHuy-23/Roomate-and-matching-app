@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/main.dart';
 import 'package:roommate_hub_mobile/models/auth_user.dart';
 import 'package:roommate_hub_mobile/navigation/app_routes.dart';
-import 'package:roommate_hub_mobile/screens/profile_screen.dart';
+import 'package:roommate_hub_mobile/screens/edit_profile_screen.dart';
 import 'package:roommate_hub_mobile/screens/auth_support_screen.dart';
 
 void main() {
@@ -25,6 +25,18 @@ void main() {
 
     expect(find.text('Tạo tài khoản'), findsNWidgets(2));
     expect(find.byKey(const Key('register_birth_date_field')), findsOneWidget);
+  });
+
+  testWidgets('Nút quay lại ở màn đăng ký trở về Roommate Hub', (tester) async {
+    await tester.pumpWidget(const RoommateHubApp());
+
+    await tester.tap(find.text('Bắt đầu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Quay lại bắt đầu'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Roommate Hub'), findsOneWidget);
+    expect(find.text('Bắt đầu'), findsOneWidget);
   });
 
   testWidgets('Không thể mở màn hình cần đăng nhập khi chưa có phiên', (
@@ -140,7 +152,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Hồ sơ cho phép cập nhật ngày sinh và trường đại học', (
+  testWidgets('Màn chỉnh sửa hồ sơ hiển thị thông tin trường học', (
     WidgetTester tester,
   ) async {
     final user = AuthUser(
@@ -155,11 +167,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: ProfileScreen(currentUser: user)),
+      MaterialApp(home: EditProfileScreen(currentUser: user)),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('profile_birth_date_field')), findsOneWidget);
-    expect(find.byKey(const Key('profile_university_field')), findsOneWidget);
+    expect(find.text('Chỉnh sửa hồ sơ'), findsOneWidget);
+    expect(find.text('Trường học / nghề nghiệp'), findsOneWidget);
     expect(find.text('Đại học Quốc gia TP.HCM'), findsOneWidget);
   });
 

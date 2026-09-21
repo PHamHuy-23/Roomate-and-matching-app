@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
 
 class ContactDetailsScreen extends StatelessWidget {
   final int? contactId;
+  final String? contactName;
   
-  const ContactDetailsScreen({super.key, this.contactId});
+  const ContactDetailsScreen({super.key, this.contactId, this.contactName});
 
   Widget _buildInfoCard(String title, String subtitle) {
     return Container(
@@ -71,6 +74,7 @@ class ContactDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = contactName ?? 'Người dùng Roommate Hub';
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
       body: SafeArea(
@@ -81,19 +85,8 @@ class ContactDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Kết nối thành công',
                     style: TextStyle(
@@ -144,8 +137,8 @@ class ContactDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   
                   // Name and Info
-                  const Text(
-                    'Hoàng Nam',
+                  Text(
+                    name,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
@@ -175,13 +168,34 @@ class ContactDetailsScreen extends StatelessWidget {
                   
                   // Action Buttons
                   _buildActionButton('Xem hồ sơ', () {
-                    Navigator.pushNamed(context, '/roommate-profile', arguments: {'userId': contactId});
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.roommateProfile,
+                      arguments: {
+                        'userId': contactId,
+                        'partnerName': name,
+                      },
+                    );
+                  }),
+                  _buildActionButton('Nhắn tin', () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.chat,
+                      arguments: {
+                        'partnerId': contactId,
+                        'partnerName': name,
+                      },
+                    );
                   }),
                   _buildActionButton('Báo cáo hoặc chặn', () {
-                    // Navigate to report screen
+                    Navigator.pushNamed(context, AppRoutes.reportViolation);
                   }),
                   _buildActionButton('Hủy kết nối', () {
-                    // Show confirmation dialog
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.cancelConnection,
+                      arguments: {'partnerId': contactId},
+                    );
                   }),
                   
                   const SizedBox(height: 32),

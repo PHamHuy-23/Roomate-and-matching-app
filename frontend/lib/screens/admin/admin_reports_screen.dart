@@ -1,7 +1,64 @@
 import 'package:flutter/material.dart';
 
-class AdminReportsScreen extends StatelessWidget {
+import '../../navigation/app_routes.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
+class _AdminReport {
+  const _AdminReport({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.reason,
+    required this.sender,
+    required this.note,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final String reason;
+  final String sender;
+  final String note;
+}
+
+class AdminReportsScreen extends StatefulWidget {
   const AdminReportsScreen({super.key});
+
+  @override
+  State<AdminReportsScreen> createState() => _AdminReportsScreenState();
+}
+
+class _AdminReportsScreenState extends State<AdminReportsScreen> {
+  static const _reports = <_AdminReport>[
+    _AdminReport(
+      id: 'BC-028',
+      title: 'Thông tin phòng sai',
+      subtitle: 'Tin RH-028 · 15 phút trước',
+      reason: 'Thông tin phòng không đúng thực tế',
+      sender: 'Thành viên ẩn danh',
+      note: 'Đã đối chiếu thông tin, yêu cầu cập nhật tin.',
+    ),
+    _AdminReport(
+      id: 'BC-027',
+      title: 'Nội dung không phù hợp',
+      subtitle: 'Người dùng #028 · 2 giờ trước',
+      reason: 'Nội dung tin đăng không phù hợp',
+      sender: 'Người dùng #028',
+      note: 'Đang chờ quản trị viên kiểm tra nội dung.',
+    ),
+    _AdminReport(
+      id: 'BC-026',
+      title: 'Tin đăng trùng lặp',
+      subtitle: 'Tin RH-024 · Hôm qua',
+      reason: 'Tin đăng có dấu hiệu trùng lặp',
+      sender: 'Thành viên ẩn danh',
+      note: 'Cần đối chiếu với tin RH-024 trước khi xử lý.',
+    ),
+  ];
+
+  int _selectedIndex = 0;
+
+  _AdminReport get _selectedReport => _reports[_selectedIndex];
 
   Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
     return GestureDetector(
@@ -33,38 +90,48 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReportItem(String title, String subtitle, {bool isActive = false}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFEAF8F5) : const Color(0xFFF5F8F7),
+  Widget _buildReportItem(_AdminReport report, {required bool isActive}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: Key('admin_report_${report.id}'),
+        onTap: () => setState(() {
+          _selectedIndex = _reports.indexOf(report);
+        }),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'SourceSansPro',
-              color: Color(0xFF142523),
-            ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFEAF8F5) : const Color(0xFFF5F8F7),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'SourceSansPro',
-              color: Color(0xFF65746F),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${report.id} · ${report.title}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'SourceSansPro',
+                  color: Color(0xFF142523),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                report.subtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'SourceSansPro',
+                  color: Color(0xFF65746F),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -135,7 +202,7 @@ class AdminReportsScreen extends StatelessWidget {
           
           // Main Content
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(40.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,21 +236,14 @@ class AdminReportsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const SizedBox(height: 40),
                   
                   // Two columns
-                  Expanded(
+                  SizedBox(
+                    height: 620,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -212,9 +272,11 @@ class AdminReportsScreen extends StatelessWidget {
                                 Expanded(
                                   child: ListView(
                                     children: [
-                                      _buildReportItem('BC-028 · Thông tin phòng sai', 'Tin RH-028 · 15 phút trước', isActive: true),
-                                      _buildReportItem('BC-027 · Nội dung không phù hợp', 'Người dùng #028 · 2 giờ trước'),
-                                      _buildReportItem('BC-026 · Tin đăng trùng lặp', 'Tin RH-024 · Hôm qua'),
+                                      for (var index = 0; index < _reports.length; index++)
+                                        _buildReportItem(
+                                          _reports[index],
+                                          isActive: index == _selectedIndex,
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -236,8 +298,8 @@ class AdminReportsScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'BC-028 / Chi tiết báo cáo',
+                                Text(
+                                  '${_selectedReport.id} / Chi tiết báo cáo',
                                   style: TextStyle(
                                     fontSize: 23,
                                     fontWeight: FontWeight.w700,
@@ -246,8 +308,8 @@ class AdminReportsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                const Text(
-                                  'Lý do: Thông tin phòng không đúng thực tế\nNgười gửi: Thành viên ẩn danh',
+                                Text(
+                                  'Lý do: ${_selectedReport.reason}\nNgười gửi: ${_selectedReport.sender}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
@@ -294,8 +356,8 @@ class AdminReportsScreen extends StatelessWidget {
                                     color: const Color(0xFFF5F8F7),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Text(
-                                    'Đã đối chiếu thông tin, yêu cầu cập nhật tin.',
+                                  child: Text(
+                                    _selectedReport.note,
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400,
@@ -310,7 +372,10 @@ class AdminReportsScreen extends StatelessWidget {
                                   height: 50,
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      // Navigate to report resolved screen
+                                      Navigator.pushReplacementNamed(
+                                        context,
+                                        AppRoutes.adminReportResolved,
+                                      );
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF087E6B),

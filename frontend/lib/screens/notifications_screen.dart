@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
+
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
@@ -77,19 +80,8 @@ class NotificationsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +120,7 @@ class NotificationsScreen extends StatelessWidget {
                     title: 'Minh Anh gửi lời mời kết nối',
                     subtitle: '15 phút trước · 94% phù hợp',
                     onTap: () {
-                      // Navigate to received requests
+                      Navigator.pushNamed(context, AppRoutes.requests);
                     },
                   ),
                   _buildNotificationItem(
@@ -136,7 +128,7 @@ class NotificationsScreen extends StatelessWidget {
                     subtitle: 'Hôm nay · Studio ngập nắng',
                     avatarIcon: Icons.calendar_today,
                     onTap: () {
-                      // Navigate to viewing schedule
+                      Navigator.pushNamed(context, AppRoutes.listingManagement);
                     },
                   ),
                   _buildNotificationItem(
@@ -144,7 +136,7 @@ class NotificationsScreen extends StatelessWidget {
                     title: 'Tin đăng đang được kiểm duyệt',
                     subtitle: 'Hôm qua · Xem trạng thái tin',
                     onTap: () {
-                      // Navigate to my posts
+                      Navigator.pushNamed(context, AppRoutes.listingManagement);
                     },
                   ),
                 ],

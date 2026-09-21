@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/penpot_back_button.dart';
+
 class ReportViolationScreen extends StatefulWidget {
   final int? targetUserId;
   
@@ -19,6 +21,33 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
     super.dispose();
   }
 
+  void _showAttachmentStatus() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Upload ảnh sẽ khả dụng khi backend bổ sung lưu trữ bằng chứng.',
+        ),
+      ),
+    );
+  }
+
+  void _submitReport() {
+    if (_descController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng mô tả vấn đề trước khi gửi.')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Báo cáo đã hợp lệ. Chức năng gửi đến quản trị viên đang chờ backend.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,19 +60,8 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,9 +190,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                   
                   // Image Upload
                   GestureDetector(
-                    onTap: () {
-                      // Handle image upload
-                    },
+                    onTap: _showAttachmentStatus,
                     child: Container(
                       width: double.infinity,
                       height: 130,
@@ -237,10 +253,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Submit report
-                        Navigator.pushReplacementNamed(context, '/report-received');
-                      },
+                      onPressed: _submitReport,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF087E6B),
                         foregroundColor: Colors.white,
@@ -265,11 +278,13 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Block user
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã chặn người dùng.')),
+                          const SnackBar(
+                            content: Text(
+                              'Chặn người dùng sẽ khả dụng khi backend bổ sung API.',
+                            ),
+                          ),
                         );
-                        Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEAF8F5),

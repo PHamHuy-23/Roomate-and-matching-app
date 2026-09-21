@@ -135,6 +135,21 @@ class _RequestsScreenState extends State<RequestsScreen> {
     );
   }
 
+  void _selectNavigationDestination(int index) {
+    if (index == 2) return;
+
+    if (index == 3) {
+      Navigator.pushReplacementNamed(context, AppRoutes.profile);
+      return;
+    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
+      arguments: {'initialTab': index},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pendingReceived = _receivedRequests.where((r) => r.status == 'PENDING').toList();
@@ -239,11 +254,28 @@ class _RequestsScreenState extends State<RequestsScreen> {
                             subtitle: subtitle,
                             onTap: () {
                               if (_selectedTabIndex == 0) {
-                                Navigator.pushNamed(context, AppRoutes.contactDetails, arguments: {'contactId': item.partnerId});
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.contactDetails,
+                                  arguments: {
+                                    'contactId': item.partnerId,
+                                    'partnerName': item.partnerName,
+                                  },
+                                );
                               } else if (_selectedTabIndex == 1) {
-                                Navigator.pushNamed(context, AppRoutes.receivedRequests);
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.receivedRequests,
+                                );
                               } else {
-                                Navigator.pushNamed(context, AppRoutes.sentRequest, arguments: {'partnerId': item.partnerId});
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.sentRequest,
+                                  arguments: {
+                                    'partnerId': item.partnerId,
+                                    'partnerName': item.partnerName,
+                                  },
+                                );
                               }
                             },
                           );
@@ -292,6 +324,36 @@ class _RequestsScreenState extends State<RequestsScreen> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        height: 68,
+        selectedIndex: 2,
+        onDestinationSelected: _selectNavigationDestination,
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFFEAF8F5),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people, color: Color(0xFF087E6B)),
+            label: 'Khám phá',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.home_work_outlined),
+            selectedIcon: Icon(Icons.home_work, color: Color(0xFF087E6B)),
+            label: 'Phòng trọ',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum, color: Color(0xFF087E6B)),
+            label: 'Kết nối',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: Color(0xFF087E6B)),
+            label: 'Hồ sơ',
+          ),
+        ],
       ),
     );
   }

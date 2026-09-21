@@ -82,13 +82,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToMyPosts() {
-    Navigator.pushNamed(context, AppRoutes.createPost);
+    Navigator.pushNamed(context, AppRoutes.listingManagement);
   }
 
   void _navigateToNotifications() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng thông báo đang phát triển')),
-    );
+    Navigator.pushNamed(context, AppRoutes.notifications);
   }
 
   void _navigateToSettings() {
@@ -319,6 +317,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        height: 68,
+        selectedIndex: 3,
+        onDestinationSelected: (index) {
+          if (index == 3) return;
+          Navigator.pushReplacementNamed(
+            context,
+            index == 2 ? AppRoutes.requests : AppRoutes.home,
+            arguments: index == 2 ? null : {'initialTab': index},
+          );
+        },
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFFEAF8F5),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people, color: Color(0xFF087E6B)),
+            label: 'Khám phá',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.home_work_outlined),
+            selectedIcon: Icon(Icons.home_work, color: Color(0xFF087E6B)),
+            label: 'Phòng trọ',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum, color: Color(0xFF087E6B)),
+            label: 'Kết nối',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: Color(0xFF087E6B)),
+            label: 'Hồ sơ',
+          ),
+        ],
       ),
     );
   }

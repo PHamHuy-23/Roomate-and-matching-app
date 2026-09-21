@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
 
 enum AuthSupportMode { welcome, verifyEmail, forgotPassword, newPassword, changePassword }
 
@@ -478,11 +479,7 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
                       if (showBack)
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            tooltip: 'Quay lại',
-                            onPressed: () => Navigator.maybePop(context),
-                            icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                          ),
+                          child: const PenpotBackButton(),
                         )
                       else
                         const SizedBox(height: 32),

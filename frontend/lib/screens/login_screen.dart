@@ -172,13 +172,23 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      final hasPreferences = isLogin ? await session.hasPreferences() : null;
+      final signedInUser = session.user;
+      final isAdmin = signedInUser != null &&
+          {
+            'ADMIN',
+            'ROLE_ADMIN',
+          }.contains(signedInUser.role.trim().toUpperCase());
+      final hasPreferences =
+          isLogin && !isAdmin ? await session.hasPreferences() : null;
       if (mounted && session.isAuthenticated) {
         final needsSurvey = isLogin && hasPreferences == false;
+        final destination = isAdmin
+            ? AppRoutes.adminDashboard
+            : (needsSurvey || !isLogin ? AppRoutes.survey : AppRoutes.home);
         Navigator.pushReplacementNamed(
           context,
-          needsSurvey || !isLogin ? AppRoutes.survey : AppRoutes.home,
-          arguments: needsSurvey || !isLogin
+          destination,
+          arguments: !isAdmin && (needsSurvey || !isLogin)
               ? const {'fromRegistration': true}
               : null,
         );
@@ -270,8 +280,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        tooltip: 'Quay lại đăng nhập',
-                        onPressed: () => setState(() => _isLogin = true),
+                        tooltip: 'Quay lại bắt đầu',
+                        onPressed: () => Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.welcome,
+                        ),
                         icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                       ),
                     ),

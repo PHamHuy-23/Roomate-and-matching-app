@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
 
 class RoommateProfileScreen extends StatelessWidget {
   final int? userId;
+  final String? displayName;
   
-  const RoommateProfileScreen({super.key, this.userId});
+  const RoommateProfileScreen({super.key, this.userId, this.displayName});
 
   Widget _buildBadge(String text) {
     return Container(
@@ -26,6 +29,7 @@ class RoommateProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = displayName ?? 'Người dùng Roommate Hub';
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
       body: SafeArea(
@@ -36,19 +40,8 @@ class RoommateProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Hồ sơ bạn ở ghép',
                     style: TextStyle(
@@ -102,8 +95,8 @@ class RoommateProfileScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Minh Anh, 22',
+                            Text(
+                              name,
                               style: TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.w700,
@@ -227,7 +220,14 @@ class RoommateProfileScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.sendRequest,
+                        arguments: {
+                          'partnerId': userId,
+                          'partnerName': name,
+                        },
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEAF8F5),
                         foregroundColor: const Color(0xFF087E6B),
@@ -266,7 +266,33 @@ class RoommateProfileScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => showModalBottomSheet<void>(
+                        context: context,
+                        backgroundColor: const Color(0xFFF5F8F7),
+                        builder: (sheetContext) => SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Vì sao hai bạn phù hợp?',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF142523),
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                                _MatchReason(text: 'Cùng khu vực Bình Thạnh'),
+                                _MatchReason(text: 'Ngân sách ở ghép tương đồng'),
+                                _MatchReason(text: 'Thói quen sinh hoạt phù hợp'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF087E6B),
                         foregroundColor: Colors.white,
@@ -292,6 +318,26 @@ class RoommateProfileScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MatchReason extends StatelessWidget {
+  const _MatchReason({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Color(0xFF087E6B)),
+          const SizedBox(width: 10),
+          Text(text, style: const TextStyle(color: Color(0xFF142523))),
+        ],
       ),
     );
   }

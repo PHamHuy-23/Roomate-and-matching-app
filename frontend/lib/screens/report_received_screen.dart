@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
 
 class ReportReceivedScreen extends StatelessWidget {
   const ReportReceivedScreen({super.key});
@@ -16,19 +17,8 @@ class ReportReceivedScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Đã nhận báo cáo',
                     style: TextStyle(

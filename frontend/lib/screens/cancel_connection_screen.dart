@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/penpot_back_button.dart';
+
 class CancelConnectionScreen extends StatelessWidget {
   final int? partnerId;
 
@@ -17,19 +19,8 @@ class CancelConnectionScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Hủy kết nối',
                     style: TextStyle(
@@ -108,10 +99,16 @@ class CancelConnectionScreen extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Confirm action
+                        // No cancel-connection endpoint exists yet. Do not
+                        // pretend the relationship was changed locally.
+                        final messenger = ScaffoldMessenger.of(context);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã hủy kết nối.')),
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Hủy kết nối sẽ khả dụng khi backend bổ sung API.',
+                            ),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(

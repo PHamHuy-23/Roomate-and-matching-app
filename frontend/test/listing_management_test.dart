@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Lưu & gửi kiểm duyệt'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Quay lại bước trước'));
+    await tester.tap(find.byTooltip('Quay lại'));
     await tester.pumpAndSettle();
     expect(find.text('Tin đăng của tôi'), findsOneWidget);
   });

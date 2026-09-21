@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../navigation/app_routes.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
 class AdminPostApprovedScreen extends StatelessWidget {
   const AdminPostApprovedScreen({super.key});
 
@@ -77,7 +80,7 @@ class AdminPostApprovedScreen extends StatelessWidget {
                 _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
                 _buildSidebarItem(context, 'Người dùng', route: '/admin/users'),
                 _buildSidebarItem(context, 'Duyệt tin đăng', isActive: true, route: '/admin/moderate-post'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm'),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: '/admin/reports'),
                 
                 const Spacer(),
                 
@@ -133,15 +136,7 @@ class AdminPostApprovedScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const Spacer(),
@@ -185,7 +180,10 @@ class AdminPostApprovedScreen extends StatelessWidget {
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pop(context);
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.adminModeratePost,
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF087E6B),

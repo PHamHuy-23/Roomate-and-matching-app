@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/auth_user.dart';
+import '../widgets/penpot_back_button.dart';
 
 class AvatarPickerScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -46,19 +47,8 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Ảnh đại diện',
                     style: TextStyle(

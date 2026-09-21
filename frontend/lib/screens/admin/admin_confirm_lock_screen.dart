@@ -1,7 +1,68 @@
 import 'package:flutter/material.dart';
 
-class AdminConfirmLockScreen extends StatelessWidget {
-  const AdminConfirmLockScreen({super.key});
+import '../../navigation/app_routes.dart';
+import '../../services/api_service.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
+class AdminConfirmLockScreen extends StatefulWidget {
+  const AdminConfirmLockScreen({
+    super.key,
+    this.user,
+    this.onStatusChanged,
+  });
+
+  final Map<String, String>? user;
+  final ValueChanged<String>? onStatusChanged;
+
+  @override
+  State<AdminConfirmLockScreen> createState() => _AdminConfirmLockScreenState();
+}
+
+class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
+  final ApiService _api = ApiService();
+  bool _isSubmitting = false;
+
+  String get _userName => widget.user?['fullName'] ?? 'Minh Anh';
+  String get _userEmail => widget.user?['email'] ?? 'anh@example.com';
+
+  int? get _userId {
+    final rawId = widget.user?['userId'] ?? widget.user?['id'];
+    if (rawId == null) return null;
+    final digits = rawId.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(digits);
+  }
+
+  Future<void> _confirmLock() async {
+    final userId = _userId;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không xác định được tài khoản cần khóa.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _api.toggleUserStatus(userId);
+      if (!mounted) return;
+      widget.onStatusChanged?.call('Đã khóa');
+      Navigator.pop(context, true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể khóa tài khoản, vui lòng thử lại.'),
+        ),
+      );
+    }
+  }
 
   Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
     return GestureDetector(
@@ -76,8 +137,8 @@ class AdminConfirmLockScreen extends StatelessWidget {
                 ),
                 _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
                 _buildSidebarItem(context, 'Người dùng', isActive: true, route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm'),
+                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
                 
                 const Spacer(),
                 
@@ -133,15 +194,7 @@ class AdminConfirmLockScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const Spacer(),
@@ -169,8 +222,8 @@ class AdminConfirmLockScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          const Text(
-                            'Minh Anh · anh@example.com\nLý do: Vi phạm quy định đăng tin',
+                          Text(
+                            '$_userName · $_userEmail\nLý do: Vi phạm quy định đăng tin',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
@@ -184,9 +237,7 @@ class AdminConfirmLockScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Confirm lock, navigate to Locked status
-                              },
+                              onPressed: _isSubmitting ? null : _confirmLock,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF087E6B),
                                 foregroundColor: Colors.white,
@@ -195,8 +246,19 @@ class AdminConfirmLockScreen extends StatelessWidget {
                                 ),
                                 elevation: 0,
                               ),
-                              child: const Text(
-                                'Xác nhận khóa',
+                              child: _isSubmitting
+                                  ? const Center(
+                                      child: SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Xác nhận khóa',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

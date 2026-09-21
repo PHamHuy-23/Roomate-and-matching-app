@@ -16,7 +16,13 @@ import '../widgets/match_card.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
-  const HomeScreen({super.key, required this.currentUser});
+  final int initialTab;
+
+  const HomeScreen({
+    super.key,
+    required this.currentUser,
+    this.initialTab = 0,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -38,10 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingPosts = true;
   bool _postsLoadError = false;
   String _searchKeyword = '';
-  double _minPriceFilter = 2000000;
-  double _maxPriceFilter = 4000000;
-  double _minAreaFilter = 20;
-  String _roomDistrictFilter = 'Bình Thạnh, TP.HCM';
+  // Quick filters are opt-in. Keep the initial room list unfiltered so the
+  // chips below accurately reflect the current state.
+  double _minPriceFilter = 0;
+  double _maxPriceFilter = 15000000;
+  double _minAreaFilter = 0;
+  String _roomDistrictFilter = 'Tất cả khu vực';
   final Set<String> _roomAmenitiesFilter = <String>{};
   bool _quickPriceActive = false;
   bool _quickNearbyActive = false;
@@ -58,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _currentUserId = widget.currentUser.userId;
+    _selectedHomeTab = widget.initialTab.clamp(0, 1).toInt();
     _loadData();
   }
 
@@ -105,13 +114,17 @@ class _HomeScreenState extends State<HomeScreen> {
       final matchDistrict =
           _roomDistrictFilter == 'Tất cả khu vực' ||
           p.address.toLowerCase().contains(districtKey);
-      // Older API payloads do not include area/amenities yet. Unknown values
-      // are kept visible so the frontend remains useful with those responses.
+      // Area and amenities are optional in older API payloads. An active
+      // filter must not silently match a post whose value is unknown.
       final matchArea = p.areaM2 == null || p.areaM2! >= _minAreaFilter;
-      final matchAmenities =
-          _roomAmenitiesFilter.isEmpty ||
-          p.amenities.isEmpty ||
-          _roomAmenitiesFilter.every(p.amenities.contains);
+      final postAmenities = p.amenities
+          .map((amenity) => amenity.trim().toLowerCase())
+          .toSet();
+      final matchAmenities = _roomAmenitiesFilter.isEmpty ||
+          (p.amenities.isNotEmpty &&
+              _roomAmenitiesFilter.every(
+                (amenity) => postAmenities.contains(amenity.toLowerCase()),
+              ));
       return matchAddress &&
           matchPrice &&
           matchDistrict &&
@@ -282,9 +295,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPreferencesPressed: _openSurvey,
                     onNotificationsPressed: () =>
                         Navigator.pushNamed(context, AppRoutes.notifications),
-                    onAdminPressed:
-                        widget.currentUser.role == 'ROLE_ADMIN' ||
-                            widget.currentUser.role == 'ADMIN'
+                    onAdminPressed: {
+                      'ADMIN',
+                      'ROLE_ADMIN',
+                    }.contains(widget.currentUser.role.trim().toUpperCase())
                         ? () => Navigator.pushNamed(context, AppRoutes.admin)
                         : null,
                   ),
@@ -452,12 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _quickFilter(
                             label: 'Có nội thất',
                             selected: _roomAmenitiesFilter.contains('Nội thất'),
-                            onTap: () => setState(() {
-                              if (!_roomAmenitiesFilter.add('Nội thất')) {
-                                _roomAmenitiesFilter.remove('Nội thất');
-                              }
-                              _applyPostFilters();
-                            }),
+                            onTap: _toggleFurnitureFilter,
                           ),
                           const SizedBox(width: 8),
                           _quickFilter(
@@ -570,6 +579,27 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
+  }
+
+  void _toggleFurnitureFilter() {
+    if (_allPosts.isNotEmpty &&
+        !_allPosts.any((post) => post.amenities.isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Bộ lọc nội thất sẽ hoạt động khi API trả về thông tin tiện ích.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      if (!_roomAmenitiesFilter.add('Nội thất')) {
+        _roomAmenitiesFilter.remove('Nội thất');
+      }
+      _applyPostFilters();
+    });
   }
 
   Widget _roomCard(RoomPost post) {

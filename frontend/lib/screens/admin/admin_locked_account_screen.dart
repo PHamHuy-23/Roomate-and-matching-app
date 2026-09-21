@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../navigation/app_routes.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
 class AdminLockedAccountScreen extends StatelessWidget {
   const AdminLockedAccountScreen({super.key});
 
@@ -76,8 +79,8 @@ class AdminLockedAccountScreen extends StatelessWidget {
                 ),
                 _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
                 _buildSidebarItem(context, 'Người dùng', isActive: true, route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm'),
+                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
                 
                 const Spacer(),
                 
@@ -133,15 +136,7 @@ class AdminLockedAccountScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const Spacer(),
@@ -185,7 +180,6 @@ class AdminLockedAccountScreen extends StatelessWidget {
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Unlock account
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(

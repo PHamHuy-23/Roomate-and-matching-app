@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../navigation/app_routes.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
 class AdminReportResolvedScreen extends StatelessWidget {
   const AdminReportResolvedScreen({super.key});
 
@@ -133,15 +136,7 @@ class AdminReportResolvedScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const Spacer(),
@@ -185,7 +180,13 @@ class AdminReportResolvedScreen extends StatelessWidget {
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pop(context);
+                                // This screen replaces the report list after
+                                // resolving an item, so popping would reveal
+                                // the previous admin page instead of the list.
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.adminReports,
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF087E6B),

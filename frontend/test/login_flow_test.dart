@@ -9,18 +9,20 @@ import 'package:roommate_hub_mobile/services/api_service.dart';
 import 'package:roommate_hub_mobile/state/auth_session.dart';
 
 class _LoginApi implements ApiService {
-  _LoginApi();
+  _LoginApi({this.admin = false});
+
+  final bool admin;
 
   Map<String, dynamic>? preferences;
   String? _token;
 
-  final _user = AuthUser(
+  late final _user = AuthUser(
     token: 'test-token',
     userId: 42,
     email: 'huy@example.com',
     fullName: 'Huy',
     gender: 'MALE',
-    role: 'ROLE_USER',
+    role: admin ? 'ROLE_ADMIN' : 'ROLE_USER',
   );
 
   @override
@@ -70,6 +72,10 @@ Widget _loginApp(_LoginApi api) {
             return MaterialPageRoute<void>(
               builder: (_) => const Scaffold(body: Text('Discovery')),
             );
+          case AppRoutes.adminDashboard:
+            return MaterialPageRoute<void>(
+              builder: (_) => const Scaffold(body: Text('Admin dashboard')),
+            );
           default:
             return MaterialPageRoute<void>(
               builder: (_) => const Scaffold(body: Text('Unknown route')),
@@ -108,5 +114,15 @@ void main() {
     await _fillAndSubmit(tester);
 
     expect(find.text('Discovery'), findsOneWidget);
+  });
+
+  testWidgets('Đăng nhập admin mở thẳng dashboard', (tester) async {
+    final api = _LoginApi(admin: true);
+    await tester.pumpWidget(_loginApp(api));
+
+    await _fillAndSubmit(tester);
+
+    expect(find.text('Admin dashboard'), findsOneWidget);
+    expect(find.text('Bạn muốn ở đâu?'), findsNothing);
   });
 }

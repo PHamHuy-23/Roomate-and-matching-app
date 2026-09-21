@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../navigation/app_routes.dart';
 import '../state/auth_session.dart';
+import '../widgets/penpot_back_button.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -82,19 +83,8 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Cài đặt',
                     style: TextStyle(
@@ -141,36 +131,28 @@ class SettingsScreen extends StatelessWidget {
                     title: 'Thay đổi mật khẩu',
                     subtitle: 'Bảo vệ tài khoản của bạn',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chức năng đang phát triển')),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.changePassword);
                     },
                   ),
                   _buildMenuCard(
                     title: 'Quyền riêng tư',
                     subtitle: 'Trạng thái tìm bạn & thông tin liên hệ',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chức năng đang phát triển')),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.privacy);
                     },
                   ),
                   _buildMenuCard(
                     title: 'Người đã chặn',
                     subtitle: 'Quản lý danh sách chặn',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chức năng đang phát triển')),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.blockedUsers);
                     },
                   ),
                   _buildMenuCard(
                     title: 'Trợ giúp & an toàn',
                     subtitle: 'Liên hệ hỗ trợ, hướng dẫn xem phòng',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Chức năng đang phát triển')),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.helpSafety);
                     },
                   ),
                   

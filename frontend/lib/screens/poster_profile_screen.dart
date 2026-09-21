@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../models/room_post.dart';
+import '../navigation/app_routes.dart';
+import '../widgets/penpot_back_button.dart';
+import 'room_details_screen.dart';
+
 class PosterProfileScreen extends StatelessWidget {
   final int? userId;
   final int? roomId; // ID of the room to view details
@@ -22,19 +27,8 @@ class PosterProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Text(
                     'Người đăng phòng',
                     style: TextStyle(
@@ -178,8 +172,25 @@ class PosterProfileScreen extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navigate to room details
-                        // Navigator.pushNamed(context, '/room-details', arguments: roomId);
+                        final post = RoomPost(
+                          id: roomId ?? 0,
+                          title: 'Studio ngập nắng',
+                          description:
+                              'Không gian sáng, thoáng, phù hợp cho người đi học và đi làm.',
+                          price: 3500000,
+                          address: 'Quận 3, TP. Hồ Chí Minh',
+                          maxOccupants: 2,
+                          authorName: 'Minh Anh',
+                          authorId: userId ?? 0,
+                          areaM2: 28,
+                          amenities: const ['Wifi', 'Máy giặt', 'Giữ xe'],
+                        );
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => RoomDetailsScreen(post: post),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF087E6B),
@@ -205,7 +216,11 @@ class PosterProfileScreen extends StatelessWidget {
                   Center(
                     child: GestureDetector(
                       onTap: () {
-                        // Handle report
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.reportViolation,
+                          arguments: {'targetUserId': userId},
+                        );
                       },
                       child: const Text(
                         'Báo cáo người dùng',

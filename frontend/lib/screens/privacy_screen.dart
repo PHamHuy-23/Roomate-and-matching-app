@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/penpot_back_button.dart';
+
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({super.key});
 
@@ -49,8 +51,43 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
               ),
             ),
-            if (trailing != null) trailing,
+            ?trailing,
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showPrivacyDetails(String title, String message) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFFF5F8F7),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF142523),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.45,
+                  color: Color(0xFF65746F),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -68,19 +105,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF142523),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,12 +158,20 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     'Thông tin liên hệ',
                     'Chỉ chia sẻ với người đã kết nối',
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    onTap: () => _showPrivacyDetails(
+                      'Thông tin liên hệ',
+                      'Email và số điện thoại chỉ được hiển thị sau khi cả hai người đồng ý kết nối.',
+                    ),
                   ),
                   
                   _buildSettingItem(
                     'Hồ sơ công khai',
                     'Tên, avatar, giới thiệu & tiêu chí',
                     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    onTap: () => _showPrivacyDetails(
+                      'Hồ sơ công khai',
+                      'Bạn có thể kiểm soát trạng thái tìm bạn và những thông tin được hiển thị trên hồ sơ.',
+                    ),
                   ),
                   
                   const SizedBox(height: 24),

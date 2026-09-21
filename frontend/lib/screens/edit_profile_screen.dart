@@ -5,6 +5,7 @@ import '../models/auth_user.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../state/auth_session.dart';
+import '../widgets/penpot_back_button.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -168,19 +169,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '‹',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const PenpotBackButton(),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,89 @@
 import 'package:flutter/material.dart';
 
-class AdminUserDetailsScreen extends StatelessWidget {
-  const AdminUserDetailsScreen({super.key});
+import '../../navigation/app_routes.dart';
+import '../../services/api_service.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
+class AdminUserDetailsScreen extends StatefulWidget {
+  const AdminUserDetailsScreen({
+    super.key,
+    this.user,
+    this.onStatusChanged,
+    this.onToggleStatus,
+  });
+
+  final Map<String, String>? user;
+  final ValueChanged<String>? onStatusChanged;
+  final Future<void> Function(int userId)? onToggleStatus;
+
+  @override
+  State<AdminUserDetailsScreen> createState() => _AdminUserDetailsScreenState();
+}
+
+class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
+  final ApiService _api = ApiService();
+  late String _status;
+  bool _isUpdatingStatus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.user?['status'] ?? 'Đã khóa';
+  }
+
+  String get _userName => widget.user?['fullName'] ?? 'Tài khoản #028';
+  String get _userEmail => widget.user?['email'] ?? 'user28@example.com';
+  String get _userId => widget.user?['id'] ?? '#028';
+  bool get _isLocked => _status == 'Đã khóa';
+
+  void _handleStatusChanged(String status) {
+    if (!mounted) return;
+    setState(() => _status = status);
+    widget.onStatusChanged?.call(status);
+  }
+
+  int? get _numericUserId {
+    final rawId = widget.user?['userId'] ?? widget.user?['id'];
+    if (rawId == null) return null;
+    final digits = rawId.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(digits);
+  }
+
+  Future<void> _unlockAccount() async {
+    final userId = _numericUserId;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không xác định được tài khoản cần mở khóa.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isUpdatingStatus = true);
+    try {
+      await (widget.onToggleStatus ?? _api.toggleUserStatus)(userId);
+      if (!mounted) return;
+      _handleStatusChanged('Hoạt động');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã mở khóa tài khoản.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể mở khóa tài khoản, vui lòng thử lại.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUpdatingStatus = false);
+    }
+  }
 
   Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
     return GestureDetector(
@@ -76,8 +158,8 @@ class AdminUserDetailsScreen extends StatelessWidget {
                 ),
                 _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
                 _buildSidebarItem(context, 'Người dùng', isActive: true, route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm'),
+                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
                 
                 const Spacer(),
                 
@@ -133,15 +215,7 @@ class AdminUserDetailsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ),
+                      const AdminProfileAvatar(),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -170,9 +244,9 @@ class AdminUserDetailsScreen extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Text(
-                              'Minh Anh',
+                              _userName,
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w700,
@@ -182,7 +256,7 @@ class AdminUserDetailsScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'anh@example.com · Vai trò: Thành viên',
+                              '$_userEmail · Vai trò: ${widget.user?['role'] ?? 'Thành viên'}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
@@ -192,12 +266,16 @@ class AdminUserDetailsScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Đã xác minh email · Hoạt động',
+                              _isLocked
+                                  ? 'Đã xác minh email · Đã khóa'
+                                  : 'Đã xác minh email · Hoạt động',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'SourceSansPro',
-                                color: Color(0xFF087E6B),
+                                color: _isLocked
+                                    ? Colors.red
+                                    : Color(0xFF087E6B),
                               ),
                             ),
                           ],
@@ -223,7 +301,7 @@ class AdminUserDetailsScreen extends StatelessWidget {
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   'Thông tin tài khoản',
                                   style: TextStyle(
@@ -235,7 +313,7 @@ class AdminUserDetailsScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 24),
                                 Text(
-                                  'Mã tài khoản: #028\nTham gia: 08 / 2025\nKhu vực: Bình Thạnh\nTin đã đăng: 3\nBáo cáo vi phạm: 0',
+                                  'Mã tài khoản: $_userId\nTham gia: 08 / 2025\nKhu vực: Bình Thạnh\nTin đã đăng: 3\nBáo cáo vi phạm: 0',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w400,
@@ -272,8 +350,10 @@ class AdminUserDetailsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                const Text(
-                                  'Khóa tài khoản sẽ ngăn người dùng\nđăng nhập và sử dụng dịch vụ',
+                                Text(
+                                  _isLocked
+                                      ? 'Mở khóa tài khoản để người dùng\ntiếp tục đăng nhập và sử dụng dịch vụ'
+                                      : 'Khóa tài khoản sẽ ngăn người dùng\nđăng nhập và sử dụng dịch vụ',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
@@ -287,25 +367,53 @@ class AdminUserDetailsScreen extends StatelessWidget {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      // Navigate to lock account confirmation
-                                    },
+                                    onPressed: _isUpdatingStatus
+                                        ? null
+                                        : () {
+                                            if (_isLocked) {
+                                              _unlockAccount();
+                                            } else {
+                                              Navigator.pushNamed(
+                                                context,
+                                                AppRoutes.adminConfirmLock,
+                                                arguments: {
+                                                  'user': widget.user,
+                                                  'onStatusChanged':
+                                                      _handleStatusChanged,
+                                                },
+                                              );
+                                            }
+                                          },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFEAF8F5),
-                                      foregroundColor: const Color(0xFF087E6B),
+                                      backgroundColor: _isLocked
+                                          ? const Color(0xFF087E6B)
+                                          : const Color(0xFFEAF8F5),
+                                      foregroundColor: _isLocked
+                                          ? Colors.white
+                                          : const Color(0xFF087E6B),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                       elevation: 0,
                                     ),
-                                    child: const Text(
-                                      'Khóa tài khoản',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'SourceSansPro',
-                                      ),
-                                    ),
+                                    child: _isUpdatingStatus
+                                        ? const SizedBox.square(
+                                            dimension: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xFF087E6B),
+                                            ),
+                                          )
+                                        : Text(
+                                            _isLocked
+                                                ? 'Mở khóa tài khoản'
+                                                : 'Khóa tài khoản',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'SourceSansPro',
+                                            ),
+                                          ),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
