@@ -194,17 +194,13 @@ class ApiService {
   }
 
   Future<bool> sendMatchRequest(
-    int senderId,
     int receiverId,
-    double score,
   ) async {
     final response = await _request(
       'POST',
       '/matches/requests',
       queryParameters: {
-        'senderId': '$senderId',
         'receiverId': '$receiverId',
-        'score': '$score',
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) return true;

@@ -47,6 +47,7 @@ public class AuthService {
                 .university(user.getUniversity())
                 .role(user.getRole().name())
                 .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 
@@ -69,6 +70,7 @@ public class AuthService {
                 .university(user.getUniversity())
                 .role(user.getRole().name())
                 .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }

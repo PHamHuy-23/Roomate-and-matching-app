@@ -3,6 +3,8 @@ package com.roommate.hub.config;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.charset.StandardCharsets;
 
 import java.security.Key;
 import java.util.Date;
@@ -11,10 +13,14 @@ import java.util.Date;
 public class JwtUtils {
 
     // Khóa bí mật tối thiểu 256-bit
-    private static final String SECRET = "roommateHubSecretKey2026SecureAuthenticationJwtStringKeyMustBeLongEnough";
     private static final long EXPIRATION_TIME = 86400000L; // 24 giờ
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    private final Key key;
+
+    public JwtUtils(@Value("${app.jwt.secret}") String secret) {
+        if (secret == null || secret.length() < 32) throw new IllegalStateException("app.jwt.secret phải có ít nhất 32 ký tự");
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateToken(String email, Long userId) {
         return Jwts.builder()

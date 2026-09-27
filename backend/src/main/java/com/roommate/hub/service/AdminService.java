@@ -2,6 +2,9 @@ package com.roommate.hub.service;
 
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.dto.UserResponseDTO;
+import com.roommate.hub.dto.AdminPostResponseDTO;
+import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +23,8 @@ public class AdminService {
     private final UserRepository userRepository;
 
     // Lấy toàn bộ bài đăng kèm trạng thái để kiểm duyệt
-    public List<RoomPost> getAllPostsForModeration() {
-        return roomPostRepository.findAll();
+    public List<AdminPostResponseDTO> getAllPostsForModeration() {
+        return roomPostRepository.findAll().stream().map(AdminPostResponseDTO::from).toList();
     }
 
     // Duyệt hoặc từ chối bài đăng
@@ -35,8 +38,13 @@ public class AdminService {
     }
 
     // Lấy danh sách toàn bộ người dùng
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll().stream().map(UserResponseDTO::from).toList();
+    }
+
+    public UserResponseDTO getUser(Long userId) {
+        return UserResponseDTO.from(userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!")));
     }
 
     // Khóa hoặc mở khóa người dùng

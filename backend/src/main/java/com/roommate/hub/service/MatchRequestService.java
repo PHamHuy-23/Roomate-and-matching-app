@@ -8,6 +8,7 @@ import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.roommate.hub.exception.ForbiddenException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +21,9 @@ public class MatchRequestService {
 
     private final MatchRequestRepository matchRequestRepository;
     private final UserRepository userRepository;
+    private final MatchingService matchingService;
 
-    public MatchRequest sendRequest(Long senderId, Long receiverId, Double score) {
+    public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
         if (senderId.equals(receiverId)) {
             throw new RuntimeException("Không thể tự ghép đôi với chính mình!");
         }
@@ -30,20 +32,32 @@ public class MatchRequestService {
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
+        Double score = matchingService.getRecommendations(sender).stream()
+                .filter(recommendation -> receiverId.equals(recommendation.getUserId()))
+                .map(recommendation -> recommendation.getTotalScore())
+                .findFirst().orElse(0.0);
 
-        return matchRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId)
+        MatchRequest request = matchRequestRepository.findBySenderIdAndReceiverId(senderId, receiverId)
                 .orElseGet(() -> matchRequestRepository.save(MatchRequest.builder()
                         .sender(sender)
                         .receiver(receiver)
                         .matchScore(score)
                         .status(MatchRequest.MatchStatus.PENDING)
                         .build()));
+        boolean accepted = request.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
+        return MatchRequestResponseDTO.builder().requestId(request.getId()).partnerId(receiver.getId())
+                .partnerName(receiver.getFullName()).partnerAvatar(receiver.getAvatarUrl())
+                .matchScore(request.getMatchScore()).status(request.getStatus().name())
+                .createdAt(request.getCreatedAt())
+                .contactPhone(accepted ? receiver.getPhone() : null)
+                .contactEmail(accepted ? receiver.getEmail() : null).build();
     }
 
     @Transactional
-    public Map<String, Object> respondRequest(Long requestId, boolean isAccepted) {
+    public Map<String, Object> respondRequest(Long requestId, boolean isAccepted, Long currentUserId) {
         MatchRequest request = matchRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại!"));
+        if (!request.getReceiver().getId().equals(currentUserId)) throw new ForbiddenException("Không có quyền xử lý yêu cầu này!");
 
         request.setStatus(isAccepted ? MatchRequest.MatchStatus.ACCEPTED : MatchRequest.MatchStatus.REJECTED);
         matchRequestRepository.save(request);
