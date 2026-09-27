@@ -20,6 +20,24 @@ class AuthSession extends ChangeNotifier {
     return user;
   }
 
+  /// Returns whether the signed-in user has completed the matching survey.
+  ///
+  /// A missing preferences resource (the API's 404 response) means the user
+  /// should be sent through the five-step onboarding flow. If the preferences
+  /// endpoint is temporarily unavailable, return null so callers can keep the
+  /// user in the normal authenticated flow instead of treating an outage as
+  /// an incomplete profile.
+  Future<bool?> hasPreferences() async {
+    final currentUser = _user;
+    if (currentUser == null) return null;
+    try {
+      final preferences = await _api.getPreferences(currentUser.userId);
+      return preferences != null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<AuthUser> register(
     String email,
     String password,
