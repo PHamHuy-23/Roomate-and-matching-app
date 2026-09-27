@@ -1,66 +1,36 @@
-# Roommate Hub - Hướng dẫn Cài đặt Cơ sở dữ liệu (Database)
+# Roommate Hub — PostgreSQL / Supabase
 
-Thư mục này chứa toàn bộ các script SQL để thiết kế bảng và nạp dữ liệu mẫu cho hệ thống Roommate Hub (MySQL 8.0+).
+`01_schema.sql` và `02_seed_data.sql` dùng cú pháp PostgreSQL 15+ và có thể chạy trực tiếp trong Supabase SQL Editor.
 
-## Cấu trúc thư mục
+## Khởi tạo Supabase
 
-- `01_schema.sql`: Chứa mã DDL tạo Database `roommate_hub`, 4 bảng chính (`users`, `user_preferences`, `room_posts`, `match_requests`), các ràng buộc khóa ngoại (Foreign Keys) và chỉ mục (Indexes).
-- `02_seed_data.sql`: Chứa mã DML nạp dữ liệu mẫu bao gồm tài khoản Admin, tài khoản sinh viên, khảo sát phong cách sống, bài đăng tìm phòng trọ và yêu cầu kết nối ghép đôi.
-- `migrations/20260916_add_user_academic_profile.sql`: Migration một lần cho database cũ, bổ sung ngày sinh và trường đại học vào hồ sơ người dùng.
-- `roommate_hub.sql`: File SQL trọn gói (gồm cả Schema và Seed Data) giúp khởi tạo CSDL hoàn chỉnh chỉ với 1 lần thực thi.
+1. Tạo project Supabase.
+2. Mở **SQL Editor**, chạy `01_schema.sql`.
+3. Chạy `02_seed_data.sql` nếu cần tài khoản demo.
+4. Trong **Connect**, chọn **Session pooler** nếu backend chạy trên mạng IPv4.
+5. Chép host, username và database password vào `backend/.env`.
 
----
-
-## Danh sách tài khoản thử nghiệm (Test Credentials)
-
-Tất cả tài khoản mẫu bên dưới đều sử dụng chung mật khẩu đăng nhập: **`123456`**
-
-| Vai trò | Họ và tên | Email đăng nhập | Mật khẩu | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- |
-| **Admin** | Quản Trị Viên | `admin@roommatehub.com` | `123456` | `ACTIVE` |
-| **User** | Quang Huy | `huy@gmail.com` | `123456` | `ACTIVE` |
-| **User** | Văn Nam | `nam@gmail.com` | `123456` | `ACTIVE` |
-| **User** | Minh Hoàng | `hoang@gmail.com` | `123456` | `ACTIVE` |
-
----
-
-## Hướng dẫn Import vào MySQL
-
-### Cách 1: Sử dụng MySQL Command Line (Khuyến nghị)
-Mở Terminal hoặc Command Prompt và chạy lệnh sau (nhập mật khẩu MySQL root khi được yêu cầu):
-
-```bash
-mysql -u root -p < database/roommate_hub.sql
-```
-
-Hoặc chạy tuần tự 2 file:
-```bash
-mysql -u root -p < database/01_schema.sql
-mysql -u root -p < database/02_seed_data.sql
-```
-
-Nếu database đã tồn tại từ phiên bản cũ, chạy migration trước khi dùng Discovery Feed:
-```bash
-mysql -u root -p < database/migrations/20260916_add_user_academic_profile.sql
-```
-
-### Cách 2: Sử dụng DBeaver / MySQL Workbench / phpMyAdmin
-1. Mở công cụ quản lý CSDL (DBeaver hoặc MySQL Workbench).
-2. Tạo một kết nối mới tới MySQL Server của bạn (port mặc định `3306`).
-3. Mở file `database/roommate_hub.sql` (File -> Open File...).
-4. Chọn **Execute SQL Script** (hoặc tổ hợp phím `Ctrl + Alt + X` trên DBeaver, `Ctrl + Shift + Enter` trên Workbench).
-5. Refresh lại danh sách Database, bạn sẽ thấy CSDL `roommate_hub` cùng 4 bảng và dữ liệu mẫu đầy đủ.
-
----
-
-## Cấu hình kết nối trên Backend (Spring Boot)
-
-Copy `backend/.env.example` thành `backend/.env`, sau đó điều chỉnh thông số phù hợp với máy tính của bạn:
+Ví dụ JDBC:
 
 ```properties
-DB_URL=jdbc:mysql://127.0.0.1:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
-DB_USERNAME=root
-DB_PASSWORD=your_mysql_password
+DB_URL=jdbc:postgresql://YOUR_POOLER_HOST:5432/postgres?sslmode=require
+DB_USERNAME=postgres.YOUR_PROJECT_REF
+DB_PASSWORD=YOUR_SUPABASE_DATABASE_PASSWORD
 ```
 
-`backend/.env` chỉ dùng trên máy local và không được commit lên Git.
+Không đưa database password hoặc Supabase service-role key vào Flutter.
+
+## Tài khoản demo
+
+Mật khẩu chung: `123456`.
+
+| Vai trò | Email |
+|---|---|
+| Admin | `admin@roommatehub.com` |
+| User | `huy@gmail.com` |
+| User | `nam@gmail.com` |
+| User | `hoang@gmail.com` |
+
+## Lưu ý migration
+
+Schema PostgreSQL là nguồn sự thật mới. Các file cũ trong `database/migrations/` được viết cho MySQL và không được chạy trên Supabase. Nếu cần chuyển dữ liệu thật từ MySQL, export dữ liệu thành CSV rồi import theo thứ tự: `users`, `user_preferences`, `room_posts`, `match_requests`.

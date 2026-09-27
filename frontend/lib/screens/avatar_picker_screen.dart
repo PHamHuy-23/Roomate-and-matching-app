@@ -1,38 +1,95 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
 import '../models/auth_user.dart';
+import '../services/api_service.dart';
+import '../state/auth_session.dart';
 import '../widgets/penpot_back_button.dart';
 
 class AvatarPickerScreen extends StatefulWidget {
   final AuthUser currentUser;
-  
+
   const AvatarPickerScreen({super.key, required this.currentUser});
-  
+
   @override
   State<AvatarPickerScreen> createState() => _AvatarPickerScreenState();
 }
 
 class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
-  // To simulate picking an image
-  bool _hasPickedImage = false;
-  
-  void _pickImage() {
+  static const int _maxBytes = 5 * 1024 * 1024;
+
+  final ImagePicker _picker = ImagePicker();
+  final ApiService _api = ApiService();
+  XFile? _selectedFile;
+  Uint8List? _selectedBytes;
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+      maxWidth: 1600,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    if (bytes.length > _maxBytes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ảnh phải nhỏ hơn hoặc bằng 5 MB')),
+      );
+      return;
+    }
     setState(() {
-      _hasPickedImage = true;
+      _selectedFile = file;
+      _selectedBytes = bytes;
     });
   }
-  
+
   void _cancel() {
     setState(() {
-      _hasPickedImage = false;
+      _selectedFile = null;
+      _selectedBytes = null;
     });
   }
-  
-  void _useImage() {
-    // In a real app we'd upload this image. For now just pop.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã cập nhật ảnh đại diện')),
-    );
-    Navigator.pop(context);
+
+  String _contentType(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _useImage() async {
+    final file = _selectedFile;
+    final bytes = _selectedBytes;
+    if (file == null || bytes == null || _isUploading) return;
+    final session = context.read<AuthSession>();
+    setState(() => _isUploading = true);
+    try {
+      final ticket = await _api.uploadImage(
+        bytes: bytes,
+        fileName: file.name,
+        contentType: _contentType(file.name),
+        purpose: 'avatar',
+      );
+      final avatarUrl = await _api.confirmAvatar(ticket.objectKey);
+      session.updateUser(widget.currentUser.copyWith(avatarUrl: avatarUrl));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật ảnh đại diện')));
+      Navigator.pop(context, avatarUrl);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   @override
@@ -78,7 +135,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
               ),
             ),
             const SizedBox(height: 60),
-            
+
             // Image Preview (Square)
             Container(
               width: 260,
@@ -86,26 +143,32 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(16),
-                image: _hasPickedImage
-                    ? const DecorationImage(
-                        image: NetworkImage('https://via.placeholder.com/260'), // mock placeholder
+                image: _selectedBytes != null
+                    ? DecorationImage(
+                        image: MemoryImage(_selectedBytes!),
                         fit: BoxFit.cover,
                       )
-                    : (widget.currentUser.avatarUrl != null && widget.currentUser.avatarUrl!.isNotEmpty
-                        ? DecorationImage(
-                            image: NetworkImage(widget.currentUser.avatarUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null),
+                    : (widget.currentUser.avatarUrl != null &&
+                              widget.currentUser.avatarUrl!.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(
+                                widget.currentUser.avatarUrl!,
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                          : null),
               ),
-              child: (!_hasPickedImage && (widget.currentUser.avatarUrl == null || widget.currentUser.avatarUrl!.isEmpty))
+              child:
+                  (_selectedBytes == null &&
+                      (widget.currentUser.avatarUrl == null ||
+                          widget.currentUser.avatarUrl!.isEmpty))
                   ? const Center(
                       child: Icon(Icons.person, size: 100, color: Colors.grey),
                     )
                   : null,
             ),
             const SizedBox(height: 24),
-            
+
             const Text(
               'Ảnh vuông · JPG hoặc PNG · Tối đa 5 MB',
               style: TextStyle(
@@ -115,9 +178,9 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                 color: Color(0xFF65746F),
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -127,7 +190,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _pickImage,
+                      onPressed: _isUploading ? null : _pickImage,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEAF8F5),
                         foregroundColor: const Color(0xFF087E6B),
@@ -146,13 +209,13 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                       ),
                     ),
                   ),
-                  if (_hasPickedImage) ...[
+                  if (_selectedBytes != null) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _useImage,
+                        onPressed: _isUploading ? null : _useImage,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF087E6B),
                           foregroundColor: Colors.white,
@@ -161,14 +224,23 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Dùng ảnh này',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'SourceSansPro',
-                          ),
-                        ),
+                        child: _isUploading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Dùng ảnh này',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'SourceSansPro',
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -176,7 +248,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _cancel,
+                        onPressed: _isUploading ? null : _cancel,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFEAF8F5),
                           foregroundColor: const Color(0xFF087E6B),

@@ -14,6 +14,7 @@ Thumbs.db
 backend/target/
 backend/*.log
 backend/.env
+backend/.env.*.local
 
 # Flutter/Dart
 frontend/.dart_tool/

@@ -8,6 +8,7 @@ import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/match_request_item.dart';
 import '../models/room_post.dart';
+import '../models/upload_ticket.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -193,15 +194,11 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách gợi ý');
   }
 
-  Future<bool> sendMatchRequest(
-    int receiverId,
-  ) async {
+  Future<bool> sendMatchRequest(int receiverId) async {
     final response = await _request(
       'POST',
       '/matches/requests',
-      queryParameters: {
-        'receiverId': '$receiverId',
-      },
+      queryParameters: {'receiverId': '$receiverId'},
     );
     if (response.statusCode == 200 || response.statusCode == 201) return true;
     throw _errorFrom(response, 'Không thể gửi yêu cầu kết nối');
@@ -355,6 +352,79 @@ class ApiService {
     final response = await _request('POST', '/posts', body: postData);
     if (response.statusCode == 200 || response.statusCode == 201) return true;
     throw _errorFrom(response, 'Không thể tạo bài đăng');
+  }
+
+  Future<UploadTicket> createUploadTicket({
+    required String fileName,
+    required String contentType,
+    required int fileSize,
+    required String purpose,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/uploads/presign',
+      body: {
+        'fileName': fileName,
+        'contentType': contentType,
+        'fileSize': fileSize,
+        'purpose': purpose,
+      },
+    );
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không thể chuẩn bị tải ảnh lên');
+    }
+    final data = _decodeData(response);
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Thông tin upload từ máy chủ không hợp lệ');
+    }
+    return UploadTicket.fromJson(data);
+  }
+
+  Future<UploadTicket> uploadImage({
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+    required String purpose,
+  }) async {
+    final ticket = await createUploadTicket(
+      fileName: fileName,
+      contentType: contentType,
+      fileSize: bytes.length,
+      purpose: purpose,
+    );
+    final response = await _client
+        .put(
+          Uri.parse(ticket.uploadUrl),
+          headers: {
+            'Content-Type': ticket.contentType,
+            'Content-Length': '${bytes.length}',
+          },
+          body: bytes,
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        'R2 từ chối tải ảnh lên',
+        statusCode: response.statusCode,
+      );
+    }
+    return ticket;
+  }
+
+  Future<String> confirmAvatar(String objectKey) async {
+    final response = await _request(
+      'PUT',
+      '/uploads/avatar',
+      body: {'objectKey': objectKey},
+    );
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không thể cập nhật ảnh đại diện');
+    }
+    final data = _decodeData(response);
+    if (data is Map<String, dynamic> && data['avatarUrl'] is String) {
+      return data['avatarUrl'] as String;
+    }
+    throw const ApiException('Máy chủ không trả về URL ảnh đại diện');
   }
 
   Future<List<dynamic>> getAdminPosts() async {

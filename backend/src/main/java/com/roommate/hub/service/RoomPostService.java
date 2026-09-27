@@ -9,6 +9,7 @@ import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +24,7 @@ public class RoomPostService {
 
     private final RoomPostRepository roomPostRepository;
     private final UserRepository userRepository;
+    private final ObjectProvider<R2StorageService> storageServiceProvider;
 
     public List<RoomPostResponseDTO> getAllAvailablePosts() {
         return roomPostRepository.findByStatusIn(List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE))
@@ -37,14 +39,30 @@ public class RoomPostService {
         User author = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
 
+        String imageUrl = null;
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            R2StorageService storageService = storageServiceProvider.getIfAvailable();
+            if (storageService == null) {
+                throw new IllegalStateException("Cloudflare R2 chưa được cấu hình");
+            }
+            imageUrl = storageService.requireOwnedObject(
+                    author.getId(), "room-post", dto.getImageObjectKey());
+        }
+
         RoomPost post = RoomPost.builder()
                 .author(author)
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .address(dto.getAddress())
+                .district(dto.getDistrict())
+                .deposit(dto.getDeposit())
+                .electricityWaterCost(dto.getElectricityWaterCost())
+                .area(dto.getArea())
                 .maxOccupants(dto.getMaxOccupants())
-                .imageUrl(dto.getImageUrl())
+                .currentOccupants(dto.getCurrentOccupants() == null ? 0 : dto.getCurrentOccupants())
+                .amenities(dto.getAmenities())
+                .imageUrl(imageUrl)
                 .status(RoomPost.PostStatus.PENDING) // Mặc định chờ duyệt
                 .build();
 
@@ -61,7 +79,13 @@ public class RoomPostService {
                 .description(post.getDescription())
                 .price(post.getPrice())
                 .address(post.getAddress())
+                .district(post.getDistrict())
+                .deposit(post.getDeposit())
+                .electricityWaterCost(post.getElectricityWaterCost())
+                .area(post.getArea())
                 .maxOccupants(post.getMaxOccupants())
+                .currentOccupants(post.getCurrentOccupants())
+                .amenities(post.getAmenities())
                 .createdAt(post.getCreatedAt())
                 .imageUrl(post.getImageUrl())
                 .build();

@@ -20,9 +20,25 @@ public class CreateRoomPostDTO {
     @NotBlank(message = "Địa chỉ không được để trống")
     private String address;
 
+    private String district;
+
+    @Min(value = 0, message = "Tiền cọc không được âm")
+    private Double deposit;
+
+    @Min(value = 0, message = "Chi phí điện nước không được âm")
+    private Double electricityWaterCost;
+
+    @Min(value = 0, message = "Diện tích không được âm")
+    private Double area;
+
     @NotNull(message = "Số lượng người tối đa không được để trống")
     @Min(value = 1, message = "Tối thiểu là 1 người")
     private Integer maxOccupants;
 
-    private String imageUrl;
+    @Min(value = 0, message = "Số người hiện tại không được âm")
+    private Integer currentOccupants;
+
+    private String amenities;
+
+    private String imageObjectKey;
 }
