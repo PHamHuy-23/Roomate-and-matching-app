@@ -37,3 +37,6 @@ MEMORY.md
 .codex-*/
 .bugbot-*/
 .bugbot-*.zip
+
+.worktrees/
+frontend/android/.kotlin/

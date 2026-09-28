@@ -32,18 +32,16 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
     final partnerId = widget.partnerId;
     if (partnerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không xác định được người nhận lời mời.')),
+        const SnackBar(
+          content: Text('Không xác định được người nhận lời mời.'),
+        ),
       );
       return;
     }
 
     setState(() => _isSending = true);
     try {
-      await _api.sendMatchRequest(
-        widget.currentUserId,
-        partnerId,
-        widget.matchScore,
-      );
+      await _api.sendMatchRequest(partnerId);
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context, true);
@@ -52,13 +50,15 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể gửi lời mời, vui lòng thử lại.')),
+        const SnackBar(
+          content: Text('Không thể gửi lời mời, vui lòng thử lại.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -110,7 +110,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -164,7 +164,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Message Input Label
                   const Text(
                     'Lời nhắn',
@@ -176,7 +176,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Message Input Field
                   Container(
                     decoration: BoxDecoration(
@@ -186,7 +186,8 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                     child: TextField(
                       maxLines: 4,
                       decoration: const InputDecoration(
-                        hintText: 'Chào bạn, mình cũng đang tìm phòng\nở Bình Thạnh. Mình muốn trao đổi thêm!',
+                        hintText:
+                            'Chào bạn, mình cũng đang tìm phòng\nở Bình Thạnh. Mình muốn trao đổi thêm!',
                         hintStyle: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
@@ -207,7 +208,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Privacy Info Box
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -244,7 +245,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                 ],
               ),
             ),
-            
+
             // Bottom Action Button
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -271,13 +272,13 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                           ),
                         )
                       : const Text(
-                    'Gửi lời mời',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'SourceSansPro',
-                    ),
-                  ),
+                          'Gửi lời mời',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'SourceSansPro',
+                          ),
+                        ),
                 ),
               ),
             ),
