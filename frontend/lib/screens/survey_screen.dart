@@ -87,6 +87,115 @@ class _SurveyScreenState extends State<SurveyScreen> {
     'Nha Be': 'Huyện Nhà Bè',
   };
 
+  /// API data can come from older screens that stored the display label
+  /// (for example, `Thủ Đức`) instead of the canonical key (`Thu Duc`).
+  /// DropdownButton requires its value to match exactly one item, so normalize
+  /// every value loaded from the API before rendering the form.
+  String _canonicalDistrictKey(String? value) {
+    final candidate = value?.trim();
+    if (candidate == null || candidate.isEmpty) return 'Binh Thanh';
+    if (_districtMap.containsKey(candidate)) return candidate;
+
+    final normalizedCandidate = _districtComparable(candidate);
+    for (final entry in _districtMap.entries) {
+      final key = _districtComparable(entry.key);
+      final label = _districtComparable(entry.value);
+      if (normalizedCandidate == key || normalizedCandidate == label) {
+        return entry.key;
+      }
+    }
+
+    // Keep the dropdown valid even when an old/invalid value is returned.
+    return 'Binh Thanh';
+  }
+
+  String _districtComparable(String value) {
+    var normalized = value.trim().toLowerCase();
+    const replacements = {
+      'à': 'a',
+      'á': 'a',
+      'ạ': 'a',
+      'ả': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ầ': 'a',
+      'ấ': 'a',
+      'ậ': 'a',
+      'ẩ': 'a',
+      'ẫ': 'a',
+      'ă': 'a',
+      'ằ': 'a',
+      'ắ': 'a',
+      'ặ': 'a',
+      'ẳ': 'a',
+      'ẵ': 'a',
+      'è': 'e',
+      'é': 'e',
+      'ẹ': 'e',
+      'ẻ': 'e',
+      'ẽ': 'e',
+      'ê': 'e',
+      'ề': 'e',
+      'ế': 'e',
+      'ệ': 'e',
+      'ể': 'e',
+      'ễ': 'e',
+      'ì': 'i',
+      'í': 'i',
+      'ị': 'i',
+      'ỉ': 'i',
+      'ĩ': 'i',
+      'ò': 'o',
+      'ó': 'o',
+      'ọ': 'o',
+      'ỏ': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ồ': 'o',
+      'ố': 'o',
+      'ộ': 'o',
+      'ổ': 'o',
+      'ỗ': 'o',
+      'ơ': 'o',
+      'ờ': 'o',
+      'ớ': 'o',
+      'ợ': 'o',
+      'ở': 'o',
+      'ỡ': 'o',
+      'ù': 'u',
+      'ú': 'u',
+      'ụ': 'u',
+      'ủ': 'u',
+      'ũ': 'u',
+      'ư': 'u',
+      'ừ': 'u',
+      'ứ': 'u',
+      'ự': 'u',
+      'ử': 'u',
+      'ữ': 'u',
+      'ỳ': 'y',
+      'ý': 'y',
+      'ỵ': 'y',
+      'ỷ': 'y',
+      'ỹ': 'y',
+      'đ': 'd',
+    };
+    for (final entry in replacements.entries) {
+      normalized = normalized.replaceAll(entry.key, entry.value);
+    }
+
+    normalized = normalized
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceFirst(RegExp(r'^(tp|thanh pho)\s+'), '')
+        .replaceFirst(RegExp(r'\s+(tp|thanh pho)\s*hcm$'), '')
+        .trim();
+    return normalized;
+  }
+
+  String get _safeDistrictValue => _districtMap.containsKey(_district)
+      ? _district
+      : _canonicalDistrictKey(_district);
+
   static const List<Map<String, dynamic>> _interestOptions = [
     {'name': 'Thể thao', 'icon': Icons.sports_soccer},
     {'name': 'Đọc sách', 'icon': Icons.menu_book},
@@ -225,7 +334,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         setState(() {
           final targetDist = data['targetDistrict'] as String?;
           if (targetDist != null && targetDist.isNotEmpty) {
-            _district = targetDist;
+            _district = _canonicalDistrictKey(targetDist);
           }
 
           final loadedBudget =
@@ -507,7 +616,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
       _allowPets = (_petHabit == 'LOVE_PETS');
 
       final payload = {
-        'targetDistrict': _district,
+        'targetDistrict': _safeDistrictValue,
         'budgetAmount': _budgetRange.end,
         'sleepHabit': _sleepHabit,
         'cleanlinessLevel': _cleanliness.toInt(),
@@ -878,7 +987,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                initialValue: _district,
+                initialValue: _safeDistrictValue,
                 isExpanded: true,
                 decoration: InputDecoration(
                   filled: true,
@@ -1524,9 +1633,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: _districtMap.containsKey(_district)
-              ? _district
-              : 'Thu Duc',
+          initialValue: _safeDistrictValue,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),

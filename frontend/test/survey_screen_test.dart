@@ -1,6 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/screens/survey_screen.dart';
+import 'package:roommate_hub_mobile/services/api_service.dart';
+
+class _LegacyDistrictApi implements ApiService {
+  @override
+  String? get authToken => null;
+
+  @override
+  bool get hasAuthToken => false;
+
+  @override
+  Future<Map<String, dynamic>?> getPreferences(int userId) async {
+    return <String, dynamic>{'targetDistrict': 'Thủ Đức'};
+  }
+
+  @override
+  void clearAuthToken() {}
+
+  @override
+  void setAuthToken(String token) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   testWidgets('SurveyScreen follows the five Penpot onboarding screens', (
@@ -28,5 +51,22 @@ void main() {
     await continueTo('Cá tính của bạn');
     await continueTo('Sẵn sàng tìm bạn!');
     expect(find.text('Lưu tiêu chí & khám phá'), findsOneWidget);
+  });
+
+  testWidgets('normalizes legacy district labels before building dropdowns', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SurveyScreen(
+          userId: 1,
+          apiService: _LegacyDistrictApi(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('TP. Thủ Đức'), findsOneWidget);
   });
 }
