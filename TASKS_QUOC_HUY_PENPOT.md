@@ -67,3 +67,8 @@ Quy trình phát triển (AI Rules):
   - Dựng thành board riêng để đối chiếu với phương án Modern Trend 2025 và đã export PNG kiểm tra.
   - Nâng board lên đúng kích thước nguồn Stitch 390×1227; bổ sung listing thứ hai, CTA tư vấn và đặt navigation ở cuối canvas.
   - Thay ký tự Unicode bằng SVG Material vector; khôi phục badge `CÒN PHÒNG • Xác thực`, rating `4.9 (18)` và bộ đếm ảnh `1/8` đúng nguồn Stitch.
+
+- [x] 01C / Khám phá • Polished Product UI (29/09/2026)
+  - Thiết kế lại độc lập thay vì sao chép pixel từ Stitch, tối ưu cho viewport 390×844.
+  - Giữ hierarchy tìm kiếm → gợi ý phù hợp → phòng mới, giảm nhiễu và dùng SVG vector đồng nhất cho logo/navigation.
+  - Đã export PNG kiểm tra typography, spacing, card density và khả năng đọc.
