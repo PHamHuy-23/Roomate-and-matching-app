@@ -252,9 +252,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
                           return _buildConnectionItem(
                             name: item.partnerName,
                             subtitle: subtitle,
-                            onTap: () {
+                            onTap: () async {
                               if (_selectedTabIndex == 0) {
-                                Navigator.pushNamed(
+                                final res = await Navigator.pushNamed(
                                   context,
                                   AppRoutes.contactDetails,
                                   arguments: {
@@ -265,13 +265,19 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                     'avatarUrl': item.partnerAvatar,
                                   },
                                 );
+                                if (res == true && mounted) {
+                                  _loadData();
+                                }
                               } else if (_selectedTabIndex == 1) {
-                                Navigator.pushNamed(
+                                await Navigator.pushNamed(
                                   context,
                                   AppRoutes.receivedRequests,
                                 );
+                                if (mounted) {
+                                  _loadData();
+                                }
                               } else {
-                                Navigator.pushNamed(
+                                final res = await Navigator.pushNamed(
                                   context,
                                   AppRoutes.sentRequest,
                                   arguments: {
@@ -279,6 +285,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                     'partnerName': item.partnerName,
                                   },
                                 );
+                                if (res == true && mounted) {
+                                  _loadData();
+                                }
                               }
                             },
                           );

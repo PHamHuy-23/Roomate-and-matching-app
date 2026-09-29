@@ -196,18 +196,28 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
 
   Widget _hero(RoomPost post) {
     final url = post.imageUrl?.trim();
-    return ClipRRect(
+    return InkWell(
+      onTap: () => Navigator.push<void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              RoomFlowScreen(post: post, mode: RoomFlowMode.roomPhotos),
+        ),
+      ),
       borderRadius: BorderRadius.circular(20),
-      child: SizedBox(
-        height: 210,
-        width: double.infinity,
-        child: url != null && url.isNotEmpty
-            ? Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _fallbackImage(),
-              )
-            : _fallbackImage(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 210,
+          width: double.infinity,
+          child: url != null && url.isNotEmpty
+              ? Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _fallbackImage(),
+                )
+              : _fallbackImage(),
+        ),
       ),
     );
   }

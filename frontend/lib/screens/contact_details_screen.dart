@@ -226,12 +226,15 @@ class ContactDetailsScreen extends StatelessWidget {
                   _buildActionButton('Báo cáo vi phạm', () {
                     Navigator.pushNamed(context, AppRoutes.reportViolation);
                   }),
-                  _buildActionButton('Hủy kết nối', () {
-                    Navigator.pushNamed(
+                  _buildActionButton('Hủy kết nối', () async {
+                    final res = await Navigator.pushNamed(
                       context,
                       AppRoutes.cancelConnection,
                       arguments: {'partnerId': contactId},
                     );
+                    if (res == true && context.mounted) {
+                      Navigator.pop(context, true);
+                    }
                   }),
                   
                   const SizedBox(height: 24),

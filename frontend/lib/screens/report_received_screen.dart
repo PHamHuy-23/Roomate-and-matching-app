@@ -95,8 +95,13 @@ class ReportReceivedScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate back to profile
-                    Navigator.popUntil(context, ModalRoute.withName(AppRoutes.profile));
+                    Navigator.popUntil(
+                      context,
+                      (route) =>
+                          route.settings.name == AppRoutes.profile ||
+                          route.settings.name == AppRoutes.home ||
+                          route.isFirst,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF087E6B),

@@ -18,17 +18,59 @@ enum RoomFlowMode {
   location,
 }
 
-class RoomFlowScreen extends StatelessWidget {
+class RoomFlowScreen extends StatefulWidget {
   const RoomFlowScreen({required this.post, required this.mode, super.key});
 
   final RoomPost post;
   final RoomFlowMode mode;
 
+  @override
+  State<RoomFlowScreen> createState() => _RoomFlowScreenState();
+}
+
+class _RoomFlowScreenState extends State<RoomFlowScreen> {
   static const _canvas = Color(0xFFF5F8F7);
   static const _primary = Color(0xFF087E6B);
   static const _ink = Color(0xFF142523);
   static const _muted = Color(0xFF52625F);
   static const _soft = Color(0xFFE8F4F1);
+
+  late RoomFlowMode _mode;
+  final List<RoomFlowMode> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _mode = widget.mode;
+  }
+
+  RoomPost get post => widget.post;
+  RoomFlowMode get mode => _mode;
+
+  bool _isPhotoMode(RoomFlowMode m) =>
+      m == RoomFlowMode.roomPhotos ||
+      m == RoomFlowMode.livingRoom ||
+      m == RoomFlowMode.bedroom ||
+      m == RoomFlowMode.kitchen;
+
+  void _changeMode(RoomFlowMode next) {
+    if (_mode == next) return;
+    // Don't accumulate photo-to-photo switches in history.
+    // Switching photos in gallery is browsing views, not opening a new screen.
+    if (!(_isPhotoMode(_mode) && _isPhotoMode(next))) {
+      _history.add(_mode);
+    }
+    setState(() => _mode = next);
+  }
+
+  void _handleBack() {
+    if (_history.isNotEmpty) {
+      final prev = _history.removeLast();
+      setState(() => _mode = prev);
+      return;
+    }
+    Navigator.pop(context);
+  }
 
   String get _title {
     switch (mode) {
@@ -59,34 +101,53 @@ class RoomFlowScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _canvas,
-      appBar: AppBar(
-        title: Text(_title),
+    return PopScope(
+      canPop: _history.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBack();
+      },
+      child: Scaffold(
         backgroundColor: _canvas,
-        foregroundColor: _ink,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-          children: [_buildBody(context)],
+        appBar: AppBar(
+          title: Text(_title),
+          backgroundColor: _canvas,
+          foregroundColor: _ink,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Quay lại',
+            onPressed: _handleBack,
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.close_rounded),
+              tooltip: 'Đóng',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
         ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            children: [_buildBody(context)],
+          ),
+        ),
+        bottomNavigationBar: mode == RoomFlowMode.roomInfo
+            ? SafeArea(
+                minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _button(
+                      'Xem vị trí & khu vực',
+                      () => _changeMode(RoomFlowMode.location),
+                    ),
+                  ],
+                ),
+              )
+            : null,
       ),
-      bottomNavigationBar: mode == RoomFlowMode.roomInfo
-          ? SafeArea(
-              minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _button(
-                    'Xem vị trí & khu vực',
-                    () => _push(context, RoomFlowMode.location),
-                  ),
-                ],
-              ),
-            )
-          : null,
     );
   }
 
@@ -140,12 +201,18 @@ class RoomFlowScreen extends StatelessWidget {
         const SizedBox(height: 28),
         _button(
           'Khám phá phòng',
-          () => Navigator.push<void>(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => RoomDetailsScreen(post: post),
-            ),
-          ),
+          () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement<void, void>(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => RoomDetailsScreen(post: post),
+                ),
+              );
+            }
+          },
         ),
       ],
     );
@@ -252,9 +319,13 @@ class RoomFlowScreen extends StatelessWidget {
       RoomFlowMode.bedroom => RoomFlowMode.kitchen,
       _ => RoomFlowMode.roomPhotos,
     };
-    final meta = mode == RoomFlowMode.roomPhotos
-        ? '01 / 04 • Không gian chính'
-        : 'Ảnh minh họa cho bản thiết kế.';
+    final meta = switch (mode) {
+      RoomFlowMode.roomPhotos => '01 / 04 • Không gian chính',
+      RoomFlowMode.livingRoom => '02 / 04 • Không gian phòng khách',
+      RoomFlowMode.bedroom => '03 / 04 • Không gian phòng ngủ',
+      RoomFlowMode.kitchen => '04 / 04 • Không gian khu bếp',
+      _ => 'Ảnh minh họa cho bản thiết kế.',
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -289,13 +360,13 @@ class RoomFlowScreen extends StatelessWidget {
         _outlineButton(context, 'Ảnh tiếp theo →', nextMode),
         const SizedBox(height: 8),
         TextButton(
-          onPressed: () => _push(context, RoomFlowMode.roomPhotos),
+          onPressed: () => _changeMode(RoomFlowMode.roomPhotos),
           child: const Text('Tất cả ảnh'),
         ),
         const SizedBox(height: 10),
         _button(
           'Xem thông tin căn phòng',
-          () => _push(context, RoomFlowMode.roomInfo),
+          () => _changeMode(RoomFlowMode.roomInfo),
         ),
       ],
     );
@@ -333,7 +404,7 @@ class RoomFlowScreen extends StatelessWidget {
         const SizedBox(height: 28),
         _button(
           'Xem lịch xem phòng',
-          () => _push(context, RoomFlowMode.viewingSchedule),
+          () => _changeMode(RoomFlowMode.viewingSchedule),
         ),
       ],
     );
@@ -407,10 +478,10 @@ class RoomFlowScreen extends StatelessWidget {
           false,
         ),
         const SizedBox(height: 18),
-        _button('Xem phòng', () => _push(context, RoomFlowMode.roomInfo)),
+        _button('Xem phòng', () => _changeMode(RoomFlowMode.roomInfo)),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => _push(context, RoomFlowMode.cancelAppointment),
+          onPressed: () => _changeMode(RoomFlowMode.cancelAppointment),
           icon: const Icon(Icons.event_busy_outlined),
           label: const Text('Hủy lịch hẹn'),
           style: OutlinedButton.styleFrom(
@@ -463,7 +534,7 @@ class RoomFlowScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _handleBack,
           child: const Text('Giữ lịch hẹn'),
         ),
       ],
@@ -510,7 +581,7 @@ class RoomFlowScreen extends StatelessWidget {
         const SizedBox(height: 20),
         _button(
           'Đặt lịch xem phòng',
-          () => _push(context, RoomFlowMode.viewingSchedule),
+          () => _changeMode(RoomFlowMode.viewingSchedule),
         ),
       ],
     );
@@ -573,7 +644,7 @@ class RoomFlowScreen extends StatelessWidget {
     String room,
     bool confirmed,
   ) => InkWell(
-    onTap: () => _push(context, RoomFlowMode.appointmentDetails),
+    onTap: () => _changeMode(RoomFlowMode.appointmentDetails),
     borderRadius: BorderRadius.circular(16),
     child: Container(
       width: double.infinity,
@@ -663,22 +734,30 @@ class RoomFlowScreen extends StatelessWidget {
     BuildContext context,
     String label,
     RoomFlowMode next,
-  ) => OutlinedButton(
-    onPressed: () => _push(context, next),
-    style: OutlinedButton.styleFrom(
-      foregroundColor: _primary,
-      side: const BorderSide(color: _primary),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
-    child: Text(label),
-  );
-
-  void _push(BuildContext context, RoomFlowMode next) {
-    Navigator.push<void>(
-      context,
-      MaterialPageRoute<void>(
-        builder: (_) => RoomFlowScreen(post: post, mode: next),
-      ),
-    );
+  ) {
+    final isSelected = mode == next;
+    return isSelected
+        ? FilledButton(
+            onPressed: () => _changeMode(next),
+            style: FilledButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(label),
+          )
+        : OutlinedButton(
+            onPressed: () => _changeMode(next),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _primary,
+              side: const BorderSide(color: _primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(label),
+          );
   }
 }
