@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/penpot_back_button.dart';
+import '../services/api_service.dart';
 
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({super.key});
@@ -10,7 +11,13 @@ class PrivacyScreen extends StatefulWidget {
 }
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
-  bool _isSearchActive = true;
+  late bool _isSearchActive;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSearchActive = ApiService().isSearchActive;
+  }
 
   Widget _buildSettingItem(String title, String subtitle, {Widget? trailing, VoidCallback? onTap}) {
     return GestureDetector(
@@ -148,7 +155,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     trailing: Switch(
                       value: _isSearchActive,
                       onChanged: (val) {
-                        setState(() => _isSearchActive = val);
+                        setState(() {
+                          _isSearchActive = val;
+                          ApiService().isSearchActive = val;
+                        });
                       },
                       activeTrackColor: const Color(0xFF087E6B),
                     ),

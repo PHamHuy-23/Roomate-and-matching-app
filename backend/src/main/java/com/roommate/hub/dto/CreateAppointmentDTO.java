@@ -19,6 +19,7 @@ public class CreateAppointmentDTO {
     private Long roomPostId;
 
     @NotNull(message = "Thời gian xem phòng không được để trống")
+    @Future(message = "Thời gian xem phòng phải ở trong tương lai")
     private LocalDateTime appointmentTime;
 
     private String note;

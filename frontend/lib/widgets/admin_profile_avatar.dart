@@ -11,11 +11,15 @@ class AdminProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       tooltip: 'Tài khoản quản trị viên',
-      onSelected: (value) {
+      onSelected: (value) async {
         if (value == 'user_app') {
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         } else if (value == 'logout') {
-          ApiService().clearAuthToken();
+          // Await logout để đảm bảo backend thu hồi token trước khi navigate.
+          // Nếu người dùng đăng nhập lại ngay, request logout cũ sẽ không
+          // vô tình thu hồi phiên vừa tạo (race condition).
+          await ApiService().logout();
+          if (!context.mounted) return;
           Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
         }
       },

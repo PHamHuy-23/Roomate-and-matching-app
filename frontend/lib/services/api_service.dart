@@ -40,10 +40,29 @@ class ApiService {
 
   final http.Client _client = http.Client();
   String? _token;
+  String? _refreshToken;
   bool _isHandlingUnauthorized = false;
+  Future<bool>? _refreshFuture;
+
+  final Set<int> savedPostIds = <int>{};
+  bool isSearchActive = true;
+
+  bool isPostSaved(int postId) => savedPostIds.contains(postId);
+
+  bool toggleSavePost(int postId) {
+    if (savedPostIds.contains(postId)) {
+      savedPostIds.remove(postId);
+      return false;
+    } else {
+      savedPostIds.add(postId);
+      return true;
+    }
+  }
 
   String? get authToken => _token;
   bool get hasAuthToken => _token != null && _token!.isNotEmpty;
+  String? get refreshToken => _refreshToken;
+  bool get hasRefreshToken => _refreshToken != null && _refreshToken!.isNotEmpty;
 
   static void configureUnauthorizedHandler(void Function() handler) {
     _onUnauthorized = handler;
@@ -79,8 +98,23 @@ class ApiService {
     _isHandlingUnauthorized = false;
   }
 
+  void setRefreshToken(String? refreshToken) {
+    if (refreshToken != null && refreshToken.trim().isNotEmpty) {
+      _refreshToken = refreshToken.trim();
+    } else {
+      _refreshToken = null;
+    }
+  }
+
+  void setTokens({required String accessToken, String? refreshToken}) {
+    setAuthToken(accessToken);
+    setRefreshToken(refreshToken);
+  }
+
   void clearAuthToken() {
     _token = null;
+    _refreshToken = null;
+    _refreshFuture = null;
   }
 
   Map<String, String> _headers({bool authenticated = true}) {
@@ -120,6 +154,25 @@ class ApiService {
         streamedResponse,
       ).timeout(requestTimeout);
       if (authenticated && response.statusCode == 401) {
+        if (hasRefreshToken) {
+          final refreshed = await (_refreshFuture ??= _tryRefreshToken());
+          if (refreshed) {
+            final retryRequest = http.Request(method, uri)
+              ..headers.addAll(_headers(authenticated: authenticated));
+            if (body != null) {
+              retryRequest.body = body is String ? body : jsonEncode(body);
+            }
+            final retryStreamed = await _client
+                .send(retryRequest)
+                .timeout(requestTimeout);
+            final retryResponse = await http.Response.fromStream(
+              retryStreamed,
+            ).timeout(requestTimeout);
+            if (retryResponse.statusCode != 401) {
+              return retryResponse;
+            }
+          }
+        }
         _handleUnauthorized();
         throw const ApiException('Phiên làm việc đã hết hạn', statusCode: 401);
       }
@@ -128,6 +181,66 @@ class ApiService {
       throw const ApiException('Máy chủ phản hồi quá lâu, vui lòng thử lại');
     } on http.ClientException {
       throw const ApiException('Không thể kết nối đến máy chủ');
+    }
+  }
+
+  Future<bool> refreshAuthToken() async {
+    return (_refreshFuture ??= _tryRefreshToken());
+  }
+
+  Future<bool> _tryRefreshToken() async {
+    final currentRefreshToken = _refreshToken;
+    if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
+      return false;
+    }
+    try {
+      final uri = Uri.parse('$baseUrl/auth/refresh-token');
+      final response = await _client.post(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({'refreshToken': currentRefreshToken}),
+      ).timeout(requestTimeout);
+
+      if (response.statusCode == 200) {
+        final data = _decodeData(response);
+        if (data is Map<String, dynamic>) {
+          final newAccessToken = data['token'] ?? data['accessToken'];
+          final newRefreshToken = data['refreshToken'];
+          if (newAccessToken is String && newAccessToken.isNotEmpty) {
+            _token = newAccessToken;
+            if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+              _refreshToken = newRefreshToken;
+            }
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<void> logout() async {
+    final tokenToRevoke = _refreshToken;
+    try {
+      if (hasAuthToken || tokenToRevoke != null) {
+        await _request(
+          'POST',
+          '/auth/logout',
+          authenticated: hasAuthToken,
+          body: tokenToRevoke != null ? {'refreshToken': tokenToRevoke} : null,
+        );
+      }
+    } catch (_) {
+      // Bỏ qua lỗi mạng khi logout để trạng thái local luôn được xóa sạch
+    } finally {
+      clearAuthToken();
     }
   }
 
@@ -230,7 +343,7 @@ class ApiService {
         throw const ApiException('Dữ liệu đăng nhập từ máy chủ không hợp lệ');
       }
       final user = AuthUser.fromJson(data);
-      setAuthToken(user.token);
+      setTokens(accessToken: user.token, refreshToken: user.refreshToken);
       return user;
     }
     throw _errorFrom(response, 'Đăng nhập thất bại');
@@ -265,7 +378,7 @@ class ApiService {
         throw const ApiException('Dữ liệu đăng ký từ máy chủ không hợp lệ');
       }
       final user = AuthUser.fromJson(data);
-      setAuthToken(user.token);
+      setTokens(accessToken: user.token, refreshToken: user.refreshToken);
       return user;
     }
     throw _errorFrom(response, 'Đăng ký thất bại');
@@ -273,7 +386,10 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getPreferences(int userId) async {
     final response = await _request('GET', '/profile/preferences/$userId');
-    if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+    if (response.statusCode == 200) {
+      if (response.bodyBytes.isEmpty || response.body.trim().isEmpty || response.body.trim() == 'null') {
+        return null;
+      }
       final data = _decodeData(response);
       return data is Map<String, dynamic> ? data : null;
     }
@@ -436,11 +552,15 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách bài đăng quản trị');
   }
 
-  Future<bool> moderatePost(int postId, String status) async {
+  Future<bool> moderatePost(int postId, String status, {String? reason}) async {
+    final query = <String, String>{'status': status};
+    if (reason != null && reason.trim().isNotEmpty) {
+      query['reason'] = reason.trim();
+    }
     final response = await _request(
       'PUT',
       '/admin/posts/$postId/moderate',
-      queryParameters: {'status': status},
+      queryParameters: query,
     );
     if (response.statusCode == 200) return true;
     throw _errorFrom(response, 'Không thể duyệt bài đăng');
@@ -668,6 +788,74 @@ class ApiService {
     throw _errorFrom(response, 'Không thể thay đổi mật khẩu');
   }
 
+  // --- QUÊN MẬT KHẨU & XÁC MINH EMAIL (PASSWORD RECOVERY & EMAIL VERIFICATION) ---
+  Future<bool> forgotPassword(String email) async {
+    final response = await _request(
+      'POST',
+      '/auth/forgot-password',
+      body: {'email': email},
+      authenticated: false,
+    );
+    if (response.statusCode == 200) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể gửi yêu cầu quên mật khẩu');
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/auth/reset-password',
+      body: {
+        'email': email,
+        'code': code,
+        'newPassword': newPassword,
+      },
+      authenticated: false,
+    );
+    if (response.statusCode == 200) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể đặt lại mật khẩu');
+  }
+
+  Future<bool> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/auth/verify-email',
+      body: {
+        'email': email,
+        'code': code,
+      },
+      authenticated: false,
+    );
+    if (response.statusCode == 200) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể xác minh email');
+  }
+
+  Future<bool> sendVerificationEmail(String email) async {
+    final response = await _request(
+      'POST',
+      '/auth/send-verification-email',
+      body: {'email': email},
+      authenticated: false,
+    );
+    if (response.statusCode == 200) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể gửi mã xác minh');
+  }
+
+
   // --- QUẢN LÝ BÀI ĐĂNG CỦA TÔI (MY ROOM POSTS) ---
   Future<List<RoomPost>> getMyPosts() async {
     final response = await _request('GET', '/posts/my');
@@ -693,6 +881,9 @@ class ApiService {
     required List<String> amenities,
     String? imageObjectKey,
   }) async {
+    final cleanCostStr = electricityWaterCost.replaceAll('.', '').replaceAll('đ', '').replaceAll('/tháng', '').trim();
+    final costDouble = double.tryParse(cleanCostStr) ?? 0.0;
+    final amenitiesString = amenities.join(',');
     final response = await _request(
       'PUT',
       '/posts/$postId',
@@ -703,11 +894,11 @@ class ApiService {
         'address': address,
         'district': district,
         'deposit': deposit,
-        'electricityWaterCost': electricityWaterCost,
+        'electricityWaterCost': costDouble,
         'area': area,
         'maxOccupants': maxOccupants,
         'currentOccupants': currentOccupants,
-        'amenities': amenities,
+        'amenities': amenitiesString,
         'imageObjectKey': imageObjectKey,
       },
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/models/room_post.dart';
 import 'package:roommate_hub_mobile/screens/listing_management_screen.dart';
+import 'package:roommate_hub_mobile/services/api_service.dart';
 
 RoomPost _post() => RoomPost(
   id: 2,
@@ -13,6 +14,17 @@ RoomPost _post() => RoomPost(
   authorName: 'Minh Anh',
   authorId: 4,
 );
+
+class _MockListingApi implements ApiService {
+  @override
+  bool get hasAuthToken => true;
+
+  @override
+  Future<bool> createRoomPost(Map<String, dynamic> postData) async => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   testWidgets('Quản lý tin đăng mở được flow xem trước và gửi tin', (tester) async {
@@ -35,12 +47,15 @@ void main() {
   });
 
   testWidgets('Các trạng thái tin đăng hiển thị được', (tester) async {
+
+    final mockApi = _MockListingApi();
     await tester.pumpWidget(
       MaterialApp(
         home: ListingManagementScreen(
           mode: ListingFlowMode.preview,
           authorId: 4,
           posts: <RoomPost>[_post()],
+          apiService: mockApi,
         ),
       ),
     );
@@ -51,6 +66,24 @@ void main() {
     await tester.pump();
     expect(find.text('Tin của bạn đang chờ kiểm duyệt'), findsOneWidget);
   });
+
+  testWidgets('Khi thiếu token, gửi tin đăng bị từ chối và hiện thông báo lỗi', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListingManagementScreen(
+          mode: ListingFlowMode.preview,
+          authorId: 4,
+          posts: <RoomPost>[_post()],
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Gửi tin để duyệt'));
+    await tester.pump();
+    expect(find.text('Tin của bạn đang chờ kiểm duyệt'), findsNothing);
+    expect(find.text('Vui lòng đăng nhập để gửi tin đăng.'), findsOneWidget);
+  });
+
 
   testWidgets('Chỉnh sửa tin đi qua đủ các bước và mũi tên quay lại từng bước', (tester) async {
     await tester.pumpWidget(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
+import '../services/api_service.dart';
 import 'room_flow_screen.dart';
 import 'room_viewing_screen.dart';
 
@@ -21,7 +22,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   static const _muted = Color(0xFF52625F);
   static const _soft = Color(0xFFE8F4F1);
 
-  bool _saved = false;
+  late bool _saved;
+
+  @override
+  void initState() {
+    super.initState();
+    _saved = ApiService().isPostSaved(widget.post.id);
+  }
 
   String get _price => NumberFormat.currency(
     locale: 'vi_VN',
@@ -45,7 +52,11 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         actions: [
           IconButton(
             tooltip: _saved ? 'Bỏ lưu phòng' : 'Lưu phòng',
-            onPressed: () => setState(() => _saved = !_saved),
+            onPressed: () {
+              setState(() {
+                _saved = ApiService().toggleSavePost(widget.post.id);
+              });
+            },
             icon: Icon(_saved ? Icons.favorite : Icons.favorite_border),
           ),
           IconButton(

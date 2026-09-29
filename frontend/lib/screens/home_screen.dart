@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _districtFilter = 'Tất cả';
   final Set<int> _connectingUserIds = {};
   final Set<int> _sentRequestUserIds = {};
-  final Set<int> _savedPostIds = {};
+  Set<int> get _savedPostIds => _api.savedPostIds;
 
   @override
   void initState() {
@@ -614,7 +614,9 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute<void>(
             builder: (_) => RoomDetailsScreen(post: post),
           ),
-        ),
+        ).then((_) {
+          if (mounted) setState(() {});
+        }),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

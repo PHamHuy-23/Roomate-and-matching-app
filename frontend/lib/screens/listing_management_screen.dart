@@ -26,19 +26,24 @@ class ListingManagementScreen extends StatefulWidget {
     required this.mode,
     required this.authorId,
     this.posts = const [],
+    this.apiService,
     super.key,
   });
 
   final ListingFlowMode mode;
   final int authorId;
   final List<RoomPost> posts;
+  final ApiService? apiService;
 
   @override
   State<ListingManagementScreen> createState() => _ListingManagementScreenState();
 }
 
 class _ListingManagementScreenState extends State<ListingManagementScreen> {
+  ApiService get _api => widget.apiService ?? ApiService();
+
   static const _canvas = Color(0xFFF5F8F7);
+
   static const _primary = Color(0xFF087E6B);
   static const _ink = Color(0xFF142523);
   static const _muted = Color(0xFF65746F);
@@ -88,10 +93,10 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   Future<void> _loadData() async {
-    if (!ApiService().hasAuthToken) return;
+    if (!_api.hasAuthToken) return;
     try {
-      final postsFuture = ApiService().getMyPosts();
-      final aptsFuture = ApiService().getMyAppointments();
+      final postsFuture = _api.getMyPosts();
+      final aptsFuture = _api.getMyAppointments();
       final results = await Future.wait([postsFuture, aptsFuture]);
       if (mounted) {
         setState(() {
@@ -109,11 +114,19 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
 
   Future<void> _handleSaveEdit() async {
     final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
-    if (post != null && ApiService().hasAuthToken) {
+    if (post != null) {
+      if (!_api.hasAuthToken) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vui lòng đăng nhập để cập nhật tin.')),
+          );
+        }
+        return;
+      }
       final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
       final rawPrice = double.tryParse(cleanPriceStr) ?? post.price;
       try {
-        await ApiService().updateRoomPost(
+        await _api.updateRoomPost(
           postId: post.id,
           title: _titleCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
@@ -127,45 +140,80 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
           currentOccupants: post.currentOccupants,
           amenities: _amenities.toList(),
         );
-      } catch (_) {}
+        _loadData();
+        _goTo(ListingFlowMode.submitted);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi khi cập nhật tin: ${e.toString().replaceAll("Exception: ", "")}')),
+          );
+        }
+      }
     }
-    _goTo(ListingFlowMode.submitted);
   }
 
   Future<void> _handleSubmitNewPost() async {
-    if (ApiService().hasAuthToken) {
-      final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
-      final rawPrice = double.tryParse(cleanPriceStr) ?? 3500000.0;
-      try {
-        await ApiService().createRoomPost({
-          'title': _titleCtrl.text.trim(),
-          'description': _descriptionCtrl.text.trim(),
-          'price': rawPrice,
-          'address': _addressCtrl.text.trim(),
-          'district': 'Quận 1',
-          'deposit': rawPrice,
-          'electricityWaterCost': 200000.0,
-          'area': _area,
-          'maxOccupants': _maxOccupants,
-          'currentOccupants': 0,
-          'amenities': _amenities.join(','),
-        });
-        _loadData();
-      } catch (_) {}
+    if (!_api.hasAuthToken) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng đăng nhập để gửi tin đăng.')),
+        );
+      }
+      return;
     }
-    _goTo(ListingFlowMode.submitted);
+
+    final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
+    final rawPrice = double.tryParse(cleanPriceStr) ?? 3500000.0;
+    try {
+      await _api.createRoomPost({
+        'title': _titleCtrl.text.trim(),
+        'description': _descriptionCtrl.text.trim(),
+        'price': rawPrice,
+        'address': _addressCtrl.text.trim(),
+        'district': 'Quận 1',
+        'deposit': rawPrice,
+        'electricityWaterCost': 200000.0,
+        'area': _area,
+        'maxOccupants': _maxOccupants,
+        'currentOccupants': 0,
+        'amenities': _amenities.join(','),
+      });
+      _loadData();
+      _goTo(ListingFlowMode.submitted);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi đăng tin: ${e.toString().replaceAll("Exception: ", "")}')),
+        );
+      }
+    }
   }
 
   Future<void> _handleCloseListing() async {
     final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
-    if (post != null && ApiService().hasAuthToken) {
+    if (post != null) {
+      if (!_api.hasAuthToken) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vui lòng đăng nhập để đóng tin đăng.')),
+          );
+        }
+        return;
+      }
       try {
-        await ApiService().closeRoomPost(post.id);
+        await _api.closeRoomPost(post.id);
         _loadData();
-      } catch (_) {}
+        _goTo(ListingFlowMode.closed);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi khi đóng tin: ${e.toString().replaceAll("Exception: ", "")}')),
+          );
+        }
+      }
     }
-    _goTo(ListingFlowMode.closed);
   }
+
 
   @override
   void dispose() {
@@ -294,6 +342,21 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     );
   }
 
+  String _postStatusLabel(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return 'CHỜ DUYỆT';
+      case 'REJECTED':
+        return 'CẦN SỬA';
+      case 'CLOSED':
+        return 'ĐÃ ĐÓNG';
+      case 'APPROVED':
+      case 'AVAILABLE':
+      default:
+        return 'ĐANG HIỂN THỊ';
+    }
+  }
+
   Widget _postCard(BuildContext context, RoomPost post) {
     return Card(
       color: Colors.white,
@@ -305,7 +368,10 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(children: <Widget>[Expanded(child: Text(post.title, style: const TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800))), _statusBadge('ĐANG HIỂN THỊ')]),
+            Row(children: <Widget>[
+              Expanded(child: Text(post.title, style: const TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800))),
+              _statusBadge(_postStatusLabel(post.status)),
+            ]),
             const SizedBox(height: 7),
             Text('${_formatMoney(post.price)}đ / tháng · 28 m²', style: const TextStyle(color: _muted)),
             const SizedBox(height: 3),
@@ -491,23 +557,54 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                   Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
                     FilledButton(
                       onPressed: () async {
+                        if (!_api.hasAuthToken) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Vui lòng đăng nhập để xác nhận lịch hẹn.')),
+                            );
+                          }
+                          return;
+                        }
                         try {
-                          await ApiService().updateAppointmentStatus(apt.id, 'CONFIRMED');
-                        } catch (_) {}
-                        _goTo(ListingFlowMode.confirmedViewing);
+                          await _api.updateAppointmentStatus(apt.id, 'CONFIRMED');
+                          _loadData();
+                          _goTo(ListingFlowMode.confirmedViewing);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Lỗi khi xác nhận lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}')),
+                            );
+                          }
+                        }
                       },
                       style: FilledButton.styleFrom(backgroundColor: _primary),
                       child: const Text('Xác nhận lịch hẹn'),
                     ),
                     OutlinedButton(
                       onPressed: () async {
+                        if (!_api.hasAuthToken) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Vui lòng đăng nhập để từ chối lịch hẹn.')),
+                            );
+                          }
+                          return;
+                        }
                         try {
-                          await ApiService().updateAppointmentStatus(apt.id, 'CANCELLED');
-                        } catch (_) {}
-                        _goTo(ListingFlowMode.myListings);
+                          await _api.updateAppointmentStatus(apt.id, 'CANCELLED');
+                          _loadData();
+                          _goTo(ListingFlowMode.myListings);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Lỗi khi từ chối lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}')),
+                            );
+                          }
+                        }
                       },
                       child: const Text('Từ chối / hủy lịch'),
                     ),
+
                   ]),
                 ]),
               ),

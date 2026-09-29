@@ -35,6 +35,11 @@ public class AdminService {
     // Duyệt hoặc từ chối bài đăng
     @Transactional
     public RoomPost moderatePost(Long postId, String status) {
+        return moderatePost(postId, status, null);
+    }
+
+    @Transactional
+    public RoomPost moderatePost(Long postId, String status, String reason) {
         RoomPost post = roomPostRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Bài đăng không tồn tại!"));
 

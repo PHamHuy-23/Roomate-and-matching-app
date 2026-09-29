@@ -28,8 +28,9 @@ public class AdminController {
     @PutMapping("/posts/{postId}/moderate")
     public ResponseEntity<AdminPostResponseDTO> moderatePost(
             @PathVariable Long postId,
-            @RequestParam String status) {
-        return ResponseEntity.ok(AdminPostResponseDTO.from(adminService.moderatePost(postId, status)));
+            @RequestParam String status,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(AdminPostResponseDTO.from(adminService.moderatePost(postId, status, reason)));
     }
 
     @GetMapping("/users")

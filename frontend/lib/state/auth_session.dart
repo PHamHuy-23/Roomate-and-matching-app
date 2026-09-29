@@ -98,9 +98,11 @@ class AuthSession extends ChangeNotifier {
     return updated;
   }
 
-  void signOut() {
-    _api.clearAuthToken();
+  Future<void> signOut() async {
     _user = null;
     notifyListeners();
+    try {
+      await _api.logout();
+    } catch (_) {}
   }
 }

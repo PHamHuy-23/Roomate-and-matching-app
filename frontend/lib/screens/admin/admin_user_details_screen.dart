@@ -31,10 +31,13 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
     _status = widget.user?['status'] ?? 'Đã khóa';
   }
 
-  String get _userName => widget.user?['fullName'] ?? 'Tài khoản #028';
-  String get _userEmail => widget.user?['email'] ?? 'user28@example.com';
-  String get _userId => widget.user?['id'] ?? '#028';
-  bool get _isLocked => _status == 'Đã khóa';
+  String get _userName => widget.user?['fullName'] ?? 'Người dùng';
+  String get _userEmail => widget.user?['email'] ?? 'Chưa có email';
+  String get _userId => widget.user?['id']?.toString() ?? '—';
+  String get _university => widget.user?['university']?.toString() ?? 'Chưa cập nhật trường';
+  String get _phone => widget.user?['phone']?.toString() ?? 'Chưa cập nhật SĐT';
+  String get _gender => widget.user?['gender'] == 'MALE' ? 'Nam' : (widget.user?['gender'] == 'FEMALE' ? 'Nữ' : 'Khác');
+  bool get _isLocked => _status == 'Đã khóa' || _status == 'BANNED' || _status == 'LOCKED';
 
   void _handleStatusChanged(String status) {
     if (!mounted) return;
@@ -313,7 +316,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                                 ),
                                 SizedBox(height: 24),
                                 Text(
-                                  'Mã tài khoản: $_userId\nTham gia: 08 / 2025\nKhu vực: Bình Thạnh\nTin đã đăng: 3\nBáo cáo vi phạm: 0',
+                                  'Mã tài khoản: $_userId\nEmail: $_userEmail\nSố điện thoại: $_phone\nGiới tính: $_gender\nTrường học: $_university\nTrạng thái: $_status',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w400,

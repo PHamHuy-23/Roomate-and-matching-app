@@ -107,7 +107,9 @@ public class RoomPostService {
         if (!admin && !post.getAuthor().getEmail().equals(authentication.getName())) {
             throw new ForbiddenException("Bạn không có quyền xóa bài đăng này!");
         }
-        roomPostRepository.delete(post);
+        // Đóng tin đăng (soft-close) để bảo toàn dữ liệu lịch hẹn và lịch sử tương tác
+        post.setStatus(RoomPost.PostStatus.CLOSED);
+        roomPostRepository.save(post);
     }
 
     @Transactional(readOnly = true)
@@ -129,6 +131,11 @@ public class RoomPostService {
         boolean admin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (!admin && !post.getAuthor().getEmail().equals(authentication.getName())) {
             throw new ForbiddenException("Bạn không có quyền sửa bài đăng này!");
+        }
+
+        // Khi người dùng chỉnh sửa nội dung tin, chuyển về trạng thái PENDING để kiểm duyệt lại
+        if (!admin) {
+            post.setStatus(RoomPost.PostStatus.PENDING);
         }
 
         if (dto.getTitle() != null) post.setTitle(dto.getTitle());

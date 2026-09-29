@@ -26,15 +26,36 @@ public class JwtUtils {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
+                .claim("token_type", "ACCESS")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    public boolean isAccessToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
+                    .parseClaimsJws(token).getBody();
+            Object tokenType = claims.get("token_type");
+            return tokenType == null || "ACCESS".equals(tokenType);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public String extractEmail(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public Date extractIssuedAt(String token) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(key).build()
+                    .parseClaimsJws(token).getBody().getIssuedAt();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean validateToken(String token) {

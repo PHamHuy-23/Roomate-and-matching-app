@@ -297,8 +297,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'Đăng xuất',
                   icon: Icons.logout,
-                  onTap: () {
-                    _api.clearAuthToken();
+                  onTap: () async {
+                    // Await logout để đảm bảo backend thu hồi token trước khi navigate.
+                    await _api.logout();
+                    if (!context.mounted) return;
                     Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
                   },
                 ),

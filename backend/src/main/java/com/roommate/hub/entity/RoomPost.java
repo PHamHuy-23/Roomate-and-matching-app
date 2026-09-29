@@ -83,6 +83,7 @@ public class RoomPost {
         PENDING,    // Chờ Admin duyệt
         APPROVED,   // Đã duyệt (hiển thị công khai)
         REJECTED,   // Bị từ chối
-        AVAILABLE   // Tương đương APPROVED
+        AVAILABLE,  // Tương đương APPROVED
+        CLOSED      // Đã đóng tin (ẩn khỏi danh sách công khai, giữ lịch sử lịch hẹn)
     }
 }

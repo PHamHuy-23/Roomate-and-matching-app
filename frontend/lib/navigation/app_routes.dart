@@ -129,7 +129,13 @@ class AppRoutes {
                   : null,
             );
           case newPassword:
-            return const AuthSupportScreen(mode: AuthSupportMode.newPassword);
+            return AuthSupportScreen(
+              mode: AuthSupportMode.newPassword,
+              email: routeSettings.arguments is String
+                  ? routeSettings.arguments as String
+                  : null,
+            );
+
         }
 
         // Guard: require authentication

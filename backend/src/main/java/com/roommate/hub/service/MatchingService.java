@@ -19,10 +19,14 @@ import java.util.stream.Collectors;
 public class MatchingService {
 
     private final UserPreferenceRepository preferenceRepository;
+    private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
 
     public List<MatchRecommendationDTO> getRecommendations(User currentUser) {
-        UserPreference myPref = preferenceRepository.findByUserId(currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Vui lòng hoàn thành khảo sát thói quen trước!"));
+        java.util.Optional<UserPreference> myPrefOpt = preferenceRepository.findByUserId(currentUser.getId());
+        if (myPrefOpt.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        UserPreference myPref = myPrefOpt.get();
 
         // 1. LỌC CỨNG (SQL): Cùng giới tính & cùng quận
         List<UserPreference> candidates = preferenceRepository.findCandidates(
@@ -31,8 +35,18 @@ public class MatchingService {
                 myPref.getTargetDistrict()
         );
 
+        // Lọc bỏ những người dùng bị chặn hoặc đã chặn người dùng hiện tại
+        java.util.Set<Long> blockedUserIds = new java.util.HashSet<>();
+        if (blockedUserRepository != null) {
+            blockedUserRepository.findByUserId(currentUser.getId())
+                    .forEach(b -> blockedUserIds.add(b.getBlockedUser().getId()));
+            blockedUserRepository.findByBlockedUserId(currentUser.getId())
+                    .forEach(b -> blockedUserIds.add(b.getUser().getId()));
+        }
+
         // 2. TÍNH TOÁN % TỔNG THỂ & CHI TIẾT TỪNG TIÊU CHÍ (QĐ 1)
         return candidates.stream()
+                .filter(candidate -> !blockedUserIds.contains(candidate.getUser().getId()))
                 .map(candidate -> {
                     MatchCriteriaDetailDTO details = calculateCriteriaDetail(myPref, candidate);
                     double total = (0.30 * details.getBudgetMatch())

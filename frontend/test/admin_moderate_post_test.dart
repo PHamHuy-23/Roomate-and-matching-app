@@ -25,7 +25,7 @@ class _ModerationApi implements ApiService {
       ];
 
   @override
-  Future<bool> moderatePost(int postId, String status) async {
+  Future<bool> moderatePost(int postId, String status, {String? reason}) async {
     lastStatus = status;
     return true;
   }

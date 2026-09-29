@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final hasPreferences =
           isLogin && !isAdmin ? await session.hasPreferences() : null;
       if (mounted && session.isAuthenticated) {
-        final needsSurvey = isLogin && hasPreferences == false;
+        final needsSurvey = isLogin && hasPreferences != true;
         final destination = isAdmin
             ? AppRoutes.adminDashboard
             : (needsSurvey || !isLogin ? AppRoutes.survey : AppRoutes.home);

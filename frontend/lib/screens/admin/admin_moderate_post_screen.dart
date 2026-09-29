@@ -251,7 +251,8 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     }
     setState(() => _isSubmitting = true);
     try {
-      await _api.moderatePost(postId, approve ? 'APPROVED' : 'REJECTED');
+      final reason = approve ? null : _reasonController.text.trim();
+      await _api.moderatePost(postId, approve ? 'APPROVED' : 'REJECTED', reason: reason);
       if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
@@ -379,11 +380,47 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     );
   }
 
+  Widget _buildPostSelector() {
+    if (_posts.isEmpty) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _posts.map((p) {
+          final isSelected = _selectedPost?['id'] == p['id'];
+          final status = p['status']?.toString().toUpperCase() ?? 'PENDING';
+          final isPending = status == 'PENDING' || status == 'PENDING_REVIEW' || status == 'WAITING_APPROVAL';
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              selected: isSelected,
+              onSelected: (_) {
+                setState(() {
+                  _selectedPost = p;
+                  _reasonController.clear();
+                });
+              },
+              label: Text('${p['label']} · ${p['title']} [${isPending ? "Chờ duyệt" : status}]'),
+              selectedColor: const Color(0xFF087E6B),
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF142523),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pendingCount = _posts.where((p) {
+      final s = p['status']?.toString().toUpperCase();
+      return s == 'PENDING' || s == 'PENDING_REVIEW' || s == 'WAITING_APPROVAL';
+    }).length;
     final countLabel = _isLoading
         ? 'Đang tải tin chờ duyệt…'
-        : '${_posts.length} tin chờ duyệt · Kiểm tra ảnh và thông tin trước khi xuất bản';
+        : '$pendingCount tin chờ duyệt · ${_posts.length} tổng số tin đăng';
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
       body: Row(
@@ -438,7 +475,9 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
                       const AdminProfileAvatar(),
                     ],
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
+                  _buildPostSelector(),
+                  const SizedBox(height: 20),
                   SizedBox(height: 680, child: _buildContent()),
                 ],
               ),

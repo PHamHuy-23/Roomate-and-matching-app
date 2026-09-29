@@ -14,6 +14,7 @@ class _AdminReport {
     required this.sender,
     required this.note,
     this.status = 'PENDING',
+    this.evidenceUrl,
   });
 
   final int rawId;
@@ -24,6 +25,7 @@ class _AdminReport {
   final String sender;
   final String note;
   final String status;
+  final String? evidenceUrl;
 }
 
 class AdminReportsScreen extends StatefulWidget {
@@ -38,35 +40,40 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   bool _isLoading = false;
   bool _isResolving = false;
 
-  List<_AdminReport> _reports = [
-    const _AdminReport(
+  static const _defaultReports = <_AdminReport>[
+    _AdminReport(
       rawId: 28,
       id: 'BC-028',
-      title: 'Thông tin phòng sai',
-      subtitle: 'Tin RH-028 · 15 phút trước',
+      title: 'Thông tin phòng không đúng...',
+      subtitle: 'Tin RH-028 · Đang chờ',
       reason: 'Thông tin phòng không đúng thực tế',
-      sender: 'Thành viên ẩn danh',
-      note: 'Đã đối chiếu thông tin, yêu cầu cập nhật tin.',
+      sender: 'Người dùng #014',
+      note: 'Người dùng phản ánh phòng thực tế khác ảnh chụp và giá cao hơn.',
+      status: 'PENDING',
     ),
-    const _AdminReport(
+    _AdminReport(
       rawId: 27,
       id: 'BC-027',
-      title: 'Nội dung không phù hợp',
-      subtitle: 'Người dùng #028 · 2 giờ trước',
+      title: 'Nội dung không phù hợp...',
+      subtitle: 'Người dùng #031 · Đang chờ',
       reason: 'Nội dung tin đăng không phù hợp',
-      sender: 'Người dùng #028',
+      sender: 'Người dùng #008',
       note: 'Đang chờ quản trị viên kiểm tra nội dung.',
+      status: 'PENDING',
     ),
-    const _AdminReport(
+    _AdminReport(
       rawId: 26,
       id: 'BC-026',
-      title: 'Tin đăng trùng lặp',
-      subtitle: 'Tin RH-024 · Hôm qua',
+      title: 'Tin đăng có dấu hiệu trùng...',
+      subtitle: 'Tin RH-026 · Đang chờ',
       reason: 'Tin đăng có dấu hiệu trùng lặp',
       sender: 'Thành viên ẩn danh',
       note: 'Cần đối chiếu với tin RH-024 trước khi xử lý.',
+      status: 'PENDING',
     ),
   ];
+
+  List<_AdminReport> _reports = _defaultReports;
 
   int _selectedIndex = 0;
 
@@ -77,45 +84,53 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   }
 
   Future<void> _loadReports() async {
+    if (!ApiService().hasAuthToken) {
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final list = await _api.getAdminReports();
       if (!mounted) return;
-      if (list.isNotEmpty) {
-        final loaded = list.map((item) {
-          final map = item as Map<String, dynamic>;
-          final rawId = map['id'] is int ? map['id'] as int : int.tryParse(map['id'].toString()) ?? 1;
-          final targetType = map['targetType']?.toString() ?? 'USER';
-          final targetId = map['targetId']?.toString() ?? '0';
-          final reason = map['reason']?.toString() ?? 'Không rõ lý do';
-          final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
-          final status = map['status']?.toString() ?? 'PENDING';
-          final note = map['actionNote']?.toString() ?? (status == 'RESOLVED' ? 'Đã xử lý vi phạm.' : 'Đang chờ quản trị viên kiểm tra nội dung.');
-          final prefix = targetType == 'ROOM_POST' ? 'Tin RH-$targetId' : 'Người dùng #$targetId';
-          return _AdminReport(
-            rawId: rawId,
-            id: 'BC-${rawId.toString().padLeft(3, '0')}',
-            title: reason.length > 25 ? '${reason.substring(0, 25)}...' : reason,
-            subtitle: '$prefix · $status',
-            reason: reason,
-            sender: sender,
-            note: note,
-            status: status,
-          );
-        }).toList();
+      final loaded = list.map((item) {
+        final map = item as Map<String, dynamic>;
+        final rawId = map['id'] is int ? map['id'] as int : int.tryParse(map['id'].toString()) ?? 1;
+        final targetType = map['targetType']?.toString() ?? 'USER';
+        final targetId = map['targetId']?.toString() ?? '0';
+        final reason = map['reason']?.toString() ?? 'Không rõ lý do';
+        final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
+        final status = map['status']?.toString() ?? 'PENDING';
+        final note = map['actionNote']?.toString() ?? (status == 'RESOLVED' ? 'Đã xử lý vi phạm.' : 'Đang chờ quản trị viên kiểm tra nội dung.');
+        final prefix = targetType == 'ROOM_POST' ? 'Tin RH-$targetId' : 'Người dùng #$targetId';
+        final statusVi = status == 'RESOLVED' ? 'Đã xử lý' : 'Đang chờ';
+        final evidenceUrl = map['evidenceUrl']?.toString() ?? map['imageUrl']?.toString();
+        return _AdminReport(
+          rawId: rawId,
+          id: 'BC-${rawId.toString().padLeft(3, '0')}',
+          title: reason.length > 25 ? '${reason.substring(0, 25)}...' : reason,
+          subtitle: '$prefix · $statusVi',
+          reason: reason,
+          sender: sender,
+          note: note,
+          status: status,
+          evidenceUrl: evidenceUrl,
+        );
+      }).toList();
 
+      setState(() {
+        _reports = loaded;
+        if (_selectedIndex >= _reports.length) _selectedIndex = 0;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) {
         setState(() {
-          _reports = loaded;
-          if (_selectedIndex >= _reports.length) _selectedIndex = 0;
+          _reports = [];
           _isLoading = false;
         });
-        return;
       }
-    } catch (_) {}
-    if (mounted) {
-      setState(() => _isLoading = false);
     }
   }
+
 
   _AdminReport get _selectedReport =>
       _reports.isNotEmpty && _selectedIndex < _reports.length
@@ -340,6 +355,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                         color: Color(0xFF142523),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '(${_reports.length})',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF65746F),
+                                      ),
+                                    ),
+
                                     if (_isLoading) ...[
                                       const SizedBox(width: 8),
                                       const SizedBox(
@@ -352,15 +377,26 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 Expanded(
-                                  child: ListView(
-                                    children: [
-                                      for (var index = 0; index < _reports.length; index++)
-                                        _buildReportItem(
-                                          _reports[index],
-                                          isActive: index == _selectedIndex,
+                                  child: _reports.isEmpty
+                                      ? const Center(
+                                          child: Text(
+                                            'Chưa có báo cáo vi phạm nào.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xFF65746F),
+                                              fontFamily: 'SourceSansPro',
+                                            ),
+                                          ),
+                                        )
+                                      : ListView(
+                                          children: [
+                                            for (var index = 0; index < _reports.length; index++)
+                                              _buildReportItem(
+                                                _reports[index],
+                                                isActive: index == _selectedIndex,
+                                              ),
+                                          ],
                                         ),
-                                    ],
-                                  ),
                                 ),
                               ],
                             ),
@@ -407,7 +443,24 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                     width: 224,
                                     height: 147,
                                     color: Colors.grey.shade300,
-                                    child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                                    child: _selectedReport.evidenceUrl != null && _selectedReport.evidenceUrl!.isNotEmpty
+                                        ? Image.network(
+                                            _selectedReport.evidenceUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Center(
+                                              child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                            ),
+                                          )
+                                        : const Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.image_not_supported_outlined, size: 36, color: Colors.grey),
+                                                SizedBox(height: 4),
+                                                Text('Không có ảnh đính kèm', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                              ],
+                                            ),
+                                          ),
                                   ),
                                 ),
                                 const SizedBox(height: 12),

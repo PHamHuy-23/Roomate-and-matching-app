@@ -150,13 +150,15 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           _showError('Vui lòng nhập đủ 6 ký tự mã xác minh.');
           return;
         }
-        break;
+        _handleVerifyEmail();
+        return;
       case AuthSupportMode.forgotPassword:
         if (!_validEmail(_emailCtrl.text.trim())) {
           _showError('Email không đúng định dạng.');
           return;
         }
-        break;
+        _handleForgotPassword();
+        return;
       case AuthSupportMode.newPassword:
         if (_verificationCode.length < 6) {
           _showError('Vui lòng nhập đủ 6 ký tự mã xác nhận.');
@@ -170,7 +172,8 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           _showError('Mật khẩu xác nhận không khớp.');
           return;
         }
-        break;
+        _handleNewPassword();
+        return;
       case AuthSupportMode.changePassword:
         if (_currentPasswordCtrl.text.trim().isEmpty) {
           _showError('Vui lòng nhập mật khẩu hiện tại.');
@@ -187,7 +190,115 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
         _handleChangePassword();
         return;
     }
-    _showUnavailable();
+  }
+
+  Future<void> _handleVerifyEmail() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final email = widget.email ?? _emailCtrl.text.trim();
+    try {
+      await ApiService().verifyEmail(email: email, code: _verificationCode);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Xác minh email thành công! Vui lòng đăng nhập.'),
+          backgroundColor: _primary,
+        ),
+      );
+      nav.pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: _danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleResendCode() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final email = (widget.email != null && widget.email!.isNotEmpty)
+        ? widget.email!
+        : _emailCtrl.text.trim();
+    if (email.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập địa chỉ email để gửi lại mã.'),
+          backgroundColor: _danger,
+        ),
+      );
+      return;
+    }
+    try {
+      if (widget.mode == AuthSupportMode.verifyEmail) {
+        await ApiService().sendVerificationEmail(email);
+      } else {
+        await ApiService().forgotPassword(email);
+      }
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Mã xác nhận mới đã được gửi lại vào email của bạn!'),
+          backgroundColor: _primary,
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: _danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final email = _emailCtrl.text.trim();
+    try {
+      await ApiService().forgotPassword(email);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Mã xác nhận khôi phục đã được gửi tới $email'),
+          backgroundColor: _primary,
+        ),
+      );
+      nav.pushNamed(AppRoutes.newPassword, arguments: email);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: _danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleNewPassword() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final email = widget.email ?? _emailCtrl.text.trim();
+    try {
+      await ApiService().resetPassword(
+        email: email,
+        code: _verificationCode,
+        newPassword: _passwordCtrl.text,
+      );
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.'),
+          backgroundColor: _primary,
+        ),
+      );
+      nav.pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: _danger,
+        ),
+      );
+    }
   }
 
   Future<void> _handleChangePassword() async {
@@ -214,6 +325,7 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
       );
     }
   }
+
 
   String get _verificationCode =>
       _codeControllers.map((controller) => controller.text).join();
@@ -366,15 +478,16 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: _showUnavailable,
-              child: const Text('Gửi lại mã sau 00:45'),
+              onPressed: _handleResendCode,
+              child: const Text('Gửi lại mã'),
             ),
             _primaryButton('Xác minh & tiếp tục', _submit),
             TextButton(
-              onPressed: _showUnavailable,
+              onPressed: () => Navigator.pop(context),
               child: const Text('Đổi email'),
             ),
           ],
+
         );
       case AuthSupportMode.forgotPassword:
         return Column(
@@ -411,6 +524,13 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
               'Mã xác nhận',
               _verificationCodeFields(
                 firstFieldKey: const Key('new_password_code_field'),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _handleResendCode,
+                child: const Text('Gửi lại mã'),
               ),
             ),
             _passwordField(

@@ -28,6 +28,9 @@ public class ProfileController {
     public ResponseEntity<UserPreferenceDTO> getPreferences(@PathVariable Long userId) {
         assertCurrentUser(userId);
         UserPreferenceDTO pref = profileService.getPreferences(userId);
+        if (pref == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(pref);
     }
 

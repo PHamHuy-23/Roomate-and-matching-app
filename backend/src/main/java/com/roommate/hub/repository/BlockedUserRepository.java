@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface BlockedUserRepository extends JpaRepository<BlockedUser, Long> {
     List<BlockedUser> findByUserId(Long userId);
+    List<BlockedUser> findByBlockedUserId(Long blockedUserId);
     Optional<BlockedUser> findByUserIdAndBlockedUserId(Long userId, Long blockedUserId);
     boolean existsByUserIdAndBlockedUserId(Long userId, Long blockedUserId);
     void deleteByUserIdAndBlockedUserId(Long userId, Long blockedUserId);

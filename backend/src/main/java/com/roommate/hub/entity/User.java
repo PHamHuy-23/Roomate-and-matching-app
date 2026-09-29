@@ -56,6 +56,20 @@ public class User {
     @Builder.Default
     private String status = "ACTIVE"; // Mặc định tài khoản mới tạo là ACTIVE
 
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
+    @Column(name = "logged_out_at")
+    private LocalDateTime loggedOutAt;
+
+    /** Timestamp của lần đăng nhập thành công gần nhất.
+     *  JwtAuthenticationFilter dùng trường này để vô hiệu hóa
+     *  mọi access token được phát hành trước mốc này (từ phiên đăng nhập cũ),
+     *  KHÔNG xóa loggedOutAt để mốc thu hồi logout không bị mất.
+     */
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     public enum Role {
         ROLE_USER, ROLE_ADMIN
     }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+
 
 enum PenpotStateMode {
   blockedUsers,
@@ -126,15 +128,17 @@ class _BlockedUserCard extends StatelessWidget {
   }
 }
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({
     super.key,
-    this.items = _defaultItems,
+    this.items,
     this.onItemTap,
+    this.loadRealData = true,
   });
 
-  final List<PenpotNotificationItem> items;
+  final List<PenpotNotificationItem>? items;
   final ValueChanged<PenpotNotificationItem>? onItemTap;
+  final bool loadRealData;
 
   static const _defaultItems = <PenpotNotificationItem>[
     PenpotNotificationItem(
@@ -150,6 +154,45 @@ class NotificationsScreen extends StatelessWidget {
   ];
 
   @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late List<PenpotNotificationItem> _items;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = widget.items ?? NotificationsScreen._defaultItems;
+    if (widget.items == null && widget.loadRealData && ApiService().hasAuthToken) {
+      _loadRealNotifications();
+    }
+  }
+
+  Future<void> _loadRealNotifications() async {
+    try {
+      final realItems = <PenpotNotificationItem>[];
+      final appointments = await ApiService().getMyAppointments();
+      for (final apt in appointments) {
+        realItems.add(
+          PenpotNotificationItem(
+            title: 'Lịch xem phòng: ${apt.roomTitle}',
+            description: '${apt.status} · ${apt.appointmentTime.day}/${apt.appointmentTime.month}/${apt.appointmentTime.year} ${apt.appointmentTime.hour}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}',
+            icon: Icons.calendar_today_outlined,
+          ),
+        );
+      }
+      if (mounted) {
+        setState(() {
+          _items = realItems;
+        });
+      }
+    } catch (_) {
+      // Keep initial items if error
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _PenpotColors.canvas,
@@ -159,7 +202,7 @@ class NotificationsScreen extends StatelessWidget {
         foregroundColor: _PenpotColors.ink,
         elevation: 0,
       ),
-      body: items.isEmpty
+      body: _items.isEmpty
           ? const PenpotStateView(
               icon: Icons.notifications_none_outlined,
               title: 'Chưa có thông báo',
@@ -174,16 +217,17 @@ class NotificationsScreen extends StatelessWidget {
                   style: TextStyle(color: _PenpotColors.muted, fontSize: 14),
                 ),
                 const SizedBox(height: 18),
-                for (final item in items)
+                for (final item in _items)
                   _NotificationCard(
                     item: item,
-                    onTap: onItemTap == null ? null : () => onItemTap!(item),
+                    onTap: widget.onItemTap == null ? null : () => widget.onItemTap!(item),
                   ),
               ],
             ),
     );
   }
 }
+
 
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({required this.item, this.onTap});

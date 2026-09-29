@@ -34,6 +34,14 @@ public class AppointmentService {
         RoomPost post = roomPostRepository.findById(dto.getRoomPostId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bài đăng phòng không tồn tại!"));
 
+        if (post.getStatus() != RoomPost.PostStatus.APPROVED && post.getStatus() != RoomPost.PostStatus.AVAILABLE) {
+            throw new RuntimeException("Chỉ có thể đặt lịch xem các phòng đã được duyệt và đang mở!");
+        }
+
+        if (dto.getAppointmentTime() == null || !dto.getAppointmentTime().isAfter(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Thời gian xem phòng phải ở trong tương lai!");
+        }
+
         if (post.getAuthor().getId().equals(requester.getId())) {
             throw new RuntimeException("Bạn không thể tự đặt lịch xem phòng của chính mình!");
         }
@@ -72,7 +80,57 @@ public class AppointmentService {
             throw new ForbiddenException("Bạn không có quyền thao tác lịch hẹn này!");
         }
 
-        AppointmentStatus targetStatus = AppointmentStatus.valueOf(statusStr.toUpperCase());
+        if (statusStr == null || statusStr.isBlank()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Trạng thái lịch hẹn không được để trống!");
+        }
+
+        AppointmentStatus targetStatus;
+        try {
+            targetStatus = AppointmentStatus.valueOf(statusStr.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Trạng thái lịch hẹn không hợp lệ: " + statusStr);
+        }
+        AppointmentStatus current = appointment.getStatus();
+
+        if (current == AppointmentStatus.CANCELLED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Lịch hẹn đã bị hủy, không thể thay đổi trạng thái!");
+        }
+        if (current == AppointmentStatus.COMPLETED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Lịch hẹn đã hoàn tất, không thể thay đổi trạng thái!");
+        }
+
+        if (targetStatus == current) {
+            return AppointmentResponseDTO.from(appointment);
+        }
+
+        if (targetStatus == AppointmentStatus.PENDING) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Không thể chuyển trạng thái lịch hẹn về trạng thái chờ duyệt!");
+        }
+
+        if (current == AppointmentStatus.PENDING && targetStatus == AppointmentStatus.COMPLETED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Không thể hoàn tất lịch hẹn khi chưa được xác nhận!");
+        }
+
+        if (targetStatus == AppointmentStatus.CONFIRMED && !isHost) {
+            throw new ForbiddenException("Chỉ chủ nhà mới có quyền xác nhận lịch hẹn!");
+        }
+
+        if (targetStatus == AppointmentStatus.COMPLETED && !isHost) {
+            throw new ForbiddenException("Chỉ chủ nhà mới có quyền đánh dấu hoàn thành lịch hẹn!");
+        }
+
         appointment.setStatus(targetStatus);
         return AppointmentResponseDTO.from(appointmentRepository.save(appointment));
     }
