@@ -65,3 +65,4 @@ Quy trình phát triển (AI Rules):
   - Chuyển trực tiếp cấu trúc HTML/Tailwind tham chiếu thành board Penpot 390×844.
   - Giữ hệ màu Material xanh ngọc, Inter + Plus Jakarta Sans, card phòng nổi bật, danh sách gần đây và navigation 4 tab.
   - Dựng thành board riêng để đối chiếu với phương án Modern Trend 2025 và đã export PNG kiểm tra.
+  - Nâng board lên đúng kích thước nguồn Stitch 390×1227; bổ sung listing thứ hai, CTA tư vấn và đặt navigation ở cuối canvas.
