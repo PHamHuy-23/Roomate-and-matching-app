@@ -329,14 +329,26 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Báo cáo đang chờ',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'SourceSansPro',
-                                    color: Color(0xFF142523),
-                                  ),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Báo cáo đang chờ',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'SourceSansPro',
+                                        color: Color(0xFF142523),
+                                      ),
+                                    ),
+                                    if (_isLoading) ...[
+                                      const SizedBox(width: 8),
+                                      const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 const SizedBox(height: 24),
                                 Expanded(
@@ -453,13 +465,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                                   note: 'Đã xác minh và xử lý vi phạm.',
                                                 );
                                               }
-                                              if (!mounted) return;
+                                              if (!mounted || !context.mounted) return;
                                               Navigator.pushReplacementNamed(
                                                 context,
                                                 AppRoutes.adminReportResolved,
                                               );
                                             } catch (e) {
-                                              if (!mounted) return;
+                                              if (!mounted || !context.mounted) return;
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(content: Text('Lỗi: $e')),
                                               );

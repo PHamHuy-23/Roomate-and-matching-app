@@ -309,7 +309,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                         try {
                           await _api.blockUser(targetId);
                         } catch (_) {}
-                        if (!mounted) return;
+                        if (!mounted || !context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
@@ -317,6 +317,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                             ),
                           ),
                         );
+                        if (!mounted || !context.mounted) return;
                         Navigator.pushNamed(context, AppRoutes.blockedUsers);
                       },
                       style: ElevatedButton.styleFrom(

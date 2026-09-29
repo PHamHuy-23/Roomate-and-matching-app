@@ -33,11 +33,20 @@ public class ChatService {
             throw new RuntimeException("Bạn không thể tự gửi tin nhắn cho chính mình!");
         }
 
+        String rawContent = dto.getContent() != null ? dto.getContent().trim() : "";
+        String imageUrl = dto.getImageUrl() != null && !dto.getImageUrl().isBlank() ? dto.getImageUrl().trim() : null;
+
+        if (rawContent.isEmpty() && imageUrl == null) {
+            throw new IllegalArgumentException("Nội dung tin nhắn hoặc hình ảnh không được để trống!");
+        }
+
+        String finalContent = rawContent.isEmpty() ? "[Hình ảnh]" : rawContent;
+
         ChatMessage message = ChatMessage.builder()
                 .sender(sender)
                 .receiver(receiver)
-                .content(dto.getContent().trim())
-                .imageUrl(dto.getImageUrl())
+                .content(finalContent)
+                .imageUrl(imageUrl)
                 .isRead(false)
                 .build();
 

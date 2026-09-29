@@ -31,10 +31,19 @@ public class R2StorageService {
             "image/jpeg", ".jpg",
             "image/png", ".png",
             "image/webp", ".webp");
-    private static final Set<String> PURPOSES = Set.of("avatar", "room-post");
+    private static final Set<String> PURPOSES = Set.of("avatar", "room-post", "chat");
 
     private final S3Presigner presigner;
     private final R2Properties properties;
+
+    private String resolveDirectory(String purpose) {
+        return switch (purpose) {
+            case "avatar" -> "avatars";
+            case "room-post" -> "room-posts";
+            case "chat" -> "chat";
+            default -> "misc";
+        };
+    }
 
     public UploadUrlResponse createUpload(Long userId, CreateUploadRequest request) {
         String contentType = request.contentType().trim().toLowerCase(Locale.ROOT);
@@ -54,7 +63,7 @@ public class R2StorageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mục đích upload không hợp lệ");
         }
 
-        String directory = purpose.equals("avatar") ? "avatars" : "room-posts";
+        String directory = resolveDirectory(purpose);
         String objectKey = "%s/%d/%s%s".formatted(
                 directory,
                 userId,
@@ -82,7 +91,7 @@ public class R2StorageService {
     }
 
     public String requireOwnedObject(Long userId, String purpose, String objectKey) {
-        String directory = purpose.equals("avatar") ? "avatars" : "room-posts";
+        String directory = resolveDirectory(purpose);
         String expectedPrefix = "%s/%d/".formatted(directory, userId);
         if (objectKey == null || !objectKey.startsWith(expectedPrefix) || objectKey.contains("..")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ảnh không thuộc người dùng hiện tại");
