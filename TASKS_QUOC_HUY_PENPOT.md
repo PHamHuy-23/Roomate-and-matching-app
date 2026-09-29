@@ -52,3 +52,11 @@ Quy trình phát triển (AI Rules):
 
 ---
 *Lưu ý: Tuân thủ nghiêm ngặt tiến trình trên với mỗi màn hình.*
+
+## Nhật ký cập nhật thiết kế Penpot
+
+- [x] 01 / Khám phá phòng trọ • Modern Trend 2025 (29/09/2026)
+  - Đối chiếu ảnh tham chiếu và đặc tả Design System màu xanh ngọc.
+  - Bổ sung tìm kiếm theo ngôn ngữ tự nhiên, bộ lọc commute tới HUTECH, chi phí thực, đánh giá, xác minh, Video Tour, khả năng ở ghép và trạng thái sắp hết phòng.
+  - Chuẩn hóa bottom navigation: Home — Map — Roommate — Chat — Profile.
+  - Đã export PNG từ Penpot để kiểm tra trực quan sau chỉnh sửa.
