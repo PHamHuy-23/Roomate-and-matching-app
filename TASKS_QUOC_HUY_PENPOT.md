@@ -60,3 +60,8 @@ Quy trình phát triển (AI Rules):
   - Bổ sung tìm kiếm theo ngôn ngữ tự nhiên, bộ lọc commute tới HUTECH, chi phí thực, đánh giá, xác minh, Video Tour, khả năng ở ghép và trạng thái sắp hết phòng.
   - Chuẩn hóa bottom navigation: Home — Map — Roommate — Chat — Profile.
   - Đã export PNG từ Penpot để kiểm tra trực quan sau chỉnh sửa.
+
+- [x] 01B / Khám phá • HTML Tailwind Reference (29/09/2026)
+  - Chuyển trực tiếp cấu trúc HTML/Tailwind tham chiếu thành board Penpot 390×844.
+  - Giữ hệ màu Material xanh ngọc, Inter + Plus Jakarta Sans, card phòng nổi bật, danh sách gần đây và navigation 4 tab.
+  - Dựng thành board riêng để đối chiếu với phương án Modern Trend 2025 và đã export PNG kiểm tra.
