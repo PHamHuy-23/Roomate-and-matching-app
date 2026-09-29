@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../models/chat_message.dart';
+import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
 class ChatScreen extends StatefulWidget {
   final int? partnerId;
   final String? partnerName;
-  
+
   const ChatScreen({super.key, this.partnerId, this.partnerName});
 
   @override
@@ -13,101 +17,190 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final ApiService _api = ApiService();
   final TextEditingController _messageController = TextEditingController();
-  final List<String> _sentMessages = [];
+  final ScrollController _scrollController = ScrollController();
+
+  List<ChatMessage> _messages = [];
+  bool _isLoading = true;
+  bool _isSending = false;
+  Timer? _pollingTimer;
 
   @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _sendMessage() {
-    final message = _messageController.text.trim();
-    if (message.isEmpty) return;
-    setState(() {
-      _sentMessages.add(message);
-      _messageController.clear();
+  void initState() {
+    super.initState();
+    _fetchMessages();
+    // Polling định kỳ mỗi 3 giây để cập nhật tin nhắn mới
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) _fetchMessages(silent: true);
     });
   }
 
-  Widget _buildReceivedMessage(String text) {
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchMessages({bool silent = false}) async {
+    final partnerId = widget.partnerId;
+    if (partnerId == null) {
+      if (!silent && mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final list = await _api.getChatMessages(partnerId);
+      if (!mounted) return;
+      final previousCount = _messages.length;
+      setState(() {
+        _messages = list;
+        _isLoading = false;
+      });
+
+      // Nếu có tin nhắn mới, tự động cuộn xuống cuối
+      if (list.length > previousCount) {
+        _scrollToBottom();
+      }
+    } catch (_) {
+      if (!silent && mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    final partnerId = widget.partnerId;
+    if (text.isEmpty || partnerId == null || _isSending) return;
+
+    setState(() => _isSending = true);
+    _messageController.clear();
+
+    try {
+      final sent = await _api.sendChatMessage(
+        receiverId: partnerId,
+        content: text,
+      );
+      if (!mounted) return;
+      setState(() {
+        _messages.add(sent);
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể gửi tin nhắn: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Widget _buildReceivedMessage(ChatMessage msg) {
+    final timeStr = DateFormat('HH:mm').format(msg.createdAt.toLocal());
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-            bottomRight: Radius.circular(16),
-            bottomLeft: Radius.circular(4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: const BoxConstraints(maxWidth: 280),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(4),
+              ),
+            ),
+            child: Text(
+              msg.content,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'SourceSansPro',
+                color: Color(0xFF142523),
+                height: 1.4,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'SourceSansPro',
-            color: Color(0xFF142523),
-            height: 1.4,
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: Text(
+              timeStr,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF65746F),
+                fontFamily: 'SourceSansPro',
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildSentMessage(String text) {
+  Widget _buildSentMessage(ChatMessage msg) {
+    final timeStr = DateFormat('HH:mm').format(msg.createdAt.toLocal());
     return Align(
       alignment: Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Color(0xFFEAF8F5),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-            bottomLeft: Radius.circular(16),
-            bottomRight: Radius.circular(4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: const BoxConstraints(maxWidth: 280),
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF8F5),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(4),
+              ),
+            ),
+            child: Text(
+              msg.content,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'SourceSansPro',
+                color: Color(0xFF142523),
+                height: 1.4,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'SourceSansPro',
-            color: Color(0xFF142523),
-            height: 1.4,
+          Padding(
+            padding: const EdgeInsets.only(right: 4, bottom: 12),
+            child: Text(
+              '$timeStr · Đã gửi',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF65746F),
+                fontFamily: 'SourceSansPro',
+              ),
+            ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReceivedImage() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        width: 243,
-        height: 154,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-            bottomRight: Radius.circular(16),
-            bottomLeft: Radius.circular(4),
-          ),
-        ),
-        child: const Center(
-          child: Icon(Icons.photo, size: 40, color: Colors.grey),
-        ),
+        ],
       ),
     );
   }
@@ -123,10 +216,10 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             // App Bar area
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
               child: Row(
                 children: [
-                      const PenpotBackButton(),
+                  const PenpotBackButton(),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -135,30 +228,31 @@ class _ChatScreenState extends State<ChatScreen> {
                         Text(
                           name,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'SourceSansPro',
                             color: Color(0xFF142523),
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         const Text(
-                          'Đã kết nối · Trao đổi về phòng trọ',
+                          'Đã kết nối · Trực tuyến',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'SourceSansPro',
-                            color: Color(0xFF65746F),
+                            color: Color(0xFF087E6B),
                           ),
                         ),
                       ],
                     ),
                   ),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(23),
+                    borderRadius: BorderRadius.circular(22),
                     child: Container(
-                      width: 46,
-                      height: 46,
+                      width: 44,
+                      height: 44,
                       color: Colors.grey.shade300,
                       child: const Icon(Icons.person, color: Colors.grey),
                     ),
@@ -166,115 +260,113 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-            
+            const Divider(height: 1, color: Color(0xFFE2EBE8)),
+
             // Chat List
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                children: [
-                  const Center(
-                    child: Text(
-                      'HÔM NAY · 14:20',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF65746F),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _buildReceivedMessage('Chào Huy! Bạn muốn xem phòng\nvào chiều thứ Hai phải không?'),
-                  
-                  _buildSentMessage('Đúng rồi, khoảng 14:00 nhé.\nPhòng có chỗ để xe không bạn?'),
-                  
-                  _buildReceivedMessage('Có nhé, mình gửi thêm ảnh cho bạn.'),
-                  
-                  _buildReceivedImage(),
-                  
-                  const SizedBox(height: 4),
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      '14:24 · Đã xem',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF65746F),
-                      ),
-                    ),
-                  ),
-                  for (final message in _sentMessages) ...[
-                    _buildSentMessage(message),
-                    const Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Đang chờ đồng bộ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'SourceSansPro',
-                          color: Color(0xFF65746F),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _messages.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Hãy gửi lời chào tới $name!',
+                                style: const TextStyle(
+                                  color: Color(0xFF65746F),
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          itemCount: _messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = _messages[index];
+                            if (msg.fromMe) {
+                              return _buildSentMessage(msg);
+                            } else {
+                              return _buildReceivedMessage(msg);
+                            }
+                          },
                         ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
             ),
-            
+
             // Input Bar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              color: const Color(0xFFF5F8F7),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              color: Colors.white,
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
-                      height: 51,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(25.5),
+                        color: const Color(0xFFF0F5F3),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: TextField(
                         controller: _messageController,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Nhập tin nhắn…',
                           hintStyle: TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'SourceSansPro',
                             color: Color(0xFF65746F),
                           ),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   GestureDetector(
                     onTap: _sendMessage,
                     child: Container(
-                      width: 50,
-                      height: 51,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF087E6B),
-                        borderRadius: BorderRadius.circular(25.5),
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF087E6B),
+                        shape: BoxShape.circle,
                       ),
-                      child: const Center(
-                        child: Text(
-                          '↑',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      child: _isSending
+                          ? const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
                     ),
                   ),
                 ],

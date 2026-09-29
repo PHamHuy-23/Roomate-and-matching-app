@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
+import '../services/api_service.dart';
 
 class RoomViewingScreen extends StatefulWidget {
   const RoomViewingScreen({required this.post, super.key});
@@ -17,16 +18,19 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
   static const _primary = Color(0xFF087E6B);
   static const _ink = Color(0xFF142523);
   static const _muted = Color(0xFF52625F);
+
+  final ApiService _api = ApiService();
+
   late DateTime _selectedDate;
   String? _selectedTime;
   late final TextEditingController _messageController;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    // Keep the same sample week as the Penpot prototype while still allowing
-    // the user to choose another day in the flow.
-    _selectedDate = DateTime(2026, 9, 21);
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
     _messageController = TextEditingController(
       text: 'Mình muốn xem phòng cùng một người bạn.',
     );
@@ -38,19 +42,67 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
     super.dispose();
   }
 
-  List<DateTime> get _dates =>
-      List.generate(5, (index) => DateTime(2026, 9, 20 + index));
+  List<DateTime> get _dates => List.generate(
+        7,
+        (index) {
+          final now = DateTime.now();
+          final base = DateTime(now.year, now.month, now.day);
+          return base.add(Duration(days: index + 1));
+        },
+      );
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng chọn khung giờ xem phòng.')),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tính năng đặt lịch đang chờ API backend.')),
+
+    final parts = _selectedTime!.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    final appointmentDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      hour,
+      minute,
     );
+
+    setState(() => _isSubmitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _api.createAppointment(
+        roomPostId: widget.post.id,
+        appointmentTime: appointmentDateTime,
+        note: _messageController.text.trim(),
+      );
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: _primary,
+          content: Text(
+            'Đã gửi yêu cầu đặt lịch xem phòng vào $_selectedTime ngày ${DateFormat('dd/MM/yyyy').format(_selectedDate)}!',
+          ),
+        ),
+      );
+      Navigator.pop(context, true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Không thể đặt lịch: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -60,6 +112,9 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
       symbol: 'đ',
       decimalDigits: 0,
     ).format(widget.post.price);
+
+    final monthYearTitle = 'Tháng ${_selectedDate.month}, ${_selectedDate.year}';
+
     return Scaffold(
       backgroundColor: _canvas,
       appBar: AppBar(
@@ -90,9 +145,9 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
             style: const TextStyle(color: _muted),
           ),
           const SizedBox(height: 26),
-          const Text(
-            'Tháng 9, 2026',
-            style: TextStyle(
+          Text(
+            monthYearTitle,
+            style: const TextStyle(
               color: _ink,
               fontSize: 17,
               fontWeight: FontWeight.w800,
@@ -207,7 +262,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
           ),
           const SizedBox(height: 14),
           const Text(
-            'Lịch chỉ được xác nhận khi người đăng đồng ý.\nBạn có thể hủy trong mục Lịch xem phòng.',
+            'Lịch chỉ được xác nhận khi người đăng đồng ý.\nBạn có thể quản lý lịch hẹn trong mục Kết nối.',
             style: TextStyle(color: _muted, height: 1.5),
           ),
         ],
@@ -215,7 +270,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
         child: FilledButton(
-          onPressed: _submit,
+          onPressed: _isSubmitting ? null : _submit,
           style: FilledButton.styleFrom(
             backgroundColor: _primary,
             minimumSize: const Size.fromHeight(52),
@@ -223,10 +278,19 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: const Text(
-            'Gửi yêu cầu xem phòng',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'Gửi yêu cầu xem phòng',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
         ),
       ),
     );

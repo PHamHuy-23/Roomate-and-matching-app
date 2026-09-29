@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../navigation/app_routes.dart';
+import '../../services/api_service.dart';
 import '../../widgets/admin_profile_avatar.dart';
 
 class _AdminReport {
   const _AdminReport({
+    required this.rawId,
     required this.id,
     required this.title,
     required this.subtitle,
     required this.reason,
     required this.sender,
     required this.note,
+    this.status = 'PENDING',
   });
 
+  final int rawId;
   final String id;
   final String title;
   final String subtitle;
   final String reason;
   final String sender;
   final String note;
+  final String status;
 }
 
 class AdminReportsScreen extends StatefulWidget {
@@ -29,8 +34,13 @@ class AdminReportsScreen extends StatefulWidget {
 }
 
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
-  static const _reports = <_AdminReport>[
-    _AdminReport(
+  final ApiService _api = ApiService();
+  bool _isLoading = false;
+  bool _isResolving = false;
+
+  List<_AdminReport> _reports = [
+    const _AdminReport(
+      rawId: 28,
       id: 'BC-028',
       title: 'Thông tin phòng sai',
       subtitle: 'Tin RH-028 · 15 phút trước',
@@ -38,7 +48,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       sender: 'Thành viên ẩn danh',
       note: 'Đã đối chiếu thông tin, yêu cầu cập nhật tin.',
     ),
-    _AdminReport(
+    const _AdminReport(
+      rawId: 27,
       id: 'BC-027',
       title: 'Nội dung không phù hợp',
       subtitle: 'Người dùng #028 · 2 giờ trước',
@@ -46,7 +57,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       sender: 'Người dùng #028',
       note: 'Đang chờ quản trị viên kiểm tra nội dung.',
     ),
-    _AdminReport(
+    const _AdminReport(
+      rawId: 26,
       id: 'BC-026',
       title: 'Tin đăng trùng lặp',
       subtitle: 'Tin RH-024 · Hôm qua',
@@ -58,7 +70,65 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
 
   int _selectedIndex = 0;
 
-  _AdminReport get _selectedReport => _reports[_selectedIndex];
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await _api.getAdminReports();
+      if (!mounted) return;
+      if (list.isNotEmpty) {
+        final loaded = list.map((item) {
+          final map = item as Map<String, dynamic>;
+          final rawId = map['id'] is int ? map['id'] as int : int.tryParse(map['id'].toString()) ?? 1;
+          final targetType = map['targetType']?.toString() ?? 'USER';
+          final targetId = map['targetId']?.toString() ?? '0';
+          final reason = map['reason']?.toString() ?? 'Không rõ lý do';
+          final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
+          final status = map['status']?.toString() ?? 'PENDING';
+          final note = map['actionNote']?.toString() ?? (status == 'RESOLVED' ? 'Đã xử lý vi phạm.' : 'Đang chờ quản trị viên kiểm tra nội dung.');
+          final prefix = targetType == 'ROOM_POST' ? 'Tin RH-$targetId' : 'Người dùng #$targetId';
+          return _AdminReport(
+            rawId: rawId,
+            id: 'BC-${rawId.toString().padLeft(3, '0')}',
+            title: reason.length > 25 ? '${reason.substring(0, 25)}...' : reason,
+            subtitle: '$prefix · $status',
+            reason: reason,
+            sender: sender,
+            note: note,
+            status: status,
+          );
+        }).toList();
+
+        setState(() {
+          _reports = loaded;
+          if (_selectedIndex >= _reports.length) _selectedIndex = 0;
+          _isLoading = false;
+        });
+        return;
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  _AdminReport get _selectedReport =>
+      _reports.isNotEmpty && _selectedIndex < _reports.length
+          ? _reports[_selectedIndex]
+          : const _AdminReport(
+              rawId: 0,
+              id: 'BC-000',
+              title: 'Không có báo cáo',
+              subtitle: '',
+              reason: 'Hiện chưa có báo cáo vi phạm nào.',
+              sender: '',
+              note: '',
+            );
 
   Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
     return GestureDetector(
@@ -371,12 +441,32 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.adminReportResolved,
-                                      );
-                                    },
+                                    onPressed: _isResolving
+                                        ? null
+                                        : () async {
+                                            setState(() => _isResolving = true);
+                                            try {
+                                              if (_selectedReport.rawId > 0) {
+                                                await _api.moderateAdminReport(
+                                                  _selectedReport.rawId,
+                                                  status: 'RESOLVED',
+                                                  note: 'Đã xác minh và xử lý vi phạm.',
+                                                );
+                                              }
+                                              if (!mounted) return;
+                                              Navigator.pushReplacementNamed(
+                                                context,
+                                                AppRoutes.adminReportResolved,
+                                              );
+                                            } catch (e) {
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Lỗi: $e')),
+                                              );
+                                            } finally {
+                                              if (mounted) setState(() => _isResolving = false);
+                                            }
+                                          },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF087E6B),
                                       foregroundColor: Colors.white,
@@ -385,14 +475,23 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                       ),
                                       elevation: 0,
                                     ),
-                                    child: const Text(
-                                      'Đánh dấu đã xử lý',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'SourceSansPro',
-                                      ),
-                                    ),
+                                    child: _isResolving
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Đánh dấu đã xử lý',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'SourceSansPro',
+                                            ),
+                                          ),
                                   ),
                                 ),
                               ],

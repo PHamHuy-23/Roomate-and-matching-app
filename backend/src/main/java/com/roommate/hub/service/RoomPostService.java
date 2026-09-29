@@ -109,4 +109,49 @@ public class RoomPostService {
         }
         roomPostRepository.delete(post);
     }
+
+    @Transactional(readOnly = true)
+    public List<RoomPostResponseDTO> getMyPosts() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User author = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
+        return roomPostRepository.findByAuthorId(author.getId())
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RoomPostResponseDTO updatePost(Long postId, CreateRoomPostDTO dto) {
+        RoomPost post = roomPostRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!admin && !post.getAuthor().getEmail().equals(authentication.getName())) {
+            throw new ForbiddenException("Bạn không có quyền sửa bài đăng này!");
+        }
+
+        if (dto.getTitle() != null) post.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) post.setDescription(dto.getDescription());
+        if (dto.getPrice() != null) post.setPrice(dto.getPrice());
+        if (dto.getAddress() != null) post.setAddress(dto.getAddress());
+        if (dto.getDistrict() != null) post.setDistrict(dto.getDistrict());
+        if (dto.getDeposit() != null) post.setDeposit(dto.getDeposit());
+        if (dto.getElectricityWaterCost() != null) post.setElectricityWaterCost(dto.getElectricityWaterCost());
+        if (dto.getArea() != null) post.setArea(dto.getArea());
+        if (dto.getMaxOccupants() != null) post.setMaxOccupants(dto.getMaxOccupants());
+        if (dto.getCurrentOccupants() != null) post.setCurrentOccupants(dto.getCurrentOccupants());
+        if (dto.getAmenities() != null) post.setAmenities(dto.getAmenities());
+
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            R2StorageService storageService = storageServiceProvider.getIfAvailable();
+            if (storageService != null) {
+                String imageUrl = storageService.requireOwnedObject(
+                        post.getAuthor().getId(), "room-post", dto.getImageObjectKey());
+                post.setImageUrl(imageUrl);
+            }
+        }
+
+        return convertToDTO(roomPostRepository.save(post));
+    }
 }

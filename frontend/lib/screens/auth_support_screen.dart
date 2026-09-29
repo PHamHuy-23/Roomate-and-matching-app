@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../navigation/app_routes.dart';
+import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
 enum AuthSupportMode { welcome, verifyEmail, forgotPassword, newPassword, changePassword }
@@ -183,9 +184,35 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           _showError('Mật khẩu xác nhận không khớp.');
           return;
         }
-        break;
+        _handleChangePassword();
+        return;
     }
     _showUnavailable();
+  }
+
+  Future<void> _handleChangePassword() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    try {
+      await ApiService().changePassword(
+        oldPassword: _currentPasswordCtrl.text,
+        newPassword: _passwordCtrl.text,
+      );
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Đổi mật khẩu thành công!'),
+          backgroundColor: _primary,
+        ),
+      );
+      nav.pop();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: _danger,
+        ),
+      );
+    }
   }
 
   String get _verificationCode =>

@@ -26,6 +26,7 @@ frontend/*.log
 
 # AI & Memory Bank (Do not push to GitHub)
 .ai/
+.agents/
 PROJECT_MEMORY.md
 MEMORY.md
 .gemini/

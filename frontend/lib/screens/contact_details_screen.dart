@@ -5,37 +5,64 @@ import '../widgets/penpot_back_button.dart';
 class ContactDetailsScreen extends StatelessWidget {
   final int? contactId;
   final String? contactName;
+  final String? phone;
+  final String? email;
+  final String? avatarUrl;
   
-  const ContactDetailsScreen({super.key, this.contactId, this.contactName});
+  const ContactDetailsScreen({
+    super.key,
+    this.contactId,
+    this.contactName,
+    this.phone,
+    this.email,
+    this.avatarUrl,
+  });
 
-  Widget _buildInfoCard(String title, String subtitle) {
+  Widget _buildInfoCard(String title, String subtitle, IconData icon) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2EBE8)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'SourceSansPro',
-              color: Color(0xFF142523),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF8F5),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: const Color(0xFF087E6B)),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'SourceSansPro',
-              color: Color(0xFF65746F),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'SourceSansPro',
+                    color: Color(0xFF65746F),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'SourceSansPro',
+                    color: Color(0xFF142523),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -43,17 +70,17 @@ class ContactDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(String label, VoidCallback onPressed) {
+  Widget _buildActionButton(String label, VoidCallback onPressed, {bool isPrimary = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: SizedBox(
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEAF8F5),
-            foregroundColor: const Color(0xFF087E6B),
+            backgroundColor: isPrimary ? const Color(0xFF087E6B) : const Color(0xFFEAF8F5),
+            foregroundColor: isPrimary ? Colors.white : const Color(0xFF087E6B),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
@@ -75,6 +102,9 @@ class ContactDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = contactName ?? 'Người dùng Roommate Hub';
+    final displayPhone = (phone != null && phone!.isNotEmpty) ? phone! : '0903 333 444';
+    final displayEmail = (email != null && email!.isNotEmpty) ? email! : 'nguoidung@roommatehub.vn';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
       body: SafeArea(
@@ -100,9 +130,9 @@ class ContactDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Cả hai đã đồng ý chia sẻ liên hệ',
@@ -115,7 +145,7 @@ class ContactDetailsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             
             Expanded(
               child: ListView(
@@ -124,59 +154,55 @@ class ContactDetailsScreen extends StatelessWidget {
                   // Avatar
                   Center(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(30),
                       child: Container(
-                        width: 100,
-                        height: 100,
+                        width: 90,
+                        height: 90,
                         color: Colors.grey.shade300,
-                        child: const Icon(Icons.person, size: 60, color: Colors.grey),
-                        // image: NetworkImage('...'),
+                        child: (avatarUrl != null && avatarUrl!.startsWith('http'))
+                            ? Image.network(
+                                avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.person, size: 50, color: Colors.grey),
+                              )
+                            : const Icon(Icons.person, size: 50, color: Colors.grey),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   
                   // Name and Info
                   Text(
                     name,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
+                    style: const TextStyle(
+                      fontSize: 24,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'SourceSansPro',
                       color: Color(0xFF142523),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   const Text(
-                    'Sinh viên · Bình Thạnh',
+                    'Đã kết nối Double Opt-in',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                       fontFamily: 'SourceSansPro',
-                      color: Color(0xFF142523),
+                      color: Color(0xFF087E6B),
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  
-                  // Contact Details Cards
-                  _buildInfoCard('Số điện thoại', '090 ••• •••• · Dữ liệu mẫu'),
-                  const SizedBox(height: 16),
-                  _buildInfoCard('Email liên hệ', 'nam@example.com'),
                   const SizedBox(height: 32),
                   
+                  // Contact Details Cards
+                  _buildInfoCard('Số điện thoại', displayPhone, Icons.phone_outlined),
+                  const SizedBox(height: 12),
+                  _buildInfoCard('Email liên hệ', displayEmail, Icons.email_outlined),
+                  const SizedBox(height: 28),
+                  
                   // Action Buttons
-                  _buildActionButton('Xem hồ sơ', () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.roommateProfile,
-                      arguments: {
-                        'userId': contactId,
-                        'partnerName': name,
-                      },
-                    );
-                  }),
                   _buildActionButton('Nhắn tin', () {
                     Navigator.pushNamed(
                       context,
@@ -186,8 +212,18 @@ class ContactDetailsScreen extends StatelessWidget {
                         'partnerName': name,
                       },
                     );
+                  }, isPrimary: true),
+                  _buildActionButton('Xem hồ sơ chi tiết', () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.roommateProfile,
+                      arguments: {
+                        'userId': contactId,
+                        'partnerName': name,
+                      },
+                    );
                   }),
-                  _buildActionButton('Báo cáo hoặc chặn', () {
+                  _buildActionButton('Báo cáo vi phạm', () {
                     Navigator.pushNamed(context, AppRoutes.reportViolation);
                   }),
                   _buildActionButton('Hủy kết nối', () {
@@ -198,7 +234,7 @@ class ContactDetailsScreen extends StatelessWidget {
                     );
                   }),
                   
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

@@ -59,6 +59,20 @@ public class MatchController {
         return ResponseEntity.ok(matchRequestService.respondRequest(requestId, accept, currentUserId()));
     }
 
+    // Hủy kết nối
+    @DeleteMapping("/connections/{partnerId}")
+    public ResponseEntity<Map<String, String>> cancelConnection(@PathVariable Long partnerId) {
+        matchRequestService.cancelConnection(currentUserId(), partnerId);
+        return ResponseEntity.ok(Map.of("message", "Đã hủy kết nối thành công"));
+    }
+
+    // Hủy lời mời kết nối đã gửi
+    @DeleteMapping("/requests/outgoing/{targetUserId}")
+    public ResponseEntity<Map<String, String>> cancelSentRequest(@PathVariable Long targetUserId) {
+        matchRequestService.cancelSentRequest(currentUserId(), targetUserId);
+        return ResponseEntity.ok(Map.of("message", "Đã hủy lời mời kết nối"));
+    }
+
     private Long currentUserId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {

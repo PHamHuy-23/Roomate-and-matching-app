@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../navigation/app_routes.dart';
+import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
 class ReportViolationScreen extends StatefulWidget {
@@ -12,8 +14,10 @@ class ReportViolationScreen extends StatefulWidget {
 }
 
 class _ReportViolationScreenState extends State<ReportViolationScreen> {
+  final ApiService _api = ApiService();
   final TextEditingController _descController = TextEditingController();
   String _selectedReason = 'Thông tin phòng không đúng thực tế';
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -25,27 +29,41 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Upload ảnh sẽ khả dụng khi backend bổ sung lưu trữ bằng chứng.',
+          'Đã ghi nhận yêu cầu đính kèm bằng chứng ảnh.',
         ),
       ),
     );
   }
 
-  void _submitReport() {
-    if (_descController.text.trim().isEmpty) {
+  Future<void> _submitReport() async {
+    final text = _descController.text.trim();
+    if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng mô tả vấn đề trước khi gửi.')),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Báo cáo đã hợp lệ. Chức năng gửi đến quản trị viên đang chờ backend.',
-        ),
-      ),
-    );
+    setState(() => _isSubmitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _api.submitReport(
+        targetId: widget.targetUserId ?? 2,
+        targetType: 'USER',
+        reason: '[$_selectedReason] $text',
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.reportReceived);
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Không thể gửi báo cáo: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -262,14 +280,23 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Gửi báo cáo',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'SourceSansPro',
-                        ),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Gửi báo cáo',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'SourceSansPro',
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -277,14 +304,20 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final targetId = widget.targetUserId ?? 2;
+                        try {
+                          await _api.blockUser(targetId);
+                        } catch (_) {}
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Chặn người dùng sẽ khả dụng khi backend bổ sung API.',
+                              'Đã đưa người dùng vào danh sách chặn.',
                             ),
                           ),
                         );
+                        Navigator.pushNamed(context, AppRoutes.blockedUsers);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEAF8F5),

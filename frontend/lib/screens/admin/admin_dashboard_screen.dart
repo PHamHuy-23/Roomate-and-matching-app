@@ -21,6 +21,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int? _visiblePostCount;
   int? _pendingPostCount;
   int? _lockedUserCount;
+  int? _pendingReportCount;
+
+  String get _currentFormattedDate {
+    final now = DateTime.now();
+    const days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+    final dayStr = days[(now.weekday - 1) % 7];
+    return '$dayStr, ${now.day.toString().padLeft(2, '0')} / ${now.month.toString().padLeft(2, '0')} / ${now.year}';
+  }
 
   @override
   void initState() {
@@ -62,6 +70,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }).length;
         _isLoading = false;
       });
+
+      try {
+        final reports = await _api.getAdminReports();
+        if (mounted) {
+          setState(() {
+            _pendingReportCount = reports.where((r) {
+              if (r is! Map) return false;
+              return r['status']?.toString().toUpperCase() == 'PENDING';
+            }).length;
+          });
+        }
+      } catch (_) {}
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -87,11 +107,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String title, {
     bool isActive = false,
     String? route,
+    VoidCallback? onTap,
+    IconData? icon,
   }) {
     return InkWell(
-      onTap: isActive || route == null
+      onTap: isActive
           ? null
-          : () => Navigator.pushReplacementNamed(context, route),
+          : (onTap ?? (route == null ? null : () => Navigator.pushReplacementNamed(context, route))),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         width: double.infinity,
@@ -103,14 +125,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            fontFamily: 'SourceSansPro',
-          ),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: isActive ? Colors.white : const Color(0xFF8FB8AC), size: 18),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  fontFamily: 'SourceSansPro',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -245,25 +277,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', isActive: true),
-                _buildSidebarItem(context, 'Người dùng', route: AppRoutes.adminUsers),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
+                _buildSidebarItem(context, 'Tổng quan', isActive: true, icon: Icons.dashboard_outlined),
+                _buildSidebarItem(context, 'Người dùng', route: AppRoutes.adminUsers, icon: Icons.people_outline),
+                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost, icon: Icons.approval_outlined),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports, icon: Icons.report_outlined),
                 
                 const Spacer(),
-                
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
-                  child: Text(
-                    'Không gian quản trị',
-                    style: TextStyle(
-                      color: Color(0xFF8FB8AC),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'SourceSansPro',
-                    ),
-                  ),
+
+                const Divider(color: Color(0xFF2A3D39), height: 1, indent: 16, endIndent: 16),
+                const SizedBox(height: 8),
+
+                _buildSidebarItem(
+                  context,
+                  'Về app người dùng',
+                  icon: Icons.home_outlined,
+                  onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
                 ),
+                _buildSidebarItem(
+                  context,
+                  'Đăng xuất',
+                  icon: Icons.logout,
+                  onTap: () {
+                    _api.clearAuthToken();
+                    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
+                  },
+                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -282,8 +321,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
+                        children: [
+                          const Text(
                             'Tổng quan hệ thống',
                             style: TextStyle(
                               fontSize: 30,
@@ -294,8 +333,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Thứ Bảy, 19 / 09 / 2026 · Dữ liệu minh họa',
-                            style: TextStyle(
+                            _currentFormattedDate,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'SourceSansPro',
@@ -339,7 +378,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       _buildStatCard(_statValue(_userCount), 'Người dùng'),
                       _buildStatCard(_statValue(_visiblePostCount), 'Tin đang hiển thị'),
                       _buildStatCard(_statValue(_pendingPostCount), 'Tin chờ duyệt'),
-                      _buildStatCard('—', 'Báo cáo cần xử lý'),
+                      _buildStatCard(_statValue(_pendingReportCount), 'Báo cáo cần xử lý'),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -420,7 +459,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               const SizedBox(height: 16),
                               _buildAlertAction(
                                 context,
-                                'Báo cáo chưa có API',
+                                _pendingReportCount != null
+                                    ? '${_statValue(_pendingReportCount)} báo cáo cần xử lý'
+                                    : 'Báo cáo chưa có API',
                                 AppRoutes.adminReports,
                               ),
                               const SizedBox(height: 16),

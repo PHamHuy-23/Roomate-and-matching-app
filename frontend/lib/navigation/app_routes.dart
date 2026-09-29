@@ -207,9 +207,21 @@ class AppRoutes {
             final contactName = arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
+            final phone = arguments is Map && arguments['phone'] is String
+                ? arguments['phone'] as String
+                : null;
+            final email = arguments is Map && arguments['email'] is String
+                ? arguments['email'] as String
+                : null;
+            final avatarUrl = arguments is Map && arguments['avatarUrl'] is String
+                ? arguments['avatarUrl'] as String
+                : null;
             return ContactDetailsScreen(
               contactId: contactId,
               contactName: contactName,
+              phone: phone,
+              email: email,
+              avatarUrl: avatarUrl,
             );
           case chat:
             final arguments = routeSettings.arguments;

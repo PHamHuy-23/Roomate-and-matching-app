@@ -260,6 +260,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                   arguments: {
                                     'contactId': item.partnerId,
                                     'partnerName': item.partnerName,
+                                    'phone': item.contactPhone,
+                                    'email': item.contactEmail,
+                                    'avatarUrl': item.partnerAvatar,
                                   },
                                 );
                               } else if (_selectedTabIndex == 1) {

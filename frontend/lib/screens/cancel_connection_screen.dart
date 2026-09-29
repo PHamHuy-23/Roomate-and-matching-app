@@ -1,11 +1,54 @@
 import 'package:flutter/material.dart';
 
+import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
-class CancelConnectionScreen extends StatelessWidget {
+class CancelConnectionScreen extends StatefulWidget {
   final int? partnerId;
 
   const CancelConnectionScreen({super.key, this.partnerId});
+
+  @override
+  State<CancelConnectionScreen> createState() => _CancelConnectionScreenState();
+}
+
+class _CancelConnectionScreenState extends State<CancelConnectionScreen> {
+  bool _isSubmitting = false;
+
+  Future<void> _handleCancelConnection() async {
+    if (widget.partnerId == null) {
+      Navigator.pop(context, true);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+
+    try {
+      await ApiService().cancelConnection(widget.partnerId!);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Đã hủy kết nối thành công.'),
+          backgroundColor: Color(0xFF087E6B),
+        ),
+      );
+      nav.pop(true);
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,19 +141,7 @@ class CancelConnectionScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // No cancel-connection endpoint exists yet. Do not
-                        // pretend the relationship was changed locally.
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.pop(context);
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Hủy kết nối sẽ khả dụng khi backend bổ sung API.',
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _isSubmitting ? null : _handleCancelConnection,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF087E6B),
                         foregroundColor: Colors.white,
@@ -119,14 +150,23 @@ class CancelConnectionScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Xác nhận hủy kết nối',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'SourceSansPro',
-                        ),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Xác nhận hủy kết nối',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'SourceSansPro',
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 12),

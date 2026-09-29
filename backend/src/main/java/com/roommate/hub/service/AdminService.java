@@ -1,13 +1,17 @@
 package com.roommate.hub.service;
 
+import com.roommate.hub.dto.AdminReportResponseDTO;
+import com.roommate.hub.dto.AdminPostResponseDTO;
+import com.roommate.hub.dto.UserResponseDTO;
+import com.roommate.hub.entity.Report;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
-import com.roommate.hub.dto.UserResponseDTO;
-import com.roommate.hub.dto.AdminPostResponseDTO;
 import com.roommate.hub.exception.ResourceNotFoundException;
+import com.roommate.hub.repository.ReportRepository;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,7 @@ public class AdminService {
 
     private final RoomPostRepository roomPostRepository;
     private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
 
     // Lấy toàn bộ bài đăng kèm trạng thái để kiểm duyệt
     public List<AdminPostResponseDTO> getAllPostsForModeration() {
@@ -62,5 +67,25 @@ public class AdminService {
         res.put("userId", user.getId());
         res.put("status", newStatus);
         return res;
+    }
+
+    // Lấy toàn bộ danh sách báo cáo
+    public List<AdminReportResponseDTO> getAllReports() {
+        return reportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(AdminReportResponseDTO::from)
+                .toList();
+    }
+
+    // Duyệt / xử lý báo cáo vi phạm
+    @Transactional
+    public AdminReportResponseDTO moderateReport(Long reportId, String status, String note) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Báo cáo không tồn tại!"));
+        report.setStatus(status.toUpperCase());
+        if (note != null && !note.isBlank()) {
+            report.setActionNote(note.trim());
+        }
+        return AdminReportResponseDTO.from(reportRepository.save(report));
     }
 }

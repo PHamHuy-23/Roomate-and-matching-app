@@ -66,6 +66,19 @@ public class RoomPost {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = PostStatus.PENDING;
+        }
+        if (currentOccupants == null) {
+            currentOccupants = 0;
+        }
+    }
+
     public enum PostStatus {
         PENDING,    // Chờ Admin duyệt
         APPROVED,   // Đã duyệt (hiển thị công khai)

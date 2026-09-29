@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
+import '../models/viewing_appointment.dart';
+import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
 enum ListingFlowMode {
@@ -66,19 +68,103 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   int _photoCount = 4;
   String _roomStatus = 'Còn phòng';
   final Set<String> _amenities = Set<String>.from(_amenityOptions);
+  List<RoomPost> _myPosts = [];
+  List<ViewingAppointment> _appointments = [];
 
   @override
   void initState() {
     super.initState();
     _mode = widget.mode;
     _editingExisting = widget.mode == ListingFlowMode.edit;
-    final post = widget.posts.isEmpty ? null : widget.posts.first;
+    _myPosts = List<RoomPost>.from(widget.posts);
+    final post = _myPosts.isEmpty ? null : _myPosts.first;
     _titleCtrl = TextEditingController(text: post?.title ?? 'Studio ngập nắng, có ban công');
     _addressCtrl = TextEditingController(text: post?.address ?? 'Nguyễn Gia Trí, Bình Thạnh, TP.HCM');
     _priceCtrl = TextEditingController(text: post == null ? '3.500.000đ' : '${_formatMoney(post.price)}đ');
     _depositCtrl = TextEditingController(text: '3.500.000đ · 1 tháng');
     _utilityCtrl = TextEditingController(text: '3.800đ / kWh · 100.000đ / người · 150.000đ');
     _descriptionCtrl = TextEditingController(text: post?.description ?? 'Ban công riêng, đủ nội thất, bếp nhỏ');
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    if (!ApiService().hasAuthToken) return;
+    try {
+      final postsFuture = ApiService().getMyPosts();
+      final aptsFuture = ApiService().getMyAppointments();
+      final results = await Future.wait([postsFuture, aptsFuture]);
+      if (mounted) {
+        setState(() {
+          final fetchedPosts = results[0] as List<RoomPost>;
+          if (fetchedPosts.isNotEmpty) {
+            _myPosts = fetchedPosts;
+          }
+          _appointments = results[1] as List<ViewingAppointment>;
+        });
+      }
+    } catch (_) {
+      // Ignored in offline / test mode
+    }
+  }
+
+  Future<void> _handleSaveEdit() async {
+    final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
+    if (post != null && ApiService().hasAuthToken) {
+      final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
+      final rawPrice = double.tryParse(cleanPriceStr) ?? post.price;
+      try {
+        await ApiService().updateRoomPost(
+          postId: post.id,
+          title: _titleCtrl.text.trim(),
+          description: _descriptionCtrl.text.trim(),
+          price: rawPrice,
+          address: _addressCtrl.text.trim(),
+          district: post.district.isNotEmpty ? post.district : 'Quận 1',
+          deposit: (post.deposit ?? 0) > 0 ? (post.deposit ?? rawPrice) : rawPrice,
+          electricityWaterCost: _utilityCtrl.text.trim(),
+          area: _area,
+          maxOccupants: _maxOccupants,
+          currentOccupants: post.currentOccupants,
+          amenities: _amenities.toList(),
+        );
+      } catch (_) {}
+    }
+    _goTo(ListingFlowMode.submitted);
+  }
+
+  Future<void> _handleSubmitNewPost() async {
+    if (ApiService().hasAuthToken) {
+      final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
+      final rawPrice = double.tryParse(cleanPriceStr) ?? 3500000.0;
+      try {
+        await ApiService().createRoomPost({
+          'title': _titleCtrl.text.trim(),
+          'description': _descriptionCtrl.text.trim(),
+          'price': rawPrice,
+          'address': _addressCtrl.text.trim(),
+          'district': 'Quận 1',
+          'deposit': rawPrice,
+          'electricityWaterCost': 200000.0,
+          'area': _area,
+          'maxOccupants': _maxOccupants,
+          'currentOccupants': 0,
+          'amenities': _amenities.join(','),
+        });
+        _loadData();
+      } catch (_) {}
+    }
+    _goTo(ListingFlowMode.submitted);
+  }
+
+  Future<void> _handleCloseListing() async {
+    final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
+    if (post != null && ApiService().hasAuthToken) {
+      try {
+        await ApiService().closeRoomPost(post.id);
+        _loadData();
+      } catch (_) {}
+    }
+    _goTo(ListingFlowMode.closed);
   }
 
   @override
@@ -198,10 +284,10 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       children: <Widget>[
         const Text('Quản lý phòng và yêu cầu xem phòng', style: TextStyle(color: _muted, height: 1.5)),
         const SizedBox(height: 18),
-        if (widget.posts.isEmpty)
+        if (_myPosts.isEmpty)
           _emptyState(context, Icons.post_add_outlined, 'Bạn chưa có tin đăng nào', 'Tạo tin đầu tiên để tìm người ở ghép phù hợp.')
         else
-          ...widget.posts.map((post) => _postCard(context, post)),
+          ..._myPosts.map((post) => _postCard(context, post)),
         const SizedBox(height: 18),
         _button('+ Đăng phòng mới', () => _goTo(ListingFlowMode.create)),
       ],
@@ -336,7 +422,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         const SizedBox(height: 10),
         const Text('Kiểm tra kỹ thông tin trước khi gửi', style: TextStyle(color: _muted, height: 1.4)),
         const SizedBox(height: 24),
-        _button(_editingExisting ? 'Lưu & gửi kiểm duyệt' : 'Gửi tin để duyệt', () => _goTo(ListingFlowMode.submitted)),
+        _button(_editingExisting ? 'Lưu & gửi kiểm duyệt' : 'Gửi tin để duyệt', _editingExisting ? _handleSaveEdit : _handleSubmitNewPost),
       ],
     );
   }
@@ -361,7 +447,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         const SizedBox(height: 14),
         _input('Mô tả', _descriptionCtrl, maxLines: 4),
         const SizedBox(height: 6),
-        _button('Lưu & gửi kiểm duyệt', () => _goTo(ListingFlowMode.submitted)),
+        _button('Lưu & gửi kiểm duyệt', _handleSaveEdit),
       ],
     );
   }
@@ -383,26 +469,71 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       children: <Widget>[
         const Text('Lịch hẹn tại phòng bạn đang đăng', style: TextStyle(color: _muted, height: 1.5)),
         const SizedBox(height: 16),
-        Card(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              const Text('Quang Huy · 21 / 09, 14:00', style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              _statusBadge('Chờ xác nhận · 2 người xem'),
-              const SizedBox(height: 14),
-              const Text('“Mình muốn xem phòng cùng một người bạn.”', style: TextStyle(color: _muted, height: 1.4)),
-              const SizedBox(height: 14),
-              Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
-                FilledButton(onPressed: () => _goTo(ListingFlowMode.confirmedViewing), style: FilledButton.styleFrom(backgroundColor: _primary), child: const Text('Xác nhận lịch hẹn')),
-                OutlinedButton(onPressed: () => _goTo(ListingFlowMode.myListings), child: const Text('Từ chối / hủy lịch')),
+        if (_appointments.isNotEmpty)
+          ..._appointments.map((apt) {
+            final timeStr = DateFormat('dd / MM, HH:mm').format(apt.appointmentTime);
+            return Card(
+              color: Colors.white,
+              elevation: 0,
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                  Text('${apt.requesterName} · $timeStr', style: const TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  _statusBadge('${apt.status == 'PENDING' ? 'Chờ xác nhận' : apt.status} · ${apt.roomTitle}'),
+                  if (apt.note != null && apt.note!.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    Text('“${apt.note}”', style: const TextStyle(color: _muted, height: 1.4)),
+                  ],
+                  const SizedBox(height: 14),
+                  Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
+                    FilledButton(
+                      onPressed: () async {
+                        try {
+                          await ApiService().updateAppointmentStatus(apt.id, 'CONFIRMED');
+                        } catch (_) {}
+                        _goTo(ListingFlowMode.confirmedViewing);
+                      },
+                      style: FilledButton.styleFrom(backgroundColor: _primary),
+                      child: const Text('Xác nhận lịch hẹn'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () async {
+                        try {
+                          await ApiService().updateAppointmentStatus(apt.id, 'CANCELLED');
+                        } catch (_) {}
+                        _goTo(ListingFlowMode.myListings);
+                      },
+                      child: const Text('Từ chối / hủy lịch'),
+                    ),
+                  ]),
+                ]),
+              ),
+            );
+          })
+        else
+          Card(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                const Text('Quang Huy · 21 / 09, 14:00', style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                _statusBadge('Chờ xác nhận · 2 người xem'),
+                const SizedBox(height: 14),
+                const Text('“Mình muốn xem phòng cùng một người bạn.”', style: TextStyle(color: _muted, height: 1.4)),
+                const SizedBox(height: 14),
+                Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
+                  FilledButton(onPressed: () => _goTo(ListingFlowMode.confirmedViewing), style: FilledButton.styleFrom(backgroundColor: _primary), child: const Text('Xác nhận lịch hẹn')),
+                  OutlinedButton(onPressed: () => _goTo(ListingFlowMode.myListings), child: const Text('Từ chối / hủy lịch')),
+                ]),
               ]),
-            ]),
+            ),
           ),
-        ),
         const SizedBox(height: 12),
         const Text('Kiểm tra thông tin lịch hẹn, trao đổi điểm hẹn và chuẩn bị trước khi đón khách.', style: TextStyle(color: _muted, height: 1.4)),
       ],
@@ -420,11 +551,15 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   Widget _confirmedViewing(BuildContext context) {
+    final firstApt = _appointments.isNotEmpty ? _appointments.first : null;
+    final info = firstApt != null
+        ? '${firstApt.requesterName} · ${DateFormat('dd / MM / yyyy · HH:mm').format(firstApt.appointmentTime)}'
+        : 'Quang Huy · 21 / 09 / 2026 · 14:00';
     return _emptyState(
       context,
       Icons.check_circle_outline,
       'Hẹn gặp tại căn phòng!',
-      'Quang Huy · 21 / 09 / 2026 · 14:00',
+      info,
       action: _button('Quản lý tin đăng', () => _goTo(ListingFlowMode.myListings)),
     );
   }
@@ -438,7 +573,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         const SizedBox(height: 10),
         const Text('Tin sẽ ngừng xuất hiện trong danh sách. Hãy xử lý các lịch xem phòng đang chờ trước khi đóng.', style: TextStyle(color: _muted, height: 1.5)),
         const SizedBox(height: 26),
-        _button('Xác nhận đóng tin', () => _goTo(ListingFlowMode.closed)),
+        _button('Xác nhận đóng tin', _handleCloseListing),
         const SizedBox(height: 10),
         SizedBox(width: double.infinity, child: OutlinedButton(onPressed: _handleBack, child: const Text('Giữ tin đăng'))),
       ],

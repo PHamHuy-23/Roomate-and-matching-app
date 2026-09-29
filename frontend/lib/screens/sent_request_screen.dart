@@ -24,7 +24,44 @@ class _SentRequestScreenState extends State<SentRequestScreen> {
   final ApiService _api = ApiService();
   MatchRequestItem? _request;
   bool _isLoading = false;
+  bool _isCancelling = false;
   String? _error;
+
+  Future<void> _handleCancelRequest() async {
+    final targetId = widget.partnerId ?? _request?.partnerId;
+    if (targetId == null) {
+      Navigator.pop(context, true);
+      return;
+    }
+
+    setState(() => _isCancelling = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+
+    try {
+      await _api.cancelSentRequest(targetId);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Đã hủy lời mời kết nối thành công.'),
+          backgroundColor: Color(0xFF087E6B),
+        ),
+      );
+      nav.pop(true);
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -217,22 +254,23 @@ class _SentRequestScreenState extends State<SentRequestScreen> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Hủy lời mời sẽ khả dụng khi backend bổ sung API.',
-                  ),
-                ),
-              );
-            },
+            onPressed: _isCancelling ? null : _handleCancelRequest,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEAF8F5),
               foregroundColor: const Color(0xFF087E6B),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,
             ),
-            child: const Text('Hủy lời mời'),
+            child: _isCancelling
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF087E6B),
+                    ),
+                  )
+                : const Text('Hủy lời mời'),
           ),
         ),
       ],

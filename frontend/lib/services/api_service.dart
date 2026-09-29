@@ -9,6 +9,9 @@ import '../models/match_recommendation.dart';
 import '../models/match_request_item.dart';
 import '../models/room_post.dart';
 import '../models/upload_ticket.dart';
+import '../models/chat_message.dart';
+import '../models/viewing_appointment.dart';
+import '../models/blocked_user.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -457,4 +460,264 @@ class ApiService {
     if (response.statusCode == 200) return true;
     throw _errorFrom(response, 'Không thể thay đổi trạng thái người dùng');
   }
+
+  // --- LỊCH HẸN XEM PHÒNG (APPOINTMENTS) ---
+  Future<ViewingAppointment> createAppointment({
+    required int roomPostId,
+    required DateTime appointmentTime,
+    String? note,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/appointments',
+      body: {
+        'roomPostId': roomPostId,
+        'appointmentTime': appointmentTime.toIso8601String(),
+        'note': note,
+      },
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = _decodeData(response);
+      if (data is Map<String, dynamic>) {
+        return ViewingAppointment.fromJson(data);
+      }
+      throw const ApiException('Dữ liệu lịch hẹn từ máy chủ không hợp lệ');
+    }
+    throw _errorFrom(response, 'Không thể đặt lịch xem phòng');
+  }
+
+  Future<List<ViewingAppointment>> getMyAppointments() async {
+    final response = await _request('GET', '/appointments/my');
+    if (response.statusCode == 200) {
+      return _decodeList(response)
+          .map((json) => ViewingAppointment.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    throw _errorFrom(response, 'Không tải được danh sách lịch hẹn');
+  }
+
+  Future<ViewingAppointment> updateAppointmentStatus(int appointmentId, String status) async {
+    final response = await _request(
+      'PUT',
+      '/appointments/$appointmentId/status',
+      queryParameters: {'status': status},
+    );
+    if (response.statusCode == 200) {
+      final data = _decodeData(response);
+      return ViewingAppointment.fromJson(data as Map<String, dynamic>);
+    }
+    throw _errorFrom(response, 'Không thể cập nhật trạng thái lịch hẹn');
+  }
+
+  // --- TIN NHẮN TRÒ CHUYỆN (REALTIME CHAT) ---
+  Future<ChatMessage> sendChatMessage({
+    required int receiverId,
+    required String content,
+    String? imageUrl,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/chat/messages',
+      body: {
+        'receiverId': receiverId,
+        'content': content,
+        'imageUrl': imageUrl,
+      },
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = _decodeData(response);
+      if (data is Map<String, dynamic>) {
+        return ChatMessage.fromJson(data);
+      }
+      throw const ApiException('Dữ liệu tin nhắn không hợp lệ');
+    }
+    throw _errorFrom(response, 'Không thể gửi tin nhắn');
+  }
+
+  Future<List<ChatMessage>> getChatMessages(int partnerId) async {
+    final response = await _request('GET', '/chat/messages/$partnerId');
+    if (response.statusCode == 200) {
+      return _decodeList(response)
+          .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    throw _errorFrom(response, 'Không tải được tin nhắn');
+  }
+
+  // --- BÁO CÁO VI PHẠM (REPORTS) ---
+  Future<bool> submitReport({
+    required int targetId,
+    String targetType = 'USER',
+    required String reason,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/reports',
+      body: {
+        'targetId': targetId,
+        'targetType': targetType,
+        'reason': reason,
+      },
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể gửi báo cáo vi phạm');
+  }
+
+  // --- HỦY KẾT NỐI (CANCEL CONNECTION) ---
+  Future<bool> cancelConnection(int partnerId) async {
+    final response = await _request(
+      'DELETE',
+      '/matches/connections/$partnerId',
+    );
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể hủy kết nối');
+  }
+
+  // --- HỦY LỜI MỜI ĐÃ GỬI (CANCEL SENT REQUEST) ---
+  Future<bool> cancelSentRequest(int targetUserId) async {
+    final response = await _request(
+      'DELETE',
+      '/matches/requests/outgoing/$targetUserId',
+    );
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể hủy lời mời');
+  }
+
+  // --- QUẢN LÝ BÁO CÁO ADMIN (ADMIN REPORTS) ---
+  Future<List<dynamic>> getAdminReports() async {
+    final response = await _request('GET', '/admin/reports');
+    if (response.statusCode == 200) return _decodeList(response);
+    throw _errorFrom(response, 'Không tải được danh sách báo cáo');
+  }
+
+  Future<bool> moderateAdminReport(int reportId, {required String status, String? note}) async {
+    final query = <String, String>{'status': status};
+    if (note != null && note.isNotEmpty) query['note'] = note;
+    final response = await _request(
+      'PUT',
+      '/admin/reports/$reportId/moderate',
+      queryParameters: query,
+    );
+    if (response.statusCode == 200) return true;
+    throw _errorFrom(response, 'Không thể xử lý báo cáo');
+  }
+
+  // --- ĐÓNG TIN ĐĂNG (CLOSE ROOM POST) ---
+  Future<bool> closeRoomPost(int postId) async {
+    final response = await _request('DELETE', '/posts/$postId');
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể đóng tin đăng');
+  }
+
+  // --- QUẢN LÝ CHẶN (BLOCK / UNBLOCK) ---
+  Future<List<BlockedUser>> getBlockedUsers() async {
+    final response = await _request('GET', '/blocks');
+    if (response.statusCode == 200) {
+      return _decodeList(response)
+          .map((json) => BlockedUser.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    throw _errorFrom(response, 'Không tải được danh sách người bị chặn');
+  }
+
+  Future<BlockedUser> blockUser(int targetUserId) async {
+    final response = await _request(
+      'POST',
+      '/blocks',
+      queryParameters: {'targetUserId': targetUserId.toString()},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = _decodeData(response);
+      return BlockedUser.fromJson(data as Map<String, dynamic>);
+    }
+    throw _errorFrom(response, 'Không thể chặn người dùng');
+  }
+
+  Future<bool> unblockUser(int targetUserId) async {
+    final response = await _request('DELETE', '/blocks/$targetUserId');
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể bỏ chặn người dùng');
+  }
+
+  // --- ĐỔI MẬT KHẨU (CHANGE PASSWORD) ---
+  Future<bool> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final response = await _request(
+      'PUT',
+      '/auth/change-password',
+      body: {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
+    );
+    if (response.statusCode == 200) {
+      return true;
+    }
+    throw _errorFrom(response, 'Không thể thay đổi mật khẩu');
+  }
+
+  // --- QUẢN LÝ BÀI ĐĂNG CỦA TÔI (MY ROOM POSTS) ---
+  Future<List<RoomPost>> getMyPosts() async {
+    final response = await _request('GET', '/posts/my');
+    if (response.statusCode == 200) {
+      final list = _decodeList(response);
+      return list.map((item) => RoomPost.fromJson(item as Map<String, dynamic>)).toList();
+    }
+    throw _errorFrom(response, 'Không tải được danh sách bài đăng của bạn');
+  }
+
+  Future<RoomPost> updateRoomPost({
+    required int postId,
+    required String title,
+    required String description,
+    required double price,
+    required String address,
+    required String district,
+    required double deposit,
+    required String electricityWaterCost,
+    required double area,
+    required int maxOccupants,
+    int? currentOccupants,
+    required List<String> amenities,
+    String? imageObjectKey,
+  }) async {
+    final response = await _request(
+      'PUT',
+      '/posts/$postId',
+      body: {
+        'title': title,
+        'description': description,
+        'price': price,
+        'address': address,
+        'district': district,
+        'deposit': deposit,
+        'electricityWaterCost': electricityWaterCost,
+        'area': area,
+        'maxOccupants': maxOccupants,
+        'currentOccupants': currentOccupants,
+        'amenities': amenities,
+        'imageObjectKey': imageObjectKey,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = _decodeData(response);
+      return RoomPost.fromJson(data as Map<String, dynamic>);
+    }
+    throw _errorFrom(response, 'Không thể cập nhật bài đăng');
+  }
 }
+
+
+

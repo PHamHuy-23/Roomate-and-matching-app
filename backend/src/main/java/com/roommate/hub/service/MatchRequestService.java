@@ -119,4 +119,21 @@ public class MatchRequestService {
                     .build();
         }).collect(Collectors.toList());
     }
+
+    @Transactional
+    public void cancelConnection(Long currentUserId, Long partnerId) {
+        matchRequestRepository.findConnectionBetweenUsers(currentUserId, partnerId)
+                .ifPresent(matchRequestRepository::delete);
+    }
+
+    @Transactional
+    public void cancelSentRequest(Long currentUserId, Long targetUserId) {
+        matchRequestRepository.findBySenderIdAndReceiverId(currentUserId, targetUserId)
+                .ifPresent(req -> {
+                    if (req.getStatus() == com.roommate.hub.entity.MatchRequest.MatchStatus.PENDING) {
+                        matchRequestRepository.delete(req);
+                    }
+                });
+    }
 }
+

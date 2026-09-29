@@ -4,6 +4,8 @@
 BEGIN;
 
 TRUNCATE TABLE
+    chat_messages,
+    blocked_users,
     reports,
     contact_permissions,
     viewing_appointments,
@@ -141,10 +143,36 @@ VALUES
     (4, 2, 3, 38.0, 'REJECTED', CURRENT_TIMESTAMP),
     (5, 5, 6, 82.0, 'ACCEPTED', CURRENT_TIMESTAMP);
 
--- 5. Synchronize Sequences
+-- 5. Viewing Appointments
+INSERT INTO viewing_appointments
+    (id, requester_id, host_id, room_post_id, appointment_time, status, note, created_at)
+VALUES
+    (1, 1, 2, 2, CURRENT_TIMESTAMP + INTERVAL '1 day', 'PENDING', 'Mình muốn xem phòng cùng một người bạn.', CURRENT_TIMESTAMP),
+    (2, 3, 2, 2, CURRENT_TIMESTAMP + INTERVAL '2 days', 'CONFIRMED', 'Xem phòng vào buổi sáng lúc 9h nhé.', CURRENT_TIMESTAMP);
+
+-- 6. Reports
+INSERT INTO reports
+    (id, reporter_id, target_id, target_type, reason, status, action_note, created_at)
+VALUES
+    (1, 1, 2, 'ROOM_POST', 'Thông tin phòng không đúng thực tế', 'PENDING', NULL, CURRENT_TIMESTAMP - INTERVAL '15 minutes'),
+    (2, 2, 3, 'USER', 'Nội dung tin nhắn không phù hợp quy tắc ứng xử', 'PENDING', NULL, CURRENT_TIMESTAMP - INTERVAL '2 hours'),
+    (3, 3, 4, 'ROOM_POST', 'Tin đăng có dấu hiệu trùng lặp', 'RESOLVED', 'Đã đối chiếu với tin RH-024 và xử lý.', CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+-- 7. Chat Messages
+INSERT INTO chat_messages
+    (id, sender_id, receiver_id, content, is_read, created_at)
+VALUES
+    (1, 2, 1, 'Chào Huy! Bạn muốn xem phòng vào chiều thứ Hai phải không?', true, CURRENT_TIMESTAMP - INTERVAL '30 minutes'),
+    (2, 1, 2, 'Đúng rồi, khoảng 14:00 nhé. Phòng có chỗ để xe không bạn?', true, CURRENT_TIMESTAMP - INTERVAL '20 minutes'),
+    (3, 2, 1, 'Có nhé, chỗ để xe rộng rãi và có camera an ninh 24/7.', false, CURRENT_TIMESTAMP - INTERVAL '10 minutes');
+
+-- 8. Synchronize Sequences
 SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE(MAX(id), 1)) FROM users;
 SELECT setval(pg_get_serial_sequence('user_preferences', 'id'), COALESCE(MAX(id), 1)) FROM user_preferences;
 SELECT setval(pg_get_serial_sequence('room_posts', 'id'), COALESCE(MAX(id), 1)) FROM room_posts;
 SELECT setval(pg_get_serial_sequence('match_requests', 'id'), COALESCE(MAX(id), 1)) FROM match_requests;
+SELECT setval(pg_get_serial_sequence('viewing_appointments', 'id'), COALESCE(MAX(id), 1)) FROM viewing_appointments;
+SELECT setval(pg_get_serial_sequence('reports', 'id'), COALESCE(MAX(id), 1)) FROM reports;
+SELECT setval(pg_get_serial_sequence('chat_messages', 'id'), COALESCE(MAX(id), 1)) FROM chat_messages;
 
 COMMIT;

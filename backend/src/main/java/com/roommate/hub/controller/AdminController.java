@@ -2,6 +2,7 @@ package com.roommate.hub.controller;
 
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.dto.AdminReportResponseDTO;
 import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
 import com.roommate.hub.service.AdminService;
@@ -41,8 +42,21 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getUser(userId));
     }
 
-    @PutMapping("/users/{userId}/toggle-status")
+    @RequestMapping(value = {"/users/{userId}/toggle-status", "/users/{userId}/status"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<Map<String, Object>> toggleUserStatus(@PathVariable Long userId) {
         return ResponseEntity.ok(adminService.toggleUserStatus(userId));
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<AdminReportResponseDTO>> getAllReports() {
+        return ResponseEntity.ok(adminService.getAllReports());
+    }
+
+    @RequestMapping(value = {"/reports/{reportId}/moderate", "/reports/{reportId}/resolve"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
+    public ResponseEntity<AdminReportResponseDTO> moderateReport(
+            @PathVariable Long reportId,
+            @RequestParam(defaultValue = "RESOLVED") String status,
+            @RequestParam(required = false) String note) {
+        return ResponseEntity.ok(adminService.moderateReport(reportId, status, note));
     }
 }
