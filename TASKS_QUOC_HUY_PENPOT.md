@@ -66,3 +66,4 @@ Quy trình phát triển (AI Rules):
   - Giữ hệ màu Material xanh ngọc, Inter + Plus Jakarta Sans, card phòng nổi bật, danh sách gần đây và navigation 4 tab.
   - Dựng thành board riêng để đối chiếu với phương án Modern Trend 2025 và đã export PNG kiểm tra.
   - Nâng board lên đúng kích thước nguồn Stitch 390×1227; bổ sung listing thứ hai, CTA tư vấn và đặt navigation ở cuối canvas.
+  - Thay ký tự Unicode bằng SVG Material vector; khôi phục badge `CÒN PHÒNG • Xác thực`, rating `4.9 (18)` và bộ đếm ảnh `1/8` đúng nguồn Stitch.
