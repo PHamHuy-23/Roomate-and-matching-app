@@ -2,6 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/models/room_post.dart';
 
 void main() {
+  test('Missing status is unknown and moderation reason is preserved', () {
+    expect(RoomPost.fromJson({}).status, 'UNKNOWN');
+    final post = RoomPost.fromJson({
+      'status': 'REJECTED',
+      'moderationReason': 'Sai giá',
+    });
+    expect(post.status, 'REJECTED');
+    expect(post.moderationReason, 'Sai giá');
+  });
   test('RoomPost parses the complete backend payload', () {
     final post = RoomPost.fromJson({
       'id': 7,

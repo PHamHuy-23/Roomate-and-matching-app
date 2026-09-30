@@ -17,7 +17,7 @@ void main() {
 
     expect(find.text('Thông báo'), findsOneWidget);
     expect(find.text('Minh Anh gửi lời mời kết nối'), findsOneWidget);
-    expect(find.text('Tất cả thông báo đã được đọc'), findsOneWidget);
+    expect(find.text('Tất cả thông báo đã được đọc'), findsNothing);
   });
 
   testWidgets('Các trạng thái discovery hiển thị đúng nội dung', (

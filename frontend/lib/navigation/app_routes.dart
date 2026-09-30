@@ -5,12 +5,12 @@ import '../screens/auth_support_screen.dart';
 import '../screens/avatar_picker_screen.dart';
 import '../screens/create_post_screen.dart';
 import '../screens/listing_management_screen.dart';
-import '../screens/conversation_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/penpot_state_screens.dart';
+import '../screens/blocked_users_screen.dart' as live_blocks;
 import '../screens/requests_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/roommate_profile_screen.dart';
@@ -135,7 +135,6 @@ class AppRoutes {
                   ? routeSettings.arguments as String
                   : null,
             );
-
         }
 
         // Guard: require authentication
@@ -172,7 +171,8 @@ class AppRoutes {
             );
           case home:
             final arguments = routeSettings.arguments;
-            final initialTab = arguments is Map && arguments['initialTab'] is int
+            final initialTab =
+                arguments is Map && arguments['initialTab'] is int
                 ? arguments['initialTab'] as int
                 : 0;
             return HomeScreen(currentUser: user, initialTab: initialTab);
@@ -189,7 +189,8 @@ class AppRoutes {
             final userId = arguments is Map && arguments['userId'] is int
                 ? arguments['userId'] as int
                 : null;
-            final displayName = arguments is Map && arguments['partnerName'] is String
+            final displayName =
+                arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
             return RoommateProfileScreen(
@@ -210,7 +211,8 @@ class AppRoutes {
             final contactId = arguments is Map && arguments['contactId'] is int
                 ? arguments['contactId'] as int
                 : null;
-            final contactName = arguments is Map && arguments['partnerName'] is String
+            final contactName =
+                arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
             final phone = arguments is Map && arguments['phone'] is String
@@ -219,7 +221,8 @@ class AppRoutes {
             final email = arguments is Map && arguments['email'] is String
                 ? arguments['email'] as String
                 : null;
-            final avatarUrl = arguments is Map && arguments['avatarUrl'] is String
+            final avatarUrl =
+                arguments is Map && arguments['avatarUrl'] is String
                 ? arguments['avatarUrl'] as String
                 : null;
             return ContactDetailsScreen(
@@ -234,24 +237,41 @@ class AppRoutes {
             final partnerId = arguments is Map && arguments['partnerId'] is int
                 ? arguments['partnerId'] as int
                 : null;
-            final partnerName = arguments is Map && arguments['partnerName'] is String
+            final partnerName =
+                arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
             return ChatScreen(partnerId: partnerId, partnerName: partnerName);
           case conversation:
-            final contactName = routeSettings.arguments is String
-                ? routeSettings.arguments as String
-                : 'Minh Anh';
-            return ConversationScreen(contactName: contactName);
+            final arguments = routeSettings.arguments;
+            final partnerId = arguments is Map && arguments['partnerId'] is int
+                ? arguments['partnerId'] as int
+                : null;
+            final partnerName =
+                arguments is Map && arguments['partnerName'] is String
+                ? arguments['partnerName'] as String
+                : null;
+            if (partnerId == null) {
+              return const Scaffold(
+                body: Center(
+                  child: Text(
+                    'Không xác định được người nhận cuộc trò chuyện.',
+                  ),
+                ),
+              );
+            }
+            return ChatScreen(partnerId: partnerId, partnerName: partnerName);
           case sendRequest:
             final arguments = routeSettings.arguments;
             final partnerId = arguments is Map && arguments['partnerId'] is int
                 ? arguments['partnerId'] as int
                 : null;
-            final partnerName = arguments is Map && arguments['partnerName'] is String
+            final partnerName =
+                arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
-            final matchScore = arguments is Map && arguments['matchScore'] is num
+            final matchScore =
+                arguments is Map && arguments['matchScore'] is num
                 ? (arguments['matchScore'] as num).toDouble()
                 : 0.0;
             return SendRequestScreen(
@@ -265,7 +285,8 @@ class AppRoutes {
             final partnerId = arguments is Map && arguments['partnerId'] is int
                 ? arguments['partnerId'] as int
                 : null;
-            final partnerName = arguments is Map && arguments['partnerName'] is String
+            final partnerName =
+                arguments is Map && arguments['partnerName'] is String
                 ? arguments['partnerName'] as String
                 : null;
             return SentRequestScreen(
@@ -282,20 +303,15 @@ class AppRoutes {
                 : null;
             return CancelConnectionScreen(partnerId: partnerId);
           case blockedUsers:
-            return const BlockedUsersScreen();
+            return const live_blocks.BlockedUsersScreen();
           case notifications:
             return NotificationsScreen(
+              currentUserId: user.userId,
               onItemTap: (item) {
                 if (item.title.contains('lời mời')) {
                   Navigator.pushNamed(context, requests);
                 } else if (item.title.contains('Lịch xem phòng')) {
                   Navigator.pushNamed(context, listingManagement);
-                } else {
-                  Navigator.pushNamed(
-                    context,
-                    conversation,
-                    arguments: item.title,
-                  );
                 }
               },
             );
@@ -303,7 +319,8 @@ class AppRoutes {
             return const PrivacyScreen();
           case reportViolation:
             final arguments = routeSettings.arguments;
-            final targetUserId = arguments is Map && arguments['targetUserId'] is int
+            final targetUserId =
+                arguments is Map && arguments['targetUserId'] is int
                 ? arguments['targetUserId'] as int
                 : null;
             return ReportViolationScreen(targetUserId: targetUserId);
@@ -330,15 +347,16 @@ class AppRoutes {
             final rawDetailUser = arguments is Map && arguments['user'] is Map
                 ? arguments['user'] as Map
                 : arguments is Map
-                    ? arguments
-                    : null;
+                ? arguments
+                : null;
             final detailUser = rawDetailUser == null
                 ? null
                 : <String, String>{
                     for (final entry in rawDetailUser.entries)
                       entry.key.toString(): entry.value.toString(),
                   };
-            final onStatusChanged = arguments is Map &&
+            final onStatusChanged =
+                arguments is Map &&
                     arguments['onStatusChanged'] is void Function(String)
                 ? arguments['onStatusChanged'] as void Function(String)
                 : null;
@@ -351,15 +369,16 @@ class AppRoutes {
             final rawConfirmUser = arguments is Map && arguments['user'] is Map
                 ? arguments['user'] as Map
                 : arguments is Map
-                    ? arguments
-                    : null;
+                ? arguments
+                : null;
             final confirmUser = rawConfirmUser == null
                 ? null
                 : <String, String>{
                     for (final entry in rawConfirmUser.entries)
                       entry.key.toString(): entry.value.toString(),
                   };
-            final onStatusChanged = arguments is Map &&
+            final onStatusChanged =
+                arguments is Map &&
                     arguments['onStatusChanged'] is void Function(String)
                 ? arguments['onStatusChanged'] as void Function(String)
                 : null;

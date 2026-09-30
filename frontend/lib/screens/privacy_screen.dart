@@ -12,14 +12,52 @@ class PrivacyScreen extends StatefulWidget {
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
   late bool _isSearchActive;
+  bool _busy = true;
 
   @override
   void initState() {
     super.initState();
     _isSearchActive = ApiService().isSearchActive;
+    _loadStatus();
   }
 
-  Widget _buildSettingItem(String title, String subtitle, {Widget? trailing, VoidCallback? onTap}) {
+  Future<void> _loadStatus() async {
+    try {
+      final value = await ApiService().getSearchStatus();
+      if (mounted) setState(() => _isSearchActive = value);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không tải được trạng thái: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _updateStatus(bool value) async {
+    setState(() => _busy = true);
+    try {
+      await ApiService().updateSearchStatus(value);
+      if (mounted) setState(() => _isSearchActive = value);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không lưu được trạng thái: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _buildSettingItem(
+    String title,
+    String subtitle, {
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -143,49 +181,55 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
               ),
             ),
-            
+
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 children: [
                   // Settings list
                   _buildSettingItem(
                     'Trạng thái tìm bạn',
-                    _isSearchActive ? 'Đang bật · Hiển thị trong gợi ý' : 'Đã tắt · Ẩn khỏi gợi ý',
+                    _isSearchActive
+                        ? 'Đang bật · Hiển thị trong gợi ý'
+                        : 'Đã tắt · Ẩn khỏi gợi ý',
                     trailing: Switch(
                       value: _isSearchActive,
-                      onChanged: (val) {
-                        setState(() {
-                          _isSearchActive = val;
-                          ApiService().isSearchActive = val;
-                        });
-                      },
+                      onChanged: _busy ? null : _updateStatus,
                       activeTrackColor: const Color(0xFF087E6B),
                     ),
                   ),
-                  
+
                   _buildSettingItem(
                     'Thông tin liên hệ',
                     'Chỉ chia sẻ với người đã kết nối',
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () => _showPrivacyDetails(
                       'Thông tin liên hệ',
                       'Email và số điện thoại chỉ được hiển thị sau khi cả hai người đồng ý kết nối.',
                     ),
                   ),
-                  
+
                   _buildSettingItem(
                     'Hồ sơ công khai',
                     'Tên, avatar, giới thiệu & tiêu chí',
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () => _showPrivacyDetails(
                       'Hồ sơ công khai',
                       'Bạn có thể kiểm soát trạng thái tìm bạn và những thông tin được hiển thị trên hồ sơ.',
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Info Box
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -222,7 +266,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
               ),
             ),
-            
+
             // Bottom Button
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),

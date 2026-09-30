@@ -35,7 +35,7 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
     _coordinates = _resolveCoordinates(widget.post);
   }
 
-  /// Phân giải tọa độ thực tế dựa theo địa chỉ và quận huyện của phòng trọ
+  /// Approximate area center, not the verified coordinates of the room.
   static LatLng _resolveCoordinates(RoomPost post) {
     final text = '${post.address} ${post.district}'.toLowerCase();
 
@@ -46,11 +46,17 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
       return const LatLng(10.8038, 106.7158);
     } else if (text.contains('điện biên phủ') || text.contains('bình thạnh')) {
       return const LatLng(10.8005, 106.7118);
-    } else if (text.contains('quận 1') || text.contains('bến nghé') || text.contains('đinh tiên hoàng')) {
+    } else if (text.contains('quận 1') ||
+        text.contains('bến nghé') ||
+        text.contains('đinh tiên hoàng')) {
       return const LatLng(10.7769, 106.7009);
-    } else if (text.contains('quận 3') || text.contains('võ văn tần') || text.contains('nam kỳ')) {
+    } else if (text.contains('quận 3') ||
+        text.contains('võ văn tần') ||
+        text.contains('nam kỳ')) {
       return const LatLng(10.7828, 106.6872);
-    } else if (text.contains('quận 7') || text.contains('rmit') || text.contains('phú mỹ hưng')) {
+    } else if (text.contains('quận 7') ||
+        text.contains('rmit') ||
+        text.contains('phú mỹ hưng')) {
       return const LatLng(10.7326, 106.7003);
     } else if (text.contains('thủ đức') || text.contains('đại học quốc gia')) {
       return const LatLng(10.8504, 106.7719);
@@ -70,10 +76,10 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
     final address = widget.post.address.trim().isNotEmpty
         ? widget.post.address.trim()
         : 'TP. Hồ Chí Minh';
-    
+
     // Deep link Google Maps tìm kiếm theo địa chỉ và tọa độ
     final url = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$address (${_coordinates.latitude},${_coordinates.longitude})')}',
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
     );
 
     try {
@@ -163,7 +169,7 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
                               ],
                             ),
                             child: const Text(
-                              'Vị trí phòng',
+                              'Khu vực tham khảo',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -205,7 +211,7 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
                     const SizedBox(height: 6),
                     _controlButton(
                       icon: Icons.my_location,
-                      tooltip: 'Căn giữa phòng',
+                      tooltip: 'Căn giữa khu vực',
                       onPressed: _recenter,
                     ),
                     const SizedBox(height: 6),
@@ -256,11 +262,7 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
         color: color,
         shape: BoxShape.circle,
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 1)),
         ],
       ),
       child: IconButton(

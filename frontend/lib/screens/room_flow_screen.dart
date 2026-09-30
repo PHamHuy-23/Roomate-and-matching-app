@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/room_post.dart';
 import '../widgets/room_location_map.dart';
 import 'room_details_screen.dart';
+import 'room_viewing_screen.dart';
 
 enum RoomFlowMode {
   landing,
@@ -200,21 +201,18 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           style: TextStyle(color: _muted, fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 28),
-        _button(
-          'Khám phá phòng',
-          () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacement<void, void>(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => RoomDetailsScreen(post: post),
-                ),
-              );
-            }
-          },
-        ),
+        _button('Khám phá phòng', () {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushReplacement<void, void>(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => RoomDetailsScreen(post: post),
+              ),
+            );
+          }
+        }),
       ],
     );
   }
@@ -405,7 +403,9 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         const SizedBox(height: 28),
         _button(
           'Xem lịch xem phòng',
-          () => _changeMode(RoomFlowMode.viewingSchedule),
+          () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => RoomViewingScreen(post: post)),
+          ),
         ),
       ],
     );
@@ -556,7 +556,9 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     String landmark2Title = 'Chợ & cửa hàng tiện lợi';
     String landmark2Dist = 'Khoảng 300 m · 4 phút đi bộ';
 
-    if (lower.contains('bình thạnh') || lower.contains('nguyễn gia trí') || lower.contains('hutech')) {
+    if (lower.contains('bình thạnh') ||
+        lower.contains('nguyễn gia trí') ||
+        lower.contains('hutech')) {
       landmark1Title = 'Đại học HUTECH / GTVT';
       landmark1Dist = 'Khoảng 650 m · 8 phút đi bộ';
       landmark2Title = 'Landmark 81 & Chợ Văn Thánh';
@@ -587,11 +589,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Bản đồ OpenStreetMap tương tác trực tiếp
-        RoomLocationMap(
-          post: post,
-          height: 240,
-          showControls: true,
-        ),
+        RoomLocationMap(post: post, height: 240, showControls: true),
         const SizedBox(height: 18),
         Text(
           districtName,
@@ -602,10 +600,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          addressText,
-          style: const TextStyle(color: _muted, height: 1.5),
-        ),
+        Text(addressText, style: const TextStyle(color: _muted, height: 1.5)),
         const SizedBox(height: 18),
         _locationFact(landmark1Title, landmark1Dist),
         _locationFact(landmark2Title, landmark2Dist),
@@ -617,7 +612,9 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         const SizedBox(height: 20),
         _button(
           'Đặt lịch xem phòng',
-          () => _changeMode(RoomFlowMode.viewingSchedule),
+          () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => RoomViewingScreen(post: post)),
+          ),
         ),
       ],
     );
@@ -766,11 +763,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
   );
 
-  Widget _outlineButton(
-    BuildContext context,
-    String label,
-    RoomFlowMode next,
-  ) {
+  Widget _outlineButton(BuildContext context, String label, RoomFlowMode next) {
     final isSelected = mode == next;
     return isSelected
         ? FilledButton(

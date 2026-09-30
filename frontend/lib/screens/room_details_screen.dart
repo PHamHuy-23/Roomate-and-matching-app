@@ -23,6 +23,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   static const _soft = Color(0xFFE8F4F1);
 
   late bool _saved;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -39,7 +40,9 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final area = post.areaM2 == null ? '28 m²' : '${post.areaM2!.round()} m²';
+    final area = post.areaM2 == null
+        ? 'Chưa có diện tích'
+        : '${post.areaM2!.round()} m²';
     final hasImage = post.imageUrl?.trim().isNotEmpty == true;
     final hasCompleteDetails = post.areaM2 != null && post.amenities.isNotEmpty;
     return Scaffold(
@@ -52,11 +55,25 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         actions: [
           IconButton(
             tooltip: _saved ? 'Bỏ lưu phòng' : 'Lưu phòng',
-            onPressed: () {
-              setState(() {
-                _saved = ApiService().toggleSavePost(widget.post.id);
-              });
-            },
+            onPressed: _saving
+                ? null
+                : () async {
+                    setState(() => _saving = true);
+                    try {
+                      final saved = await ApiService().toggleSavePost(
+                        widget.post.id,
+                      );
+                      if (mounted) setState(() => _saved = saved);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Không lưu được phòng: $e')),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _saving = false);
+                    }
+                  },
             icon: Icon(_saved ? Icons.favorite : Icons.favorite_border),
           ),
           IconButton(

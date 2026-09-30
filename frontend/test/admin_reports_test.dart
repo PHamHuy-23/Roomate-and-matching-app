@@ -3,6 +3,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/navigation/app_routes.dart';
 import 'package:roommate_hub_mobile/screens/admin/admin_report_resolved_screen.dart';
 import 'package:roommate_hub_mobile/screens/admin/admin_reports_screen.dart';
+import 'package:roommate_hub_mobile/services/api_service.dart';
+
+class _ReportsApi implements ApiService {
+  @override
+  bool get hasAuthToken => true;
+  @override
+  Future<List<dynamic>> getAdminReports() async => [
+    {
+      'id': 28,
+      'reason': 'Thông tin phòng không đúng thực tế',
+      'targetType': 'ROOM_POST',
+      'targetId': 4,
+    },
+    {
+      'id': 27,
+      'reason': 'Nội dung tin đăng không phù hợp',
+      'targetId': 5,
+      'actionNote': 'Đang chờ quản trị viên kiểm tra nội dung.',
+    },
+    {'id': 26, 'reason': 'Tin đăng có dấu hiệu trùng lặp', 'targetId': 6},
+  ];
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   testWidgets('Chọn từng báo cáo cập nhật phần chi tiết', (tester) async {
@@ -12,24 +36,37 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      const MaterialApp(home: AdminReportsScreen()),
+      MaterialApp(home: AdminReportsScreen(apiService: _ReportsApi())),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('BC-028 / Chi tiết báo cáo'), findsOneWidget);
-    expect(find.textContaining('Thông tin phòng không đúng thực tế'), findsOneWidget);
+    expect(
+      find.textContaining('Thông tin phòng không đúng thực tế'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('admin_report_BC-027')));
     await tester.pumpAndSettle();
 
     expect(find.text('BC-027 / Chi tiết báo cáo'), findsOneWidget);
-    expect(find.textContaining('Nội dung tin đăng không phù hợp'), findsOneWidget);
-    expect(find.textContaining('Đang chờ quản trị viên kiểm tra nội dung.'), findsOneWidget);
+    expect(
+      find.textContaining('Nội dung tin đăng không phù hợp'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Đang chờ quản trị viên kiểm tra nội dung.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('admin_report_BC-026')));
     await tester.pumpAndSettle();
 
     expect(find.text('BC-026 / Chi tiết báo cáo'), findsOneWidget);
-    expect(find.textContaining('Tin đăng có dấu hiệu trùng lặp'), findsOneWidget);
+    expect(
+      find.textContaining('Tin đăng có dấu hiệu trùng lặp'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Nút về danh sách báo cáo mở lại màn danh sách', (tester) async {
@@ -39,9 +76,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: const AdminReportResolvedScreen(),
-        routes: {
-          AppRoutes.adminReports: (_) => const AdminReportsScreen(),
-        },
+        routes: {AppRoutes.adminReports: (_) => const AdminReportsScreen()},
       ),
     );
 

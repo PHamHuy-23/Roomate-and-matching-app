@@ -5,11 +5,7 @@ import '../../services/api_service.dart';
 import '../../widgets/admin_profile_avatar.dart';
 
 class AdminConfirmLockScreen extends StatefulWidget {
-  const AdminConfirmLockScreen({
-    super.key,
-    this.user,
-    this.onStatusChanged,
-  });
+  const AdminConfirmLockScreen({super.key, this.user, this.onStatusChanged});
 
   final Map<String, String>? user;
   final ValueChanged<String>? onStatusChanged;
@@ -22,8 +18,8 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
   final ApiService _api = ApiService();
   bool _isSubmitting = false;
 
-  String get _userName => widget.user?['fullName'] ?? 'Minh Anh';
-  String get _userEmail => widget.user?['email'] ?? 'anh@example.com';
+  String get _userName => widget.user?['fullName'] ?? 'Không xác định';
+  String get _userEmail => widget.user?['email'] ?? 'Chưa có email';
 
   int? get _userId {
     final rawId = widget.user?['userId'] ?? widget.user?['id'];
@@ -36,7 +32,9 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
     final userId = _userId;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không xác định được tài khoản cần khóa.')),
+        const SnackBar(
+          content: Text('Không xác định được tài khoản cần khóa.'),
+        ),
       );
       return;
     }
@@ -50,9 +48,9 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
@@ -64,7 +62,12 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
     }
   }
 
-  Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
     return GestureDetector(
       onTap: () {
         if (!isActive && route != null) {
@@ -135,13 +138,30 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
-                _buildSidebarItem(context, 'Người dùng', isActive: true, route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
-                
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Người dùng',
+                  isActive: true,
+                  route: '/admin/users',
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: AppRoutes.adminModeratePost,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Báo cáo vi phạm',
+                  route: AppRoutes.adminReports,
+                ),
+
                 const Spacer(),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text(
@@ -157,7 +177,7 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: Padding(
@@ -198,7 +218,7 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
                     ],
                   ),
                   const Spacer(),
-                  
+
                   // Center Card
                   Center(
                     child: Container(
@@ -259,12 +279,12 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
                                     )
                                   : const Text(
                                       'Xác nhận khóa',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'SourceSansPro',
-                                ),
-                              ),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'SourceSansPro',
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 16),

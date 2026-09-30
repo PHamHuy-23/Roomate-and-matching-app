@@ -15,6 +15,7 @@ class RoomPost {
   final double? deposit;
   final double? electricityWaterCost;
   final String status;
+  final String? moderationReason;
   final String? createdAt;
 
   RoomPost({
@@ -34,6 +35,7 @@ class RoomPost {
     this.deposit,
     this.electricityWaterCost,
     this.status = 'AVAILABLE',
+    this.moderationReason,
     this.createdAt,
   });
 
@@ -72,7 +74,8 @@ class RoomPost {
       amenities: amenities,
       deposit: (json['deposit'] as num?)?.toDouble(),
       electricityWaterCost: (json['electricityWaterCost'] as num?)?.toDouble(),
-      status: json['status'] as String? ?? 'AVAILABLE',
+      status: json['status'] as String? ?? 'UNKNOWN',
+      moderationReason: json['moderationReason'] as String?,
       createdAt: json['createdAt'] as String?,
     );
   }

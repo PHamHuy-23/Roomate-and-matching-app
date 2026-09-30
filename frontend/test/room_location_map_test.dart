@@ -28,9 +28,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: RoomLocationMap(post: post, height: 300),
-          ),
+          home: Scaffold(body: RoomLocationMap(post: post, height: 300)),
         ),
       );
 
@@ -39,14 +37,14 @@ void main() {
       expect(find.byType(TileLayer), findsOneWidget);
       expect(find.byType(MarkerLayer), findsOneWidget);
 
-      // 2. Kiểm tra ghim vị trí phòng
-      expect(find.text('Vị trí phòng'), findsOneWidget);
+      // 2. Tọa độ chỉ là tâm khu vực, không giả là tọa độ chính xác của phòng.
+      expect(find.text('Khu vực tham khảo'), findsOneWidget);
       expect(find.byIcon(Icons.location_on), findsOneWidget);
 
       // 3. Kiểm tra các nút tương tác zoom & Google Maps
       expect(find.byTooltip('Phóng to'), findsOneWidget);
       expect(find.byTooltip('Thu nhỏ'), findsOneWidget);
-      expect(find.byTooltip('Căn giữa phòng'), findsOneWidget);
+      expect(find.byTooltip('Căn giữa khu vực'), findsOneWidget);
       expect(find.byTooltip('Mở Google Maps'), findsOneWidget);
 
       // 4. Bấm thử các nút điều khiển
@@ -56,7 +54,7 @@ void main() {
       await tester.tap(find.byTooltip('Thu nhỏ'));
       await tester.pump();
 
-      await tester.tap(find.byTooltip('Căn giữa phòng'));
+      await tester.tap(find.byTooltip('Căn giữa khu vực'));
       await tester.pump();
     },
   );

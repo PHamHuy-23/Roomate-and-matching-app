@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
-
 enum PenpotStateMode {
   blockedUsers,
   noResults,
@@ -134,11 +133,13 @@ class NotificationsScreen extends StatefulWidget {
     this.items,
     this.onItemTap,
     this.loadRealData = true,
+    this.currentUserId,
   });
 
   final List<PenpotNotificationItem>? items;
   final ValueChanged<PenpotNotificationItem>? onItemTap;
   final bool loadRealData;
+  final int? currentUserId;
 
   static const _defaultItems = <PenpotNotificationItem>[
     PenpotNotificationItem(
@@ -159,12 +160,19 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late List<PenpotNotificationItem> _items;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    _items = widget.items ?? NotificationsScreen._defaultItems;
-    if (widget.items == null && widget.loadRealData && ApiService().hasAuthToken) {
+    final shouldLoad =
+        widget.items == null &&
+        widget.loadRealData &&
+        ApiService().hasAuthToken;
+    _items = shouldLoad
+        ? []
+        : widget.items ?? NotificationsScreen._defaultItems;
+    if (shouldLoad) {
       _loadRealNotifications();
     }
   }
@@ -177,18 +185,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         realItems.add(
           PenpotNotificationItem(
             title: 'Lịch xem phòng: ${apt.roomTitle}',
-            description: '${apt.status} · ${apt.appointmentTime.day}/${apt.appointmentTime.month}/${apt.appointmentTime.year} ${apt.appointmentTime.hour}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}',
+            description:
+                '${apt.status} · ${apt.appointmentTime.day}/${apt.appointmentTime.month}/${apt.appointmentTime.year} ${apt.appointmentTime.hour}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}',
             icon: Icons.calendar_today_outlined,
           ),
         );
       }
+      final userId = widget.currentUserId;
+      if (userId != null) {
+        final received = await ApiService().getReceivedRequests(userId);
+        for (final request in received) {
+          realItems.add(
+            PenpotNotificationItem(
+              title: '${request.partnerName} gửi lời mời kết nối',
+              description:
+                  '${request.status} · ${request.matchScore.round()}% phù hợp',
+              icon: Icons.person_add_alt_1_outlined,
+            ),
+          );
+        }
+      }
       if (mounted) {
         setState(() {
           _items = realItems;
+          _loadError = null;
         });
       }
-    } catch (_) {
-      // Keep initial items if error
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _items = [];
+          _loadError = 'Không tải được thông báo: $e';
+        });
+      }
     }
   }
 
@@ -203,31 +232,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         elevation: 0,
       ),
       body: _items.isEmpty
-          ? const PenpotStateView(
+          ? PenpotStateView(
               icon: Icons.notifications_none_outlined,
-              title: 'Chưa có thông báo',
+              title: _loadError == null
+                  ? 'Chưa có thông báo'
+                  : 'Chưa tải được thông báo',
               description:
-                  'Thông báo về kết nối, lịch hẹn và tin đăng sẽ xuất hiện ở đây.',
+                  _loadError ??
+                  'Thông báo về kết nối và lịch hẹn sẽ xuất hiện ở đây.',
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
               children: [
-                const Text(
-                  'Tất cả thông báo đã được đọc',
-                  style: TextStyle(color: _PenpotColors.muted, fontSize: 14),
-                ),
-                const SizedBox(height: 18),
                 for (final item in _items)
                   _NotificationCard(
                     item: item,
-                    onTap: widget.onItemTap == null ? null : () => widget.onItemTap!(item),
+                    onTap: widget.onItemTap == null
+                        ? null
+                        : () => widget.onItemTap!(item),
                   ),
               ],
             ),
     );
   }
 }
-
 
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({required this.item, this.onTap});

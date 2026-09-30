@@ -49,20 +49,43 @@ class ApiService {
 
   bool isPostSaved(int postId) => savedPostIds.contains(postId);
 
-  bool toggleSavePost(int postId) {
-    if (savedPostIds.contains(postId)) {
-      savedPostIds.remove(postId);
-      return false;
-    } else {
-      savedPostIds.add(postId);
-      return true;
+  Future<bool> toggleSavePost(int postId) async {
+    final saved = !savedPostIds.contains(postId);
+    await setPostSaved(postId, saved);
+    return saved;
+  }
+
+  Future<void> setPostSaved(int postId, bool saved) async {
+    final response = await _request(
+      'PUT',
+      '/profile/saved-posts/$postId',
+      body: {'saved': saved},
+    );
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không lưu được phòng');
     }
+    if (saved) {
+      savedPostIds.add(postId);
+    } else {
+      savedPostIds.remove(postId);
+    }
+  }
+
+  Future<void> loadSavedPosts() async {
+    final response = await _request('GET', '/profile/saved-posts');
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không tải được phòng đã lưu');
+    }
+    savedPostIds
+      ..clear()
+      ..addAll(_decodeList(response).map((id) => (id as num).toInt()));
   }
 
   String? get authToken => _token;
   bool get hasAuthToken => _token != null && _token!.isNotEmpty;
   String? get refreshToken => _refreshToken;
-  bool get hasRefreshToken => _refreshToken != null && _refreshToken!.isNotEmpty;
+  bool get hasRefreshToken =>
+      _refreshToken != null && _refreshToken!.isNotEmpty;
 
   static void configureUnauthorizedHandler(void Function() handler) {
     _onUnauthorized = handler;
@@ -112,6 +135,8 @@ class ApiService {
   }
 
   void clearAuthToken() {
+    savedPostIds.clear();
+    isSearchActive = true;
     _token = null;
     _refreshToken = null;
     _refreshFuture = null;
@@ -195,14 +220,16 @@ class ApiService {
     }
     try {
       final uri = Uri.parse('$baseUrl/auth/refresh-token');
-      final response = await _client.post(
-        uri,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode({'refreshToken': currentRefreshToken}),
-      ).timeout(requestTimeout);
+      final response = await _client
+          .post(
+            uri,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode({'refreshToken': currentRefreshToken}),
+          )
+          .timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final data = _decodeData(response);
@@ -387,7 +414,9 @@ class ApiService {
   Future<Map<String, dynamic>?> getPreferences(int userId) async {
     final response = await _request('GET', '/profile/preferences/$userId');
     if (response.statusCode == 200) {
-      if (response.bodyBytes.isEmpty || response.body.trim().isEmpty || response.body.trim() == 'null') {
+      if (response.bodyBytes.isEmpty ||
+          response.body.trim().isEmpty ||
+          response.body.trim() == 'null') {
         return null;
       }
       final data = _decodeData(response);
@@ -610,13 +639,18 @@ class ApiService {
     final response = await _request('GET', '/appointments/my');
     if (response.statusCode == 200) {
       return _decodeList(response)
-          .map((json) => ViewingAppointment.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => ViewingAppointment.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     }
     throw _errorFrom(response, 'Không tải được danh sách lịch hẹn');
   }
 
-  Future<ViewingAppointment> updateAppointmentStatus(int appointmentId, String status) async {
+  Future<ViewingAppointment> updateAppointmentStatus(
+    int appointmentId,
+    String status,
+  ) async {
     final response = await _request(
       'PUT',
       '/appointments/$appointmentId/status',
@@ -669,6 +703,7 @@ class ApiService {
     required int targetId,
     String targetType = 'USER',
     required String reason,
+    String? evidenceObjectKey,
   }) async {
     final response = await _request(
       'POST',
@@ -677,6 +712,7 @@ class ApiService {
         'targetId': targetId,
         'targetType': targetType,
         'reason': reason,
+        'evidenceObjectKey': ?evidenceObjectKey,
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -716,7 +752,11 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách báo cáo');
   }
 
-  Future<bool> moderateAdminReport(int reportId, {required String status, String? note}) async {
+  Future<bool> moderateAdminReport(
+    int reportId, {
+    required String status,
+    String? note,
+  }) async {
     final query = <String, String>{'status': status};
     if (note != null && note.isNotEmpty) query['note'] = note;
     final response = await _request(
@@ -777,10 +817,7 @@ class ApiService {
     final response = await _request(
       'PUT',
       '/auth/change-password',
-      body: {
-        'oldPassword': oldPassword,
-        'newPassword': newPassword,
-      },
+      body: {'oldPassword': oldPassword, 'newPassword': newPassword},
     );
     if (response.statusCode == 200) {
       return true;
@@ -810,11 +847,7 @@ class ApiService {
     final response = await _request(
       'POST',
       '/auth/reset-password',
-      body: {
-        'email': email,
-        'code': code,
-        'newPassword': newPassword,
-      },
+      body: {'email': email, 'code': code, 'newPassword': newPassword},
       authenticated: false,
     );
     if (response.statusCode == 200) {
@@ -830,10 +863,7 @@ class ApiService {
     final response = await _request(
       'POST',
       '/auth/verify-email',
-      body: {
-        'email': email,
-        'code': code,
-      },
+      body: {'email': email, 'code': code},
       authenticated: false,
     );
     if (response.statusCode == 200) {
@@ -855,13 +885,14 @@ class ApiService {
     throw _errorFrom(response, 'Không thể gửi mã xác minh');
   }
 
-
   // --- QUẢN LÝ BÀI ĐĂNG CỦA TÔI (MY ROOM POSTS) ---
   Future<List<RoomPost>> getMyPosts() async {
     final response = await _request('GET', '/posts/my');
     if (response.statusCode == 200) {
       final list = _decodeList(response);
-      return list.map((item) => RoomPost.fromJson(item as Map<String, dynamic>)).toList();
+      return list
+          .map((item) => RoomPost.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     throw _errorFrom(response, 'Không tải được danh sách bài đăng của bạn');
   }
@@ -881,8 +912,15 @@ class ApiService {
     required List<String> amenities,
     String? imageObjectKey,
   }) async {
-    final cleanCostStr = electricityWaterCost.replaceAll('.', '').replaceAll('đ', '').replaceAll('/tháng', '').trim();
-    final costDouble = double.tryParse(cleanCostStr) ?? 0.0;
+    final cleanCostStr = electricityWaterCost
+        .replaceAll('.', '')
+        .replaceAll('đ', '')
+        .replaceAll('/tháng', '')
+        .trim();
+    final costDouble = double.tryParse(cleanCostStr);
+    if (costDouble == null || costDouble < 0) {
+      throw const ApiException('Chi phí điện / nước phải là số tiền không âm');
+    }
     final amenitiesString = amenities.join(',');
     final response = await _request(
       'PUT',
@@ -908,7 +946,42 @@ class ApiService {
     }
     throw _errorFrom(response, 'Không thể cập nhật bài đăng');
   }
+
+  Future<Map<String, dynamic>> getPublicProfile(int userId) async {
+    final response = await _request('GET', '/profile/public/$userId');
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không tải được hồ sơ công khai');
+    }
+    return _decodeData(response) as Map<String, dynamic>;
+  }
+
+  Future<RoomPost> getRoomPost(int postId) async {
+    final response = await _request('GET', '/posts/$postId');
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không tải được tin phòng');
+    }
+    return RoomPost.fromJson(_decodeData(response) as Map<String, dynamic>);
+  }
+
+  Future<bool> getSearchStatus() async {
+    final response = await _request('GET', '/profile/search-status');
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không tải được trạng thái tìm bạn');
+    }
+    final data = _decodeData(response) as Map<String, dynamic>;
+    isSearchActive = data['searchActive'] == true;
+    return isSearchActive;
+  }
+
+  Future<void> updateSearchStatus(bool value) async {
+    final response = await _request(
+      'PUT',
+      '/profile/search-status',
+      body: {'searchActive': value},
+    );
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không cập nhật được trạng thái tìm bạn');
+    }
+    isSearchActive = value;
+  }
 }
-
-
-

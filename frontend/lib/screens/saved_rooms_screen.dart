@@ -8,7 +8,7 @@ class SavedRoomsScreen extends StatefulWidget {
   const SavedRoomsScreen({required this.posts, this.onUnsave, super.key});
 
   final List<RoomPost> posts;
-  final ValueChanged<int>? onUnsave;
+  final Future<void> Function(int)? onUnsave;
 
   @override
   State<SavedRoomsScreen> createState() => _SavedRoomsScreenState();
@@ -203,9 +203,19 @@ class _SavedRoomsScreenState extends State<SavedRoomsScreen> {
     return address;
   }
 
-  void _remove(RoomPost post) {
-    setState(() => _savedPosts.removeWhere((item) => item.id == post.id));
-    widget.onUnsave?.call(post.id);
+  Future<void> _remove(RoomPost post) async {
+    try {
+      await widget.onUnsave?.call(post.id);
+      if (mounted) {
+        setState(() => _savedPosts.removeWhere((item) => item.id == post.id));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không bỏ lưu được phòng: $e')));
+      }
+    }
   }
 }
 

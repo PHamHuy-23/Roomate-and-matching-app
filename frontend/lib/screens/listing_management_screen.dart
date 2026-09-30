@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/room_post.dart';
 import '../models/viewing_appointment.dart';
@@ -36,7 +37,8 @@ class ListingManagementScreen extends StatefulWidget {
   final ApiService? apiService;
 
   @override
-  State<ListingManagementScreen> createState() => _ListingManagementScreenState();
+  State<ListingManagementScreen> createState() =>
+      _ListingManagementScreenState();
 }
 
 class _ListingManagementScreenState extends State<ListingManagementScreen> {
@@ -63,16 +65,20 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   late bool _editingExisting;
   late final TextEditingController _titleCtrl;
   late final TextEditingController _addressCtrl;
+  late final TextEditingController _districtCtrl;
   late final TextEditingController _priceCtrl;
   late final TextEditingController _depositCtrl;
   late final TextEditingController _utilityCtrl;
   late final TextEditingController _descriptionCtrl;
-  DateTime _availableDate = DateTime(2026, 10, 1);
   double _area = 28;
   int _maxOccupants = 2;
-  int _photoCount = 4;
-  String _roomStatus = 'Còn phòng';
-  final Set<String> _amenities = Set<String>.from(_amenityOptions);
+  String? _imageObjectKey;
+  String? _imageUrl;
+  bool _busy = false;
+  String? _loadError;
+  final Set<String> _amenities = {};
+  RoomPost? _selectedPost;
+  ViewingAppointment? _selectedAppointment;
   List<RoomPost> _myPosts = [];
   List<ViewingAppointment> _appointments = [];
 
@@ -81,14 +87,18 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     super.initState();
     _mode = widget.mode;
     _editingExisting = widget.mode == ListingFlowMode.edit;
-    _myPosts = List<RoomPost>.from(widget.posts);
+    _myPosts = widget.posts
+        .where((post) => post.authorId == widget.authorId)
+        .toList();
     final post = _myPosts.isEmpty ? null : _myPosts.first;
-    _titleCtrl = TextEditingController(text: post?.title ?? 'Studio ngập nắng, có ban công');
-    _addressCtrl = TextEditingController(text: post?.address ?? 'Nguyễn Gia Trí, Bình Thạnh, TP.HCM');
-    _priceCtrl = TextEditingController(text: post == null ? '3.500.000đ' : '${_formatMoney(post.price)}đ');
-    _depositCtrl = TextEditingController(text: '3.500.000đ · 1 tháng');
-    _utilityCtrl = TextEditingController(text: '3.800đ / kWh · 100.000đ / người · 150.000đ');
-    _descriptionCtrl = TextEditingController(text: post?.description ?? 'Ban công riêng, đủ nội thất, bếp nhỏ');
+    _titleCtrl = TextEditingController();
+    _addressCtrl = TextEditingController();
+    _districtCtrl = TextEditingController();
+    _priceCtrl = TextEditingController();
+    _depositCtrl = TextEditingController(text: '0');
+    _utilityCtrl = TextEditingController(text: '0');
+    _descriptionCtrl = TextEditingController();
+    if (_editingExisting && post != null) _selectPost(post);
     _loadData();
   }
 
@@ -101,58 +111,157 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       if (mounted) {
         setState(() {
           final fetchedPosts = results[0] as List<RoomPost>;
-          if (fetchedPosts.isNotEmpty) {
-            _myPosts = fetchedPosts;
-          }
+          _myPosts = fetchedPosts
+              .where((post) => post.authorId == widget.authorId)
+              .toList();
+          _loadError = null;
           _appointments = results[1] as List<ViewingAppointment>;
         });
       }
-    } catch (_) {
-      // Ignored in offline / test mode
+    } catch (e) {
+      if (mounted) setState(() => _loadError = 'Không thể tải dữ liệu: $e');
+    }
+  }
+
+  void _selectPost(RoomPost post) {
+    _selectedPost = post;
+    _titleCtrl.text = post.title;
+    _addressCtrl.text = post.address;
+    _districtCtrl.text = post.district;
+    _priceCtrl.text = _formatMoney(post.price);
+    _depositCtrl.text = _formatMoney(post.deposit ?? 0);
+    _utilityCtrl.text = _formatMoney(post.electricityWaterCost ?? 0);
+    _descriptionCtrl.text = post.description;
+    _area = post.areaM2 ?? 0;
+    _maxOccupants = post.maxOccupants;
+    _amenities
+      ..clear()
+      ..addAll(post.amenities);
+    _imageUrl = post.imageUrl;
+    _imageObjectKey = null;
+  }
+
+  double _money(TextEditingController controller) {
+    final value = double.tryParse(
+      controller.text.replaceAll('.', '').replaceAll('đ', '').trim(),
+    );
+    if (value == null || value < 0) {
+      throw const FormatException(
+        'Chi phí phải là số tiền không âm, không kèm đơn vị khác.',
+      );
+    }
+    return value;
+  }
+
+  void _validatePost() {
+    if (_titleCtrl.text.trim().isEmpty ||
+        _addressCtrl.text.trim().isEmpty ||
+        _districtCtrl.text.trim().isEmpty ||
+        _descriptionCtrl.text.trim().isEmpty ||
+        _money(_priceCtrl) <= 0 ||
+        _area <= 0) {
+      throw const FormatException(
+        'Vui lòng nhập đủ thông tin, giá thuê và diện tích lớn hơn 0.',
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        imageQuality: 90,
+      );
+      if (image == null) return;
+      final bytes = await image.readAsBytes();
+      if (bytes.length > 5 * 1024 * 1024) {
+        throw const FormatException('Ảnh phải nhỏ hơn hoặc bằng 5 MB.');
+      }
+      final name = image.name.toLowerCase();
+      final ticket = await _api.uploadImage(
+        bytes: bytes,
+        fileName: image.name,
+        contentType: name.endsWith('.png')
+            ? 'image/png'
+            : name.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/jpeg',
+        purpose: 'room-post',
+      );
+      if (mounted) {
+        setState(() {
+          _imageObjectKey = ticket.objectKey;
+          _imageUrl = ticket.publicUrl;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không thể tải ảnh: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _handleSaveEdit() async {
-    final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
+    if (_busy) return;
+    final post = _selectedPost;
     if (post != null) {
       if (!_api.hasAuthToken) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vui lòng đăng nhập để cập nhật tin.')),
+            const SnackBar(
+              content: Text('Vui lòng đăng nhập để cập nhật tin.'),
+            ),
           );
         }
         return;
       }
-      final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
-      final rawPrice = double.tryParse(cleanPriceStr) ?? post.price;
+      setState(() => _busy = true);
       try {
+        _validatePost();
         await _api.updateRoomPost(
           postId: post.id,
           title: _titleCtrl.text.trim(),
           description: _descriptionCtrl.text.trim(),
-          price: rawPrice,
+          price: _money(_priceCtrl),
           address: _addressCtrl.text.trim(),
-          district: post.district.isNotEmpty ? post.district : 'Quận 1',
-          deposit: (post.deposit ?? 0) > 0 ? (post.deposit ?? rawPrice) : rawPrice,
+          district: _districtCtrl.text.trim(),
+          deposit: _money(_depositCtrl),
           electricityWaterCost: _utilityCtrl.text.trim(),
           area: _area,
           maxOccupants: _maxOccupants,
           currentOccupants: post.currentOccupants,
           amenities: _amenities.toList(),
+          imageObjectKey: _imageObjectKey,
         );
-        _loadData();
+        if (!mounted) return;
+        await _loadData();
+        if (!mounted) return;
         _goTo(ListingFlowMode.submitted);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi khi cập nhật tin: ${e.toString().replaceAll("Exception: ", "")}')),
+            SnackBar(
+              content: Text(
+                'Lỗi khi cập nhật tin: ${e.toString().replaceAll("Exception: ", "")}',
+              ),
+            ),
           );
         }
+      } finally {
+        if (mounted) setState(() => _busy = false);
       }
     }
   }
 
   Future<void> _handleSubmitNewPost() async {
+    if (_busy) return;
     if (!_api.hasAuthToken) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,63 +271,84 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       return;
     }
 
-    final cleanPriceStr = _priceCtrl.text.replaceAll('.', '').replaceAll('đ', '').trim();
-    final rawPrice = double.tryParse(cleanPriceStr) ?? 3500000.0;
+    setState(() => _busy = true);
     try {
+      _validatePost();
       await _api.createRoomPost({
         'title': _titleCtrl.text.trim(),
         'description': _descriptionCtrl.text.trim(),
-        'price': rawPrice,
+        'price': _money(_priceCtrl),
         'address': _addressCtrl.text.trim(),
-        'district': 'Quận 1',
-        'deposit': rawPrice,
-        'electricityWaterCost': 200000.0,
+        'district': _districtCtrl.text.trim(),
+        'deposit': _money(_depositCtrl),
+        'electricityWaterCost': _money(_utilityCtrl),
+        if (_imageObjectKey != null) 'imageObjectKey': _imageObjectKey,
         'area': _area,
         'maxOccupants': _maxOccupants,
         'currentOccupants': 0,
         'amenities': _amenities.join(','),
       });
-      _loadData();
+      if (!mounted) return;
+      await _loadData();
+      if (!mounted) return;
       _goTo(ListingFlowMode.submitted);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi đăng tin: ${e.toString().replaceAll("Exception: ", "")}')),
+          SnackBar(
+            content: Text(
+              'Lỗi khi đăng tin: ${e.toString().replaceAll("Exception: ", "")}',
+            ),
+          ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _handleCloseListing() async {
-    final post = _myPosts.isNotEmpty ? _myPosts.first : (widget.posts.isNotEmpty ? widget.posts.first : null);
+    if (_busy) return;
+    final post = _selectedPost;
     if (post != null) {
       if (!_api.hasAuthToken) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vui lòng đăng nhập để đóng tin đăng.')),
+            const SnackBar(
+              content: Text('Vui lòng đăng nhập để đóng tin đăng.'),
+            ),
           );
         }
         return;
       }
+      setState(() => _busy = true);
       try {
         await _api.closeRoomPost(post.id);
-        _loadData();
+        if (!mounted) return;
+        await _loadData();
+        if (!mounted) return;
         _goTo(ListingFlowMode.closed);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi khi đóng tin: ${e.toString().replaceAll("Exception: ", "")}')),
+            SnackBar(
+              content: Text(
+                'Lỗi khi đóng tin: ${e.toString().replaceAll("Exception: ", "")}',
+              ),
+            ),
           );
         }
+      } finally {
+        if (mounted) setState(() => _busy = false);
       }
     }
   }
-
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _addressCtrl.dispose();
+    _districtCtrl.dispose();
     _priceCtrl.dispose();
     _depositCtrl.dispose();
     _utilityCtrl.dispose();
@@ -330,14 +460,44 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Quản lý phòng và yêu cầu xem phòng', style: TextStyle(color: _muted, height: 1.5)),
+        const Text(
+          'Quản lý phòng và yêu cầu xem phòng',
+          style: TextStyle(color: _muted, height: 1.5),
+        ),
         const SizedBox(height: 18),
+        if (_loadError != null)
+          Text(_loadError!, style: const TextStyle(color: Colors.red)),
         if (_myPosts.isEmpty)
-          _emptyState(context, Icons.post_add_outlined, 'Bạn chưa có tin đăng nào', 'Tạo tin đầu tiên để tìm người ở ghép phù hợp.')
+          _emptyState(
+            context,
+            Icons.post_add_outlined,
+            'Bạn chưa có tin đăng nào',
+            'Tạo tin đầu tiên để tìm người ở ghép phù hợp.',
+          )
         else
           ..._myPosts.map((post) => _postCard(context, post)),
         const SizedBox(height: 18),
-        _button('+ Đăng phòng mới', () => _goTo(ListingFlowMode.create)),
+        _button('+ Đăng phòng mới', () {
+          _editingExisting = false;
+          _selectedPost = null;
+          for (final controller in [
+            _titleCtrl,
+            _addressCtrl,
+            _districtCtrl,
+            _priceCtrl,
+            _descriptionCtrl,
+          ]) {
+            controller.clear();
+          }
+          _depositCtrl.text = '0';
+          _utilityCtrl.text = '0';
+          _area = 28;
+          _maxOccupants = 2;
+          _amenities.clear();
+          _imageObjectKey = null;
+          _imageUrl = null;
+          _goTo(ListingFlowMode.create);
+        }),
       ],
     );
   }
@@ -352,8 +512,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         return 'ĐÃ ĐÓNG';
       case 'APPROVED':
       case 'AVAILABLE':
-      default:
         return 'ĐANG HIỂN THỊ';
+      default:
+        return 'CHƯA RÕ TRẠNG THÁI';
     }
   }
 
@@ -362,28 +523,72 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       color: Colors.white,
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(children: <Widget>[
-              Expanded(child: Text(post.title, style: const TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800))),
-              _statusBadge(_postStatusLabel(post.status)),
-            ]),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    post.title,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                _statusBadge(_postStatusLabel(post.status)),
+              ],
+            ),
             const SizedBox(height: 7),
-            Text('${_formatMoney(post.price)}đ / tháng · 28 m²', style: const TextStyle(color: _muted)),
+            Text(
+              '${_formatMoney(post.price)}đ / tháng · ${post.areaM2 ?? "—"} m²',
+              style: const TextStyle(color: _muted),
+            ),
+            if (post.moderationReason != null)
+              Text('Phản hồi kiểm duyệt: ${post.moderationReason}'),
             const SizedBox(height: 3),
-            Text(post.address, style: const TextStyle(color: _muted, fontSize: 13)),
+            Text(
+              post.address,
+              style: const TextStyle(color: _muted, fontSize: 13),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: <Widget>[
-                OutlinedButton(onPressed: () { _editingExisting = true; _goTo(ListingFlowMode.edit); }, child: const Text('Chỉnh sửa tin đăng')),
-                OutlinedButton(onPressed: () => _goTo(ListingFlowMode.viewingRequest), child: const Text('Yêu cầu xem phòng · 1')),
-                TextButton(onPressed: () => _goTo(ListingFlowMode.close), child: const Text('Đóng tin đăng')),
+                OutlinedButton(
+                  onPressed: () {
+                    _selectPost(post);
+                    _editingExisting = true;
+                    _goTo(ListingFlowMode.edit);
+                  },
+                  child: const Text('Chỉnh sửa tin đăng'),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    _selectedPost = post;
+                    _goTo(ListingFlowMode.viewingRequest);
+                  },
+                  child: Text(
+                    'Yêu cầu xem phòng · ${_appointments.where((a) => a.roomPostId == post.id && a.hostId == widget.authorId && a.status == 'PENDING').length}',
+                  ),
+                ),
+                if (post.status != 'CLOSED')
+                  TextButton(
+                    onPressed: () {
+                      _selectedPost = post;
+                      _goTo(ListingFlowMode.close);
+                    },
+                    child: const Text('Đóng tin đăng'),
+                  ),
               ],
             ),
           ],
@@ -396,17 +601,51 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _stageHeader('1 / 3 · Thông tin cơ bản', 'Bắt đầu bằng những thông tin người xem cần biết.'),
-        _input('Tiêu đề bài đăng', _titleCtrl, hint: 'Studio ngập nắng, có ban công'),
-        _input('Địa chỉ / khu vực', _addressCtrl, hint: 'Nguyễn Gia Trí, Bình Thạnh, TP.HCM'),
-        Row(children: <Widget>[
-          Expanded(child: _numberInput('Diện tích', '${_area.toStringAsFixed(0)} m²', () => setState(() => _area = _area >= 60 ? 18 : _area + 2))),
-          const SizedBox(width: 12),
-          Expanded(child: _numberInput('Số người tối đa', '$_maxOccupants người', () => setState(() => _maxOccupants = _maxOccupants >= 6 ? 1 : _maxOccupants + 1))),
-        ]),
-        _dateField(),
+        _stageHeader(
+          '1 / 3 · Thông tin cơ bản',
+          'Bắt đầu bằng những thông tin người xem cần biết.',
+        ),
+        _input(
+          'Tiêu đề bài đăng',
+          _titleCtrl,
+          hint: 'Studio ngập nắng, có ban công',
+        ),
+        _input(
+          'Địa chỉ / khu vực',
+          _addressCtrl,
+          hint: 'Nguyễn Gia Trí, Bình Thạnh, TP.HCM',
+        ),
+        _input('Quận / huyện', _districtCtrl),
+        _input('Mô tả', _descriptionCtrl, maxLines: 4),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _numberInput(
+                'Diện tích',
+                '${_area.toStringAsFixed(0)} m²',
+                () => setState(() => _area = _area >= 60 ? 18 : _area + 2),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _numberInput(
+                'Số người tối đa',
+                '$_maxOccupants người',
+                () => setState(
+                  () => _maxOccupants = _maxOccupants >= 6
+                      ? 1
+                      : _maxOccupants + 1,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const Text('Ngày nhận phòng: ghi cụ thể trong mô tả nếu cần.'),
         const SizedBox(height: 6),
-        _button('Tiếp tục · Ảnh & tiện ích', () => _goTo(ListingFlowMode.photosAmenities)),
+        _button(
+          'Tiếp tục · Ảnh & tiện ích',
+          () => _goTo(ListingFlowMode.photosAmenities),
+        ),
       ],
     );
   }
@@ -415,24 +654,61 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _stageHeader('2 / 3 · Giúp người xem hiểu căn phòng', 'Hình ảnh rõ ràng giúp tin đăng đáng tin cậy hơn.'),
+        _stageHeader(
+          '2 / 3 · Giúp người xem hiểu căn phòng',
+          'Hình ảnh rõ ràng giúp tin đăng đáng tin cậy hơn.',
+        ),
         const SizedBox(height: 14),
-        const Text('Ảnh bìa', style: TextStyle(color: _ink, fontSize: 16, fontWeight: FontWeight.w800)),
+        const Text(
+          'Ảnh bìa',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 8),
         InkWell(
-          onTap: () => setState(() => _photoCount = _photoCount >= 10 ? 1 : _photoCount + 1),
+          onTap: _busy ? null : _pickImage,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             height: 164,
             width: double.infinity,
-            decoration: BoxDecoration(color: _soft, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
-            child: const Center(child: Icon(Icons.add_photo_alternate_outlined, color: _primary, size: 52)),
+            decoration: BoxDecoration(
+              color: _soft,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _border),
+            ),
+            child: _imageUrl == null
+                ? const Center(
+                    child: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: _primary,
+                      size: 52,
+                    ),
+                  )
+                : Image.network(
+                    _imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) =>
+                        const Center(child: Text('Không tải được ảnh')),
+                  ),
           ),
         ),
         const SizedBox(height: 8),
-        Text('$_photoCount / 10 ảnh · JPG, PNG · Tối đa 5 MB / ảnh', style: const TextStyle(color: _muted, fontSize: 13)),
+        Text(
+          '${_imageUrl == null ? 0 : 1} ảnh bìa · JPG, PNG · Tối đa 5 MB',
+          style: const TextStyle(color: _muted, fontSize: 13),
+        ),
         const SizedBox(height: 20),
-        const Text('Tiện ích có sẵn', style: TextStyle(color: _ink, fontSize: 16, fontWeight: FontWeight.w800)),
+        const Text(
+          'Tiện ích có sẵn',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -444,14 +720,24 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
               selected: selected,
               selectedColor: _soft,
               checkmarkColor: _primary,
-              onSelected: (value) => setState(() => value ? _amenities.add(amenity) : _amenities.remove(amenity)),
+              onSelected: (value) => setState(
+                () => value
+                    ? _amenities.add(amenity)
+                    : _amenities.remove(amenity),
+              ),
             );
           }).toList(),
         ),
         const SizedBox(height: 12),
-        const Text('Chọn ảnh bìa rõ, đủ sáng và đúng thực tế.', style: TextStyle(color: _muted, height: 1.4)),
+        const Text(
+          'Chọn ảnh bìa rõ, đủ sáng và đúng thực tế.',
+          style: TextStyle(color: _muted, height: 1.4),
+        ),
         const SizedBox(height: 24),
-        _button('Tiếp tục · Giá & nội quy', () => _goTo(ListingFlowMode.priceRules)),
+        _button(
+          'Tiếp tục · Giá & nội quy',
+          () => _goTo(ListingFlowMode.priceRules),
+        ),
       ],
     );
   }
@@ -460,11 +746,23 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _stageHeader('3 / 3 · Minh bạch trước khi kết nối', 'Nêu rõ chi phí và nguyên tắc sống chung.'),
-        _input('Tiền thuê / tháng', _priceCtrl, keyboard: TextInputType.number, hint: '3.500.000đ'),
-        _input('Tiền cọc', _depositCtrl, hint: '3.500.000đ · 1 tháng'),
-        _input('Điện / nước / phí dịch vụ', _utilityCtrl, hint: '3.800đ / kWh · 100.000đ / người · 150.000đ'),
-        _infoCard(Icons.rule_outlined, 'Nội quy', 'Không hút thuốc · Yên tĩnh sau 23h'),
+        _stageHeader(
+          '3 / 3 · Minh bạch trước khi kết nối',
+          'Nêu rõ chi phí và nguyên tắc sống chung.',
+        ),
+        _input(
+          'Tiền thuê / tháng',
+          _priceCtrl,
+          keyboard: TextInputType.number,
+          hint: '3.500.000đ',
+        ),
+        _input('Tiền cọc (đ)', _depositCtrl, keyboard: TextInputType.number),
+        _input(
+          'Tổng điện / nước / phí dịch vụ mỗi tháng (đ)',
+          _utilityCtrl,
+          keyboard: TextInputType.number,
+        ),
+        _input('Mô tả và nội quy', _descriptionCtrl, maxLines: 4),
         const SizedBox(height: 24),
         _button('Xem trước tin đăng', () => _goTo(ListingFlowMode.preview)),
       ],
@@ -475,20 +773,45 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Container(height: 180, decoration: BoxDecoration(color: _soft, borderRadius: BorderRadius.circular(16)), child: const Center(child: Icon(Icons.home_work_outlined, color: _primary, size: 62))),
+        Container(
+          height: 180,
+          decoration: BoxDecoration(
+            color: _soft,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Center(
+            child: Icon(Icons.home_work_outlined, color: _primary, size: 62),
+          ),
+        ),
         const SizedBox(height: 18),
-        Text(_titleCtrl.text.trim(), style: const TextStyle(color: _ink, fontSize: 21, fontWeight: FontWeight.w800)),
+        Text(
+          _titleCtrl.text.trim(),
+          style: const TextStyle(
+            color: _ink,
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 8),
-        Text('${_addressCtrl.text.trim()} · ${_area.toStringAsFixed(0)} m² · Tối đa $_maxOccupants người', style: const TextStyle(color: _muted)),
+        Text(
+          '${_addressCtrl.text.trim()} · ${_area.toStringAsFixed(0)} m² · Tối đa $_maxOccupants người',
+          style: const TextStyle(color: _muted),
+        ),
         const SizedBox(height: 14),
         _previewRow('Giá thuê', '${_priceCtrl.text.trim()} / tháng'),
-        _previewRow('Tiền cọc', 'Cọc 1 tháng · Có nội thất'),
-        _previewRow('Chi phí', 'Điện, nước và phí dịch vụ tính riêng'),
+        _previewRow('Tiền cọc', '${_depositCtrl.text}đ'),
+        _previewRow('Chi phí', '${_utilityCtrl.text}đ / tháng'),
         _previewRow('Mô tả', _descriptionCtrl.text.trim()),
         const SizedBox(height: 10),
-        const Text('Kiểm tra kỹ thông tin trước khi gửi', style: TextStyle(color: _muted, height: 1.4)),
+        const Text(
+          'Kiểm tra kỹ thông tin trước khi gửi',
+          style: TextStyle(color: _muted, height: 1.4),
+        ),
         const SizedBox(height: 24),
-        _button(_editingExisting ? 'Lưu & gửi kiểm duyệt' : 'Gửi tin để duyệt', _editingExisting ? _handleSaveEdit : _handleSubmitNewPost),
+        _button(
+          _editingExisting ? 'Lưu & gửi kiểm duyệt' : 'Gửi tin để duyệt',
+          _editingExisting ? _handleSaveEdit : _handleSubmitNewPost,
+        ),
       ],
     );
   }
@@ -497,19 +820,23 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _infoCard(Icons.home_work_outlined, 'Studio ngập nắng · RH-028', 'Thông tin đang hiển thị trên tin đăng của bạn.'),
+        _infoCard(
+          Icons.home_work_outlined,
+          _selectedPost?.title ?? 'Chưa chọn tin',
+          'Chỉnh sửa sẽ gửi tin để kiểm duyệt lại.',
+        ),
         const SizedBox(height: 14),
         _input('Tiêu đề', _titleCtrl),
         _input('Giá thuê / tháng', _priceCtrl, keyboard: TextInputType.number),
-        DropdownButtonFormField<String>(
-          initialValue: _roomStatus,
-          decoration: _fieldDecoration('Trạng thái phòng'),
-          items: const <DropdownMenuItem<String>>[
-            DropdownMenuItem(value: 'Còn phòng', child: Text('Còn phòng')),
-            DropdownMenuItem(value: 'Đã có người', child: Text('Đã có người')),
-          ],
-          onChanged: (value) => setState(() => _roomStatus = value ?? _roomStatus),
+        _input('Địa chỉ / khu vực', _addressCtrl),
+        _input('Quận / huyện', _districtCtrl),
+        _input('Tiền cọc (đ)', _depositCtrl, keyboard: TextInputType.number),
+        _input(
+          'Tổng chi phí điện / nước mỗi tháng (đ)',
+          _utilityCtrl,
+          keyboard: TextInputType.number,
         ),
+        const Text('Để ngừng cho thuê, dùng thao tác Đóng tin đăng.'),
         const SizedBox(height: 14),
         _input('Mô tả', _descriptionCtrl, maxLines: 4),
         const SizedBox(height: 6),
@@ -525,114 +852,166 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       'Tin của bạn đang chờ kiểm duyệt',
       'Bạn sẽ nhận thông báo khi có kết quả. Tin chưa hiển thị trong danh sách phòng.',
       badge: 'Chờ duyệt',
-      action: _button('Về tin đăng của tôi', () => _goTo(ListingFlowMode.myListings)),
+      action: _button(
+        'Về tin đăng của tôi',
+        () => _goTo(ListingFlowMode.myListings),
+      ),
     );
   }
 
   Widget _viewingRequest(BuildContext context) {
+    final appointments = _appointments
+        .where(
+          (apt) =>
+              apt.hostId == widget.authorId &&
+              apt.roomPostId == _selectedPost?.id,
+        )
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Lịch hẹn tại phòng bạn đang đăng', style: TextStyle(color: _muted, height: 1.5)),
+        const Text(
+          'Lịch hẹn tại phòng bạn đang đăng',
+          style: TextStyle(color: _muted, height: 1.5),
+        ),
         const SizedBox(height: 16),
-        if (_appointments.isNotEmpty)
-          ..._appointments.map((apt) {
-            final timeStr = DateFormat('dd / MM, HH:mm').format(apt.appointmentTime);
+        if (appointments.isNotEmpty)
+          ...appointments.map((apt) {
+            final timeStr = DateFormat(
+              'dd / MM, HH:mm',
+            ).format(apt.appointmentTime);
             return Card(
               color: Colors.white,
               elevation: 0,
               margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: _border),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                  Text('${apt.requesterName} · $timeStr', style: const TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  _statusBadge('${apt.status == 'PENDING' ? 'Chờ xác nhận' : apt.status} · ${apt.roomTitle}'),
-                  if (apt.note != null && apt.note!.isNotEmpty) ...[
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      '${apt.requesterName} · $timeStr',
+                      style: const TextStyle(
+                        color: _ink,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _statusBadge(
+                      '${apt.status == 'PENDING' ? 'Chờ xác nhận' : apt.status} · ${apt.roomTitle}',
+                    ),
+                    if (apt.note != null && apt.note!.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        '“${apt.note}”',
+                        style: const TextStyle(color: _muted, height: 1.4),
+                      ),
+                    ],
                     const SizedBox(height: 14),
-                    Text('“${apt.note}”', style: const TextStyle(color: _muted, height: 1.4)),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        if (apt.status == 'PENDING')
+                          FilledButton(
+                            onPressed: () async {
+                              if (!_api.hasAuthToken) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Vui lòng đăng nhập để xác nhận lịch hẹn.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+                              try {
+                                await _api.updateAppointmentStatus(
+                                  apt.id,
+                                  'CONFIRMED',
+                                );
+                                if (!context.mounted) return;
+                                _selectedAppointment = apt;
+                                await _loadData();
+                                if (!context.mounted) return;
+                                _goTo(ListingFlowMode.confirmedViewing);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Lỗi khi xác nhận lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _primary,
+                            ),
+                            child: const Text('Xác nhận lịch hẹn'),
+                          ),
+                        if (apt.status == 'PENDING' ||
+                            apt.status == 'CONFIRMED')
+                          OutlinedButton(
+                            onPressed: () async {
+                              if (!_api.hasAuthToken) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Vui lòng đăng nhập để từ chối lịch hẹn.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+                              try {
+                                await _api.updateAppointmentStatus(
+                                  apt.id,
+                                  'CANCELLED',
+                                );
+                                if (!context.mounted) return;
+                                await _loadData();
+                                if (!context.mounted) return;
+                                _goTo(ListingFlowMode.myListings);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Lỗi khi từ chối lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text('Từ chối / hủy lịch'),
+                          ),
+                      ],
+                    ),
                   ],
-                  const SizedBox(height: 14),
-                  Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
-                    FilledButton(
-                      onPressed: () async {
-                        if (!_api.hasAuthToken) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Vui lòng đăng nhập để xác nhận lịch hẹn.')),
-                            );
-                          }
-                          return;
-                        }
-                        try {
-                          await _api.updateAppointmentStatus(apt.id, 'CONFIRMED');
-                          _loadData();
-                          _goTo(ListingFlowMode.confirmedViewing);
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Lỗi khi xác nhận lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}')),
-                            );
-                          }
-                        }
-                      },
-                      style: FilledButton.styleFrom(backgroundColor: _primary),
-                      child: const Text('Xác nhận lịch hẹn'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () async {
-                        if (!_api.hasAuthToken) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Vui lòng đăng nhập để từ chối lịch hẹn.')),
-                            );
-                          }
-                          return;
-                        }
-                        try {
-                          await _api.updateAppointmentStatus(apt.id, 'CANCELLED');
-                          _loadData();
-                          _goTo(ListingFlowMode.myListings);
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Lỗi khi từ chối lịch hẹn: ${e.toString().replaceAll("Exception: ", "")}')),
-                            );
-                          }
-                        }
-                      },
-                      child: const Text('Từ chối / hủy lịch'),
-                    ),
-
-                  ]),
-                ]),
+                ),
               ),
             );
           })
         else
-          Card(
-            color: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: _border)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                const Text('Quang Huy · 21 / 09, 14:00', style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                _statusBadge('Chờ xác nhận · 2 người xem'),
-                const SizedBox(height: 14),
-                const Text('“Mình muốn xem phòng cùng một người bạn.”', style: TextStyle(color: _muted, height: 1.4)),
-                const SizedBox(height: 14),
-                Wrap(spacing: 8, runSpacing: 8, children: <Widget>[
-                  FilledButton(onPressed: () => _goTo(ListingFlowMode.confirmedViewing), style: FilledButton.styleFrom(backgroundColor: _primary), child: const Text('Xác nhận lịch hẹn')),
-                  OutlinedButton(onPressed: () => _goTo(ListingFlowMode.myListings), child: const Text('Từ chối / hủy lịch')),
-                ]),
-              ]),
-            ),
-          ),
+          const Text('Tin này chưa có lịch xem phòng.'),
         const SizedBox(height: 12),
-        const Text('Kiểm tra thông tin lịch hẹn, trao đổi điểm hẹn và chuẩn bị trước khi đón khách.', style: TextStyle(color: _muted, height: 1.4)),
+        const Text(
+          'Kiểm tra thông tin lịch hẹn, trao đổi điểm hẹn và chuẩn bị trước khi đón khách.',
+          style: TextStyle(color: _muted, height: 1.4),
+        ),
       ],
     );
   }
@@ -648,16 +1027,19 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   Widget _confirmedViewing(BuildContext context) {
-    final firstApt = _appointments.isNotEmpty ? _appointments.first : null;
+    final firstApt = _selectedAppointment;
     final info = firstApt != null
         ? '${firstApt.requesterName} · ${DateFormat('dd / MM / yyyy · HH:mm').format(firstApt.appointmentTime)}'
-        : 'Quang Huy · 21 / 09 / 2026 · 14:00';
+        : 'Chưa có lịch hẹn được xác nhận.';
     return _emptyState(
       context,
       Icons.check_circle_outline,
       'Hẹn gặp tại căn phòng!',
       info,
-      action: _button('Quản lý tin đăng', () => _goTo(ListingFlowMode.myListings)),
+      action: _button(
+        'Quản lý tin đăng',
+        () => _goTo(ListingFlowMode.myListings),
+      ),
     );
   }
 
@@ -666,13 +1048,29 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         const SizedBox(height: 24),
-        const Text('Bạn đã tìm được người thuê?', style: TextStyle(color: _ink, fontSize: 21, fontWeight: FontWeight.w800)),
+        const Text(
+          'Bạn đã tìm được người thuê?',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 10),
-        const Text('Tin sẽ ngừng xuất hiện trong danh sách. Hãy xử lý các lịch xem phòng đang chờ trước khi đóng.', style: TextStyle(color: _muted, height: 1.5)),
+        const Text(
+          'Tin sẽ ngừng xuất hiện trong danh sách. Hãy xử lý các lịch xem phòng đang chờ trước khi đóng.',
+          style: TextStyle(color: _muted, height: 1.5),
+        ),
         const SizedBox(height: 26),
         _button('Xác nhận đóng tin', _handleCloseListing),
         const SizedBox(height: 10),
-        SizedBox(width: double.infinity, child: OutlinedButton(onPressed: _handleBack, child: const Text('Giữ tin đăng'))),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _handleBack,
+            child: const Text('Giữ tin đăng'),
+          ),
+        ),
       ],
     );
   }
@@ -683,18 +1081,30 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       Icons.check_circle_outline,
       'Căn phòng đã ngừng hiển thị',
       'Bạn vẫn có thể xem lại nội dung và đăng tin mới khi có phòng.',
-      action: _button('Về tin đăng của tôi', () => _goTo(ListingFlowMode.myListings)),
+      action: _button(
+        'Về tin đăng của tôi',
+        () => _goTo(ListingFlowMode.myListings),
+      ),
     );
   }
 
   Widget _stageHeader(String label, String helper) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Text(label, style: const TextStyle(color: _primary, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 6),
-        Text(helper, style: const TextStyle(color: _muted, height: 1.4)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: const TextStyle(
+              color: _primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(helper, style: const TextStyle(color: _muted, height: 1.4)),
+        ],
+      ),
     );
   }
 
@@ -704,73 +1114,193 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: InputDecorator(decoration: _fieldDecoration(label), child: Text(value, style: const TextStyle(color: _ink))),
+        child: InputDecorator(
+          decoration: _fieldDecoration(label),
+          child: Text(value, style: const TextStyle(color: _ink)),
+        ),
       ),
     );
   }
 
-  Widget _dateField() {
-    return InkWell(
-      onTap: () async {
-        final selected = await showDatePicker(context: context, firstDate: DateTime(2026), lastDate: DateTime(2030), initialDate: _availableDate);
-        if (selected != null) setState(() => _availableDate = selected);
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: InputDecorator(decoration: _fieldDecoration('Ngày có thể nhận phòng').copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18)), child: Text(DateFormat('dd / MM / yyyy').format(_availableDate))),
-      ),
-    );
-  }
-
-  Widget _input(String label, TextEditingController controller, {TextInputType? keyboard, int maxLines = 1, String? hint}) {
+  Widget _input(
+    String label,
+    TextEditingController controller, {
+    TextInputType? keyboard,
+    int maxLines = 1,
+    String? hint,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
-      child: TextField(controller: controller, keyboardType: keyboard, maxLines: maxLines, decoration: _fieldDecoration(label, hint: hint)),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboard,
+        maxLines: maxLines,
+        decoration: _fieldDecoration(label, hint: hint),
+      ),
     );
   }
 
-  InputDecoration _fieldDecoration(String label, {String? hint, Widget? suffixIcon}) {
-    return InputDecoration(labelText: label, hintText: hint, suffixIcon: suffixIcon, filled: true, fillColor: Colors.white, labelStyle: const TextStyle(color: _muted), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _primary, width: 1.5)));
+  InputDecoration _fieldDecoration(
+    String label, {
+    String? hint,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      labelStyle: const TextStyle(color: _muted),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primary, width: 1.5),
+      ),
+    );
   }
 
   Widget _infoCard(IconData icon, String title, String subtitle) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _soft, borderRadius: BorderRadius.circular(14), border: Border.all(color: _border)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Icon(icon, color: _primary),
-        const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text(title, style: const TextStyle(color: _ink, fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text(subtitle, style: const TextStyle(color: _muted, height: 1.35))])),
-      ]),
+      decoration: BoxDecoration(
+        color: _soft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, color: _primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: _ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: _muted, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _previewRow(String label, String value) {
-    return Padding(padding: const EdgeInsets.only(bottom: 10), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[SizedBox(width: 104, child: Text(label, style: const TextStyle(color: _muted))), Expanded(child: Text(value, style: const TextStyle(color: _ink, fontWeight: FontWeight.w600)))]));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 104,
+            child: Text(label, style: const TextStyle(color: _muted)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: _ink, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _statusBadge(String text) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5), decoration: BoxDecoration(color: _soft, borderRadius: BorderRadius.circular(30)), child: Text(text, style: const TextStyle(color: _primary, fontSize: 11, fontWeight: FontWeight.w800)));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: _soft,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: _primary,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
   }
 
-  Widget _emptyState(BuildContext context, IconData icon, String title, String description, {Widget? action, String? badge}) {
-    return Column(children: <Widget>[
-      const SizedBox(height: 38),
-      Icon(icon, color: _primary, size: 64),
-      const SizedBox(height: 16),
-      Text(title, textAlign: TextAlign.center, style: const TextStyle(color: _ink, fontSize: 19, fontWeight: FontWeight.w800)),
-      if (badge != null) ...<Widget>[const SizedBox(height: 10), _statusBadge(badge)],
-      const SizedBox(height: 10),
-      Text(description, textAlign: TextAlign.center, style: const TextStyle(color: _muted, height: 1.5)),
-      if (action != null) ...<Widget>[const SizedBox(height: 24), action],
-    ]);
+  Widget _emptyState(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String description, {
+    Widget? action,
+    String? badge,
+  }) {
+    return Column(
+      children: <Widget>[
+        const SizedBox(height: 38),
+        Icon(icon, color: _primary, size: 64),
+        const SizedBox(height: 16),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: _ink,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        if (badge != null) ...<Widget>[
+          const SizedBox(height: 10),
+          _statusBadge(badge),
+        ],
+        const SizedBox(height: 10),
+        Text(
+          description,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: _muted, height: 1.5),
+        ),
+        if (action != null) ...<Widget>[const SizedBox(height: 24), action],
+      ],
+    );
   }
 
   Widget _button(String label, VoidCallback onPressed) {
-    return SizedBox(width: double.infinity, child: FilledButton(onPressed: onPressed, style: FilledButton.styleFrom(backgroundColor: _primary, minimumSize: const Size.fromHeight(50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))), child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700))));
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: _busy ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: _primary,
+          minimumSize: const Size.fromHeight(50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Text(
+          _busy ? 'Đang xử lý…' : label,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
   }
 
-  String _formatMoney(num value) => NumberFormat('#,###', 'en_US').format(value).replaceAll(',', '.');
+  String _formatMoney(num value) =>
+      NumberFormat('#,###', 'en_US').format(value).replaceAll(',', '.');
 }

@@ -18,11 +18,7 @@ class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
   final int initialTab;
 
-  const HomeScreen({
-    super.key,
-    required this.currentUser,
-    this.initialTab = 0,
-  });
+  const HomeScreen({super.key, required this.currentUser, this.initialTab = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _minimumMatchScore = 0;
   String _districtFilter = 'Tất cả';
   final Set<int> _connectingUserIds = {};
+  final Set<int> _savingPostIds = {};
   final Set<int> _sentRequestUserIds = {};
   Set<int> get _savedPostIds => _api.savedPostIds;
 
@@ -71,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadData() {
+    _loadSavedPosts();
     setState(() {
       _matchesFuture = _api.getRecommendations(_currentUserId);
       _isLoadingPosts = true;
@@ -113,14 +111,17 @@ class _HomeScreenState extends State<HomeScreen> {
           .toLowerCase();
       final matchDistrict =
           _roomDistrictFilter == 'Tất cả khu vực' ||
-          p.address.toLowerCase().contains(districtKey);
+          '${p.address} ${p.district}'.toLowerCase().contains(districtKey);
       // Area and amenities are optional in older API payloads. An active
       // filter must not silently match a post whose value is unknown.
-      final matchArea = p.areaM2 == null || p.areaM2! >= _minAreaFilter;
+      final matchArea =
+          _minAreaFilter == 0 ||
+          (p.areaM2 != null && p.areaM2! >= _minAreaFilter);
       final postAmenities = p.amenities
           .map((amenity) => amenity.trim().toLowerCase())
           .toSet();
-      final matchAmenities = _roomAmenitiesFilter.isEmpty ||
+      final matchAmenities =
+          _roomAmenitiesFilter.isEmpty ||
           (p.amenities.isNotEmpty &&
               _roomAmenitiesFilter.every(
                 (amenity) => postAmenities.contains(amenity.toLowerCase()),
@@ -148,9 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _connectingUserIds.add(item.userId));
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final sent = await _api.sendMatchRequest(
-        item.userId,
-      );
+      final sent = await _api.sendMatchRequest(item.userId);
       if (!mounted) return false;
       if (sent) {
         setState(() => _sentRequestUserIds.add(item.userId));
@@ -293,10 +292,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPreferencesPressed: _openSurvey,
                     onNotificationsPressed: () =>
                         Navigator.pushNamed(context, AppRoutes.notifications),
-                    onAdminPressed: {
-                      'ADMIN',
-                      'ROLE_ADMIN',
-                    }.contains(widget.currentUser.role.trim().toUpperCase())
+                    onAdminPressed:
+                        {
+                          'ADMIN',
+                          'ROLE_ADMIN',
+                        }.contains(widget.currentUser.role.trim().toUpperCase())
                         ? () => Navigator.pushNamed(context, AppRoutes.admin)
                         : null,
                   ),
@@ -609,14 +609,15 @@ class _HomeScreenState extends State<HomeScreen> {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
-        onTap: () => Navigator.push<void>(
-          context,
-          MaterialPageRoute<void>(
-            builder: (_) => RoomDetailsScreen(post: post),
-          ),
-        ).then((_) {
-          if (mounted) setState(() {});
-        }),
+        onTap: () =>
+            Navigator.push<void>(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => RoomDetailsScreen(post: post),
+              ),
+            ).then((_) {
+              if (mounted) setState(() {});
+            }),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -643,11 +644,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               : Icons.favorite_border,
                           color: _discoveryPrimary,
                         ),
-                        onPressed: () => setState(() {
-                          if (!_savedPostIds.add(post.id)) {
-                            _savedPostIds.remove(post.id);
-                          }
-                        }),
+                        onPressed: _savingPostIds.contains(post.id)
+                            ? null
+                            : () => _toggleSavedPost(post.id),
                       ),
                     ),
                   ),
@@ -733,11 +732,39 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => ListingManagementScreen(
           mode: ListingFlowMode.myListings,
           authorId: _currentUserId,
-          posts: _allPosts,
         ),
       ),
     );
     if (mounted) _loadData();
+  }
+
+  Future<void> _loadSavedPosts() async {
+    if (!_api.hasAuthToken) return;
+    try {
+      await _api.loadSavedPosts();
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không tải được phòng đã lưu: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleSavedPost(int postId) async {
+    setState(() => _savingPostIds.add(postId));
+    try {
+      await _api.toggleSavePost(postId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không lưu được phòng: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _savingPostIds.remove(postId));
+    }
   }
 
   Future<void> _openRoomFilters() async {
@@ -778,7 +805,10 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute<void>(
         builder: (_) => SavedRoomsScreen(
           posts: saved,
-          onUnsave: (postId) => setState(() => _savedPostIds.remove(postId)),
+          onUnsave: (postId) async {
+            await _api.setPostSaved(postId, false);
+            if (mounted) setState(() {});
+          },
         ),
       ),
     );

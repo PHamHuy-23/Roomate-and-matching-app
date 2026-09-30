@@ -8,7 +8,7 @@ class ContactDetailsScreen extends StatelessWidget {
   final String? phone;
   final String? email;
   final String? avatarUrl;
-  
+
   const ContactDetailsScreen({
     super.key,
     this.contactId,
@@ -70,7 +70,11 @@ class ContactDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(String label, VoidCallback onPressed, {bool isPrimary = false}) {
+  Widget _buildActionButton(
+    String label,
+    VoidCallback onPressed, {
+    bool isPrimary = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: SizedBox(
@@ -79,7 +83,9 @@ class ContactDetailsScreen extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isPrimary ? const Color(0xFF087E6B) : const Color(0xFFEAF8F5),
+            backgroundColor: isPrimary
+                ? const Color(0xFF087E6B)
+                : const Color(0xFFEAF8F5),
             foregroundColor: isPrimary ? Colors.white : const Color(0xFF087E6B),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -102,8 +108,12 @@ class ContactDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = contactName ?? 'Người dùng Roommate Hub';
-    final displayPhone = (phone != null && phone!.isNotEmpty) ? phone! : '0903 333 444';
-    final displayEmail = (email != null && email!.isNotEmpty) ? email! : 'nguoidung@roommatehub.vn';
+    final displayPhone = (phone != null && phone!.isNotEmpty)
+        ? phone!
+        : '0903 333 444';
+    final displayEmail = (email != null && email!.isNotEmpty)
+        ? email!
+        : 'nguoidung@roommatehub.vn';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
@@ -146,7 +156,7 @@ class ContactDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -159,19 +169,28 @@ class ContactDetailsScreen extends StatelessWidget {
                         width: 90,
                         height: 90,
                         color: Colors.grey.shade300,
-                        child: (avatarUrl != null && avatarUrl!.startsWith('http'))
+                        child:
+                            (avatarUrl != null && avatarUrl!.startsWith('http'))
                             ? Image.network(
                                 avatarUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.person, size: 50, color: Colors.grey),
+                                    const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
                               )
-                            : const Icon(Icons.person, size: 50, color: Colors.grey),
+                            : const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Name and Info
                   Text(
                     name,
@@ -195,36 +214,42 @@ class ContactDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Contact Details Cards
-                  _buildInfoCard('Số điện thoại', displayPhone, Icons.phone_outlined),
+                  _buildInfoCard(
+                    'Số điện thoại',
+                    displayPhone,
+                    Icons.phone_outlined,
+                  ),
                   const SizedBox(height: 12),
-                  _buildInfoCard('Email liên hệ', displayEmail, Icons.email_outlined),
+                  _buildInfoCard(
+                    'Email liên hệ',
+                    displayEmail,
+                    Icons.email_outlined,
+                  ),
                   const SizedBox(height: 28),
-                  
+
                   // Action Buttons
                   _buildActionButton('Nhắn tin', () {
                     Navigator.pushNamed(
                       context,
                       AppRoutes.chat,
-                      arguments: {
-                        'partnerId': contactId,
-                        'partnerName': name,
-                      },
+                      arguments: {'partnerId': contactId, 'partnerName': name},
                     );
                   }, isPrimary: true),
                   _buildActionButton('Xem hồ sơ chi tiết', () {
                     Navigator.pushNamed(
                       context,
                       AppRoutes.roommateProfile,
-                      arguments: {
-                        'userId': contactId,
-                        'partnerName': name,
-                      },
+                      arguments: {'userId': contactId, 'partnerName': name},
                     );
                   }),
                   _buildActionButton('Báo cáo vi phạm', () {
-                    Navigator.pushNamed(context, AppRoutes.reportViolation);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.reportViolation,
+                      arguments: {'targetUserId': contactId},
+                    );
                   }),
                   _buildActionButton('Hủy kết nối', () async {
                     final res = await Navigator.pushNamed(
@@ -236,7 +261,7 @@ class ContactDetailsScreen extends StatelessWidget {
                       Navigator.pop(context, true);
                     }
                   }),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),

@@ -86,17 +86,24 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   List<Map<String, String>> get _filteredUsers {
     final query = _query.trim().toLowerCase();
     if (query.isEmpty) return _users;
-    return _users.where((user) {
-      final searchable = [
-        user['fullName'],
-        user['email'],
-        user['id'],
-      ].map((value) => value?.toString().toLowerCase() ?? '');
-      return searchable.any((value) => value.contains(query));
-    }).toList(growable: false);
+    return _users
+        .where((user) {
+          final searchable = [
+            user['fullName'],
+            user['email'],
+            user['id'],
+          ].map((value) => value?.toString().toLowerCase() ?? '');
+          return searchable.any((value) => value.contains(query));
+        })
+        .toList(growable: false);
   }
 
-  Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
     return GestureDetector(
       onTap: () {
         if (!isActive && route != null) {
@@ -126,14 +133,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  Widget _buildUserRow(
-    BuildContext context,
-    Map<String, String> user,
-  ) {
+  Widget _buildUserRow(BuildContext context, Map<String, String> user) {
     final name = user['fullName'] ?? 'Chưa đặt tên';
     final email = user['email'] ?? 'Chưa có email';
     final role = user['role'] ?? 'Thành viên';
-    final status = user['status'] ?? 'Hoạt động';
+    final status = user['status'] ?? 'Không xác định';
     final date = user['createdAt'] ?? '—';
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -208,7 +212,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'SourceSansPro',
-                color: status == 'Đã khóa' ? Colors.red : const Color(0xFF087E6B),
+                color: status == 'Đã khóa'
+                    ? Colors.red
+                    : const Color(0xFF087E6B),
               ),
             ),
           ),
@@ -242,10 +248,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       );
                       if (index == -1) return;
                       setState(() {
-                        _users[index] = {
-                          ..._users[index],
-                          'status': status,
-                        };
+                        _users[index] = {..._users[index], 'status': status};
                       });
                     },
                   },
@@ -308,13 +311,25 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
                 _buildSidebarItem(context, 'Người dùng', isActive: true),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
-                
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: AppRoutes.adminModeratePost,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Báo cáo vi phạm',
+                  route: AppRoutes.adminReports,
+                ),
+
                 const Spacer(),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text(
@@ -330,7 +345,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: Padding(
@@ -371,7 +386,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     ],
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Search
                   Container(
                     width: double.infinity,
@@ -388,10 +403,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            onChanged: (value) => setState(() => _query = value),
+                            onChanged: (value) =>
+                                setState(() => _query = value),
                             textInputAction: TextInputAction.search,
                             decoration: const InputDecoration(
-                              hintText: 'Tìm theo tên, email hoặc mã người dùng',
+                              hintText:
+                                  'Tìm theo tên, email hoặc mã người dùng',
                               hintStyle: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
@@ -414,13 +431,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               _searchController.clear();
                               setState(() => _query = '');
                             },
-                            icon: const Icon(Icons.close, color: Color(0xFF65746F)),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Color(0xFF65746F),
+                            ),
                           ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Table
                   Expanded(
                     child: Container(
@@ -435,16 +455,28 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           // Table Header
                           Row(
                             children: [
-                              Expanded(flex: 3, child: _buildTableHeader('NGƯỜI DÙNG')),
-                              Expanded(flex: 2, child: _buildTableHeader('VAI TRÒ')),
-                              Expanded(flex: 2, child: _buildTableHeader('TRẠNG THÁI')),
-                              Expanded(flex: 2, child: _buildTableHeader('NGÀY TẠO')),
+                              Expanded(
+                                flex: 3,
+                                child: _buildTableHeader('NGƯỜI DÙNG'),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: _buildTableHeader('VAI TRÒ'),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: _buildTableHeader('TRẠNG THÁI'),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: _buildTableHeader('NGÀY TẠO'),
+                              ),
                               Expanded(flex: 1, child: _buildTableHeader('')),
                             ],
                           ),
                           const SizedBox(height: 16),
                           const Divider(color: Color(0xFFEEEEEE)),
-                          
+
                           // Table Body
                           Expanded(child: _buildTableBody()),
                         ],
@@ -490,10 +522,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               style: const TextStyle(color: Color(0xFF65746F)),
             ),
             const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: _loadUsers,
-              child: const Text('Thử lại'),
-            ),
+            OutlinedButton(onPressed: _loadUsers, child: const Text('Thử lại')),
           ],
         ),
       );

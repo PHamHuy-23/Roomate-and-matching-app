@@ -29,51 +29,27 @@ class _AdminReport {
 }
 
 class AdminReportsScreen extends StatefulWidget {
-  const AdminReportsScreen({super.key});
+  const AdminReportsScreen({super.key, this.apiService});
+  final ApiService? apiService;
 
   @override
   State<AdminReportsScreen> createState() => _AdminReportsScreenState();
 }
 
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
-  final ApiService _api = ApiService();
+  ApiService get _api => widget.apiService ?? ApiService();
   bool _isLoading = false;
   bool _isResolving = false;
+  final _noteController = TextEditingController();
 
-  static const _defaultReports = <_AdminReport>[
-    _AdminReport(
-      rawId: 28,
-      id: 'BC-028',
-      title: 'Thông tin phòng không đúng...',
-      subtitle: 'Tin RH-028 · Đang chờ',
-      reason: 'Thông tin phòng không đúng thực tế',
-      sender: 'Người dùng #014',
-      note: 'Người dùng phản ánh phòng thực tế khác ảnh chụp và giá cao hơn.',
-      status: 'PENDING',
-    ),
-    _AdminReport(
-      rawId: 27,
-      id: 'BC-027',
-      title: 'Nội dung không phù hợp...',
-      subtitle: 'Người dùng #031 · Đang chờ',
-      reason: 'Nội dung tin đăng không phù hợp',
-      sender: 'Người dùng #008',
-      note: 'Đang chờ quản trị viên kiểm tra nội dung.',
-      status: 'PENDING',
-    ),
-    _AdminReport(
-      rawId: 26,
-      id: 'BC-026',
-      title: 'Tin đăng có dấu hiệu trùng...',
-      subtitle: 'Tin RH-026 · Đang chờ',
-      reason: 'Tin đăng có dấu hiệu trùng lặp',
-      sender: 'Thành viên ẩn danh',
-      note: 'Cần đối chiếu với tin RH-024 trước khi xử lý.',
-      status: 'PENDING',
-    ),
-  ];
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
 
-  List<_AdminReport> _reports = _defaultReports;
+  List<_AdminReport> _reports = [];
+  String? _loadError;
 
   int _selectedIndex = 0;
 
@@ -84,7 +60,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   }
 
   Future<void> _loadReports() async {
-    if (!ApiService().hasAuthToken) {
+    if (!_api.hasAuthToken) {
       return;
     }
     setState(() => _isLoading = true);
@@ -93,16 +69,29 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       if (!mounted) return;
       final loaded = list.map((item) {
         final map = item as Map<String, dynamic>;
-        final rawId = map['id'] is int ? map['id'] as int : int.tryParse(map['id'].toString()) ?? 1;
+        final rawId = map['id'] is int
+            ? map['id'] as int
+            : int.tryParse(map['id'].toString()) ?? 1;
         final targetType = map['targetType']?.toString() ?? 'USER';
         final targetId = map['targetId']?.toString() ?? '0';
         final reason = map['reason']?.toString() ?? 'Không rõ lý do';
         final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
         final status = map['status']?.toString() ?? 'PENDING';
-        final note = map['actionNote']?.toString() ?? (status == 'RESOLVED' ? 'Đã xử lý vi phạm.' : 'Đang chờ quản trị viên kiểm tra nội dung.');
-        final prefix = targetType == 'ROOM_POST' ? 'Tin RH-$targetId' : 'Người dùng #$targetId';
-        final statusVi = status == 'RESOLVED' ? 'Đã xử lý' : 'Đang chờ';
-        final evidenceUrl = map['evidenceUrl']?.toString() ?? map['imageUrl']?.toString();
+        final note =
+            map['actionNote']?.toString() ??
+            (status == 'RESOLVED'
+                ? 'Đã xử lý vi phạm.'
+                : 'Đang chờ quản trị viên kiểm tra nội dung.');
+        final prefix = targetType == 'ROOM_POST'
+            ? 'Tin RH-$targetId'
+            : 'Người dùng #$targetId';
+        final statusVi = status == 'RESOLVED'
+            ? 'Đã xử lý'
+            : status == 'DISMISSED'
+            ? 'Đã bác bỏ'
+            : 'Đang chờ';
+        final evidenceUrl =
+            map['evidenceUrl']?.toString() ?? map['imageUrl']?.toString();
         return _AdminReport(
           rawId: rawId,
           id: 'BC-${rawId.toString().padLeft(3, '0')}',
@@ -118,34 +107,40 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
 
       setState(() {
         _reports = loaded;
+        _loadError = null;
         if (_selectedIndex >= _reports.length) _selectedIndex = 0;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
           _reports = [];
+          _loadError = 'Không tải được báo cáo: $e';
           _isLoading = false;
         });
       }
     }
   }
 
-
   _AdminReport get _selectedReport =>
       _reports.isNotEmpty && _selectedIndex < _reports.length
-          ? _reports[_selectedIndex]
-          : const _AdminReport(
-              rawId: 0,
-              id: 'BC-000',
-              title: 'Không có báo cáo',
-              subtitle: '',
-              reason: 'Hiện chưa có báo cáo vi phạm nào.',
-              sender: '',
-              note: '',
-            );
+      ? _reports[_selectedIndex]
+      : _AdminReport(
+          rawId: 0,
+          id: 'BC-000',
+          title: 'Không có báo cáo',
+          subtitle: '',
+          reason: _loadError ?? 'Hiện chưa có báo cáo vi phạm nào.',
+          sender: '',
+          note: '',
+        );
 
-  Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
     return GestureDetector(
       onTap: () {
         if (!isActive && route != null) {
@@ -262,13 +257,21 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
                 _buildSidebarItem(context, 'Người dùng', route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: '/admin/moderate-post'),
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: '/admin/moderate-post',
+                ),
                 _buildSidebarItem(context, 'Báo cáo vi phạm', isActive: true),
-                
+
                 const Spacer(),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text(
@@ -284,7 +287,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: SingleChildScrollView(
@@ -325,7 +328,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                     ],
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Two columns
                   SizedBox(
                     height: 620,
@@ -370,7 +373,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                       const SizedBox(
                                         width: 14,
                                         height: 14,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       ),
                                     ],
                                   ],
@@ -390,10 +395,15 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                         )
                                       : ListView(
                                           children: [
-                                            for (var index = 0; index < _reports.length; index++)
+                                            for (
+                                              var index = 0;
+                                              index < _reports.length;
+                                              index++
+                                            )
                                               _buildReportItem(
                                                 _reports[index],
-                                                isActive: index == _selectedIndex,
+                                                isActive:
+                                                    index == _selectedIndex,
                                               ),
                                           ],
                                         ),
@@ -403,7 +413,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                           ),
                         ),
                         const SizedBox(width: 24),
-                        
+
                         // Right Column (Details)
                         Expanded(
                           flex: 52, // approx 520 width
@@ -443,21 +453,43 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                     width: 224,
                                     height: 147,
                                     color: Colors.grey.shade300,
-                                    child: _selectedReport.evidenceUrl != null && _selectedReport.evidenceUrl!.isNotEmpty
+                                    child:
+                                        _selectedReport.evidenceUrl != null &&
+                                            _selectedReport
+                                                .evidenceUrl!
+                                                .isNotEmpty
                                         ? Image.network(
                                             _selectedReport.evidenceUrl!,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => const Center(
-                                              child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                                            ),
+                                            errorBuilder:
+                                                (context, error, stack) =>
+                                                    const Center(
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        size: 48,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
                                           )
                                         : const Center(
                                             child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
-                                                Icon(Icons.image_not_supported_outlined, size: 36, color: Colors.grey),
+                                                Icon(
+                                                  Icons
+                                                      .image_not_supported_outlined,
+                                                  size: 36,
+                                                  color: Colors.grey,
+                                                ),
                                                 SizedBox(height: 4),
-                                                Text('Không có ảnh đính kèm', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                                Text(
+                                                  'Không có ảnh đính kèm',
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -506,30 +538,102 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: _isResolving
+                                    onPressed:
+                                        _isResolving ||
+                                            _selectedReport.rawId <= 0 ||
+                                            _selectedReport.status != 'PENDING'
                                         ? null
                                         : () async {
+                                            final reportId =
+                                                _selectedReport.rawId;
+                                            final noteController =
+                                                _noteController..clear();
+                                            final note = await showDialog<String>(
+                                              context: context,
+                                              builder: (dialogContext) =>
+                                                  AlertDialog(
+                                                    title: const Text(
+                                                      'Kết quả xem xét báo cáo',
+                                                    ),
+                                                    content: TextField(
+                                                      controller:
+                                                          noteController,
+                                                      maxLines: 3,
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            labelText:
+                                                                'Ghi rõ kết quả và hành động thực tế đã thực hiện',
+                                                          ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                            ),
+                                                        child: const Text(
+                                                          'Hủy',
+                                                        ),
+                                                      ),
+                                                      FilledButton(
+                                                        onPressed: () {
+                                                          if (noteController
+                                                              .text
+                                                              .trim()
+                                                              .isNotEmpty) {
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                              noteController
+                                                                  .text
+                                                                  .trim(),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text(
+                                                          'Lưu kết quả',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+                                            // The dialog owns the controller until its closing animation ends.
+                                            if (!context.mounted ||
+                                                note == null) {
+                                              return;
+                                            }
                                             setState(() => _isResolving = true);
                                             try {
-                                              if (_selectedReport.rawId > 0) {
+                                              if (reportId > 0) {
                                                 await _api.moderateAdminReport(
-                                                  _selectedReport.rawId,
+                                                  reportId,
                                                   status: 'RESOLVED',
-                                                  note: 'Đã xác minh và xử lý vi phạm.',
+                                                  note: note,
                                                 );
                                               }
-                                              if (!mounted || !context.mounted) return;
+                                              if (!mounted || !context.mounted) {
+                                                return;
+                                              }
                                               Navigator.pushReplacementNamed(
                                                 context,
                                                 AppRoutes.adminReportResolved,
                                               );
                                             } catch (e) {
-                                              if (!mounted || !context.mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('Lỗi: $e')),
+                                              if (!mounted || !context.mounted) {
+                                                return;
+                                              }
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Lỗi: $e'),
+                                                ),
                                               );
                                             } finally {
-                                              if (mounted) setState(() => _isResolving = false);
+                                              if (mounted) {
+                                                setState(
+                                                  () => _isResolving = false,
+                                                );
+                                              }
                                             }
                                           },
                                     style: ElevatedButton.styleFrom(

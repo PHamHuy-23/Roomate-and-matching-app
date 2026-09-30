@@ -6,7 +6,12 @@ import '../../widgets/admin_profile_avatar.dart';
 class AdminReportResolvedScreen extends StatelessWidget {
   const AdminReportResolvedScreen({super.key});
 
-  Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
     return GestureDetector(
       onTap: () {
         if (!isActive && route != null) {
@@ -77,13 +82,26 @@ class AdminReportResolvedScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
                 _buildSidebarItem(context, 'Người dùng', route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: '/admin/moderate-post'),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', isActive: true, route: '/admin/reports'),
-                
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: '/admin/moderate-post',
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Báo cáo vi phạm',
+                  isActive: true,
+                  route: '/admin/reports',
+                ),
+
                 const Spacer(),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text(
@@ -99,7 +117,7 @@ class AdminReportResolvedScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: Padding(
@@ -140,7 +158,7 @@ class AdminReportResolvedScreen extends StatelessWidget {
                     ],
                   ),
                   const Spacer(),
-                  
+
                   // Center Card
                   Center(
                     child: Container(
@@ -165,7 +183,7 @@ class AdminReportResolvedScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                           const Text(
-                            'BC-028 · Đã ghi nhận kết quả và ghi chú xử lý.\nThông báo kết quả đã được gửi tới người báo cáo.',
+                            'Đã lưu kết quả xem xét và ghi chú xử lý.\nViệc khóa tài khoản hoặc đóng tin cần được thực hiện riêng nếu cần.',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,

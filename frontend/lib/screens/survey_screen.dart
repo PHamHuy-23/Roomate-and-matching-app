@@ -331,6 +331,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
     try {
       final data = await _api.getPreferences(widget.userId);
       if (data != null) {
+        if (!mounted) return;
         setState(() {
           final targetDist = data['targetDistrict'] as String?;
           if (targetDist != null && targetDist.isNotEmpty) {
@@ -348,6 +349,18 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
           final rawBio = (data['bioDescription'] as String?) ?? '';
           _parseBioDescription(rawBio, loadedBudget);
+          if (data['targetGender'] is String) {
+            _targetGender = data['targetGender'] as String;
+          }
+          if (data['topPriority'] is String) {
+            _topPriority = data['topPriority'] as String;
+          }
+          if (data['budgetMin'] is num && data['budgetMax'] is num) {
+            _budgetRange = RangeValues(
+              (data['budgetMin'] as num).toDouble(),
+              (data['budgetMax'] as num).toDouble(),
+            );
+          }
         });
       }
     } catch (_) {
@@ -618,6 +631,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
       final payload = {
         'targetDistrict': _safeDistrictValue,
         'budgetAmount': _budgetRange.end,
+        'budgetMin': _budgetRange.start,
+        'budgetMax': _budgetRange.end,
+        'targetGender': _targetGender,
+        'topPriority': _topPriority,
         'sleepHabit': _sleepHabit,
         'cleanlinessLevel': _cleanliness.toInt(),
         'isSmoking': _isSmoking,

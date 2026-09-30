@@ -28,16 +28,20 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _status = widget.user?['status'] ?? 'Đã khóa';
+    _status = widget.user?['status'] ?? 'Không xác định';
   }
 
   String get _userName => widget.user?['fullName'] ?? 'Người dùng';
   String get _userEmail => widget.user?['email'] ?? 'Chưa có email';
   String get _userId => widget.user?['id']?.toString() ?? '—';
-  String get _university => widget.user?['university']?.toString() ?? 'Chưa cập nhật trường';
+  String get _university =>
+      widget.user?['university']?.toString() ?? 'Chưa cập nhật trường';
   String get _phone => widget.user?['phone']?.toString() ?? 'Chưa cập nhật SĐT';
-  String get _gender => widget.user?['gender'] == 'MALE' ? 'Nam' : (widget.user?['gender'] == 'FEMALE' ? 'Nữ' : 'Khác');
-  bool get _isLocked => _status == 'Đã khóa' || _status == 'BANNED' || _status == 'LOCKED';
+  String get _gender => widget.user?['gender'] == 'MALE'
+      ? 'Nam'
+      : (widget.user?['gender'] == 'FEMALE' ? 'Nữ' : 'Khác');
+  bool get _isLocked =>
+      _status == 'Đã khóa' || _status == 'BANNED' || _status == 'LOCKED';
 
   void _handleStatusChanged(String status) {
     if (!mounted) return;
@@ -68,14 +72,14 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
       await (widget.onToggleStatus ?? _api.toggleUserStatus)(userId);
       if (!mounted) return;
       _handleStatusChanged('Hoạt động');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã mở khóa tài khoản.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã mở khóa tài khoản.')));
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -88,7 +92,12 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
     }
   }
 
-  Widget _buildSidebarItem(BuildContext context, String title, {bool isActive = false, String? route}) {
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
     return GestureDetector(
       onTap: () {
         if (!isActive && route != null) {
@@ -159,13 +168,30 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', route: '/admin/dashboard'),
-                _buildSidebarItem(context, 'Người dùng', isActive: true, route: '/admin/users'),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
-                
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Người dùng',
+                  isActive: true,
+                  route: '/admin/users',
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: AppRoutes.adminModeratePost,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Báo cáo vi phạm',
+                  route: AppRoutes.adminReports,
+                ),
+
                 const Spacer(),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text(
@@ -181,7 +207,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: Padding(
@@ -222,7 +248,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                     ],
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Profile Overview Card
                   Container(
                     width: double.infinity,
@@ -240,7 +266,11 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                             width: 100,
                             height: 100,
                             color: Colors.grey.shade300,
-                            child: const Icon(Icons.person, size: 50, color: Colors.grey),
+                            child: const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 24),
@@ -287,7 +317,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Bottom Row
                   Expanded(
                     child: Row(
@@ -330,7 +360,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                           ),
                         ),
                         const SizedBox(width: 24),
-                        
+
                         // Right Column
                         Expanded(
                           flex: 38, // approx 378 width

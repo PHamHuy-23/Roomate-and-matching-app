@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
@@ -6,7 +7,7 @@ import '../widgets/penpot_back_button.dart';
 
 class ReportViolationScreen extends StatefulWidget {
   final int? targetUserId;
-  
+
   const ReportViolationScreen({super.key, this.targetUserId});
 
   @override
@@ -18,6 +19,8 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
   final TextEditingController _descController = TextEditingController();
   String _selectedReason = 'Thông tin phòng không đúng thực tế';
   bool _isSubmitting = false;
+  String? _evidenceObjectKey;
+  String? _evidenceName;
 
   @override
   void dispose() {
@@ -25,17 +28,61 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
     super.dispose();
   }
 
-  void _showAttachmentStatus() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Đã ghi nhận yêu cầu đính kèm bằng chứng ảnh.',
-        ),
-      ),
-    );
+  Future<void> _showAttachmentStatus() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        imageQuality: 90,
+      );
+      if (image == null) return;
+      final bytes = await image.readAsBytes();
+      if (bytes.length > 5 * 1024 * 1024) {
+        throw const FormatException('Ảnh phải nhỏ hơn hoặc bằng 5 MB');
+      }
+      final name = image.name.toLowerCase();
+      final ticket = await _api.uploadImage(
+        bytes: bytes,
+        fileName: image.name,
+        contentType: name.endsWith('.png')
+            ? 'image/png'
+            : name.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/jpeg',
+        purpose: 'report',
+      );
+      if (mounted) {
+        setState(() {
+          _evidenceObjectKey = ticket.objectKey;
+          _evidenceName = image.name;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không thể tải bằng chứng: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _submitReport() async {
+    if (_isSubmitting) return;
+    final targetId = widget.targetUserId;
+    if (targetId == null || targetId <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Không xác định được người bị báo cáo. Hãy mở báo cáo từ hồ sơ liên hệ.',
+          ),
+        ),
+      );
+      return;
+    }
     final text = _descController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -49,9 +96,10 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
 
     try {
       await _api.submitReport(
-        targetId: widget.targetUserId ?? 2,
+        targetId: targetId,
         targetType: 'USER',
         reason: '[$_selectedReason] $text',
+        evidenceObjectKey: _evidenceObjectKey,
       );
 
       if (!mounted) return;
@@ -109,10 +157,13 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                 ],
               ),
             ),
-            
+
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 children: [
                   // Reason
                   const Text(
@@ -135,7 +186,10 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedReason,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey,
+                        ),
                         isExpanded: true,
                         style: const TextStyle(
                           fontSize: 15,
@@ -143,17 +197,18 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                           fontFamily: 'SourceSansPro',
                           color: Color(0xFF65746F),
                         ),
-                        items: [
-                          'Thông tin phòng không đúng thực tế',
-                          'Lừa đảo / Chiếm đoạt tài sản',
-                          'Ngôn từ quấy rối / Xúc phạm',
-                          'Lý do khác'
-                        ].map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                        items:
+                            [
+                              'Thông tin phòng không đúng thực tế',
+                              'Lừa đảo / Chiếm đoạt tài sản',
+                              'Ngôn từ quấy rối / Xúc phạm',
+                              'Lý do khác',
+                            ].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
                         onChanged: (newValue) {
                           if (newValue != null) {
                             setState(() {
@@ -165,7 +220,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Description
                   const Text(
                     'Mô tả chi tiết',
@@ -205,7 +260,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Image Upload
                   GestureDetector(
                     onTap: _showAttachmentStatus,
@@ -244,7 +299,8 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+                  if (_evidenceName != null) Text('Đã tải ảnh: $_evidenceName'),
+
                   // Info Text
                   const Text(
                     'Báo cáo sẽ được xem xét. Danh tính của bạn\nkhông hiển thị với người bị báo cáo.',
@@ -261,7 +317,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                 ],
               ),
             ),
-            
+
             // Bottom Actions
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
@@ -271,7 +327,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _submitReport,
+                      onPressed: _isSubmitting ? null : _submitReport,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF087E6B),
                         foregroundColor: Colors.white,
@@ -305,10 +361,24 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () async {
-                        final targetId = widget.targetUserId ?? 2;
+                        final targetId = widget.targetUserId;
+                        if (targetId == null || targetId <= 0 || _isSubmitting) {
+                          return;
+                        }
+                        setState(() => _isSubmitting = true);
                         try {
                           await _api.blockUser(targetId);
-                        } catch (_) {}
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Không thể chặn người dùng: $e'),
+                            ),
+                          );
+                          return;
+                        } finally {
+                          if (mounted) setState(() => _isSubmitting = false);
+                        }
                         if (!mounted || !context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

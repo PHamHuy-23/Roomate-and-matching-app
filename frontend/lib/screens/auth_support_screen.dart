@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
+import '../state/auth_session.dart';
 import '../widgets/penpot_back_button.dart';
 
-enum AuthSupportMode { welcome, verifyEmail, forgotPassword, newPassword, changePassword }
+enum AuthSupportMode {
+  welcome,
+  verifyEmail,
+  forgotPassword,
+  newPassword,
+  changePassword,
+}
 
 class AuthSupportScreen extends StatefulWidget {
   const AuthSupportScreen({required this.mode, super.key, this.email});
@@ -81,7 +89,10 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
       case AuthSupportMode.welcome:
         return 'Tìm bạn hợp. Tìm nơi thuộc về.';
       case AuthSupportMode.verifyEmail:
-        return 'Mã được gửi đến ${widget.email ?? 'huy@example.com'}';
+        final email = widget.email?.trim();
+        return email == null || email.isEmpty
+            ? 'Nhập mã đã được gửi đến email của bạn'
+            : 'Mã được gửi đến $email';
       case AuthSupportMode.forgotPassword:
         return 'Nhận mã để tạo mật khẩu mới';
       case AuthSupportMode.newPassword:
@@ -129,14 +140,6 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           const SizedBox(height: 8),
           child,
         ],
-      ),
-    );
-  }
-
-  void _showUnavailable() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tính năng này đang chờ API backend được triển khai.'),
       ),
     );
   }
@@ -286,7 +289,9 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
       );
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.'),
+          content: Text(
+            'Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.',
+          ),
           backgroundColor: _primary,
         ),
       );
@@ -304,6 +309,7 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
   Future<void> _handleChangePassword() async {
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);
+    final session = context.read<AuthSession>();
     try {
       await ApiService().changePassword(
         oldPassword: _currentPasswordCtrl.text,
@@ -311,11 +317,13 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
       );
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('Đổi mật khẩu thành công!'),
+          content: Text('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.'),
           backgroundColor: _primary,
         ),
       );
-      nav.pop();
+      await session.signOut();
+      if (!mounted) return;
+      nav.pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
@@ -326,7 +334,6 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
     }
   }
 
-
   String get _verificationCode =>
       _codeControllers.map((controller) => controller.text).join();
 
@@ -335,9 +342,9 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: _danger),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: _danger));
   }
 
   Widget _passwordField(
@@ -362,7 +369,9 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
             tooltip: obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
             onPressed: onToggle,
             icon: Icon(
-              obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              obscure
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
               color: _muted,
             ),
           ),
@@ -411,13 +420,22 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
                 color: _primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.home_work_outlined, color: _primary, size: 38),
+              child: const Icon(
+                Icons.home_work_outlined,
+                color: _primary,
+                size: 38,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               'Một tổ ấm mới,\nmột khởi đầu vui.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: _ink, fontSize: 22, height: 1.25, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: _ink,
+                fontSize: 22,
+                height: 1.25,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -436,15 +454,15 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
             ),
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: () => Navigator.pushReplacementNamed(
-                context,
-                AppRoutes.login,
-              ),
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.login),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 minimumSize: const Size.fromHeight(48),
                 side: const BorderSide(color: _primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: const Text('Tôi đã có tài khoản'),
             ),
@@ -487,7 +505,6 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
               child: const Text('Đổi email'),
             ),
           ],
-
         );
       case AuthSupportMode.forgotPassword:
         return Column(
@@ -537,14 +554,16 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
               'Mật khẩu mới',
               _passwordCtrl,
               obscure: _obscurePassword,
-              onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+              onToggle: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
               key: const Key('new_password_field'),
             ),
             _passwordField(
               'Xác nhận mật khẩu mới',
               _confirmPasswordCtrl,
               obscure: _obscureConfirm,
-              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              onToggle: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
               key: const Key('new_password_confirm_field'),
             ),
             const Padding(
@@ -564,7 +583,8 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
               'Mật khẩu hiện tại',
               _currentPasswordCtrl,
               obscure: _obscureCurrent,
-              onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
+              onToggle: () =>
+                  setState(() => _obscureCurrent = !_obscureCurrent),
               hint: 'Nhập mật khẩu hiện tại',
               key: const Key('current_password_field'),
             ),
@@ -572,14 +592,16 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
               'Mật khẩu mới',
               _passwordCtrl,
               obscure: _obscurePassword,
-              onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+              onToggle: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
               key: const Key('change_password_field'),
             ),
             _passwordField(
               'Xác nhận mật khẩu mới',
               _confirmPasswordCtrl,
               obscure: _obscureConfirm,
-              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              onToggle: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
               key: const Key('change_password_confirm_field'),
             ),
             _primaryButton('Lưu mật khẩu', _submit),
@@ -597,7 +619,9 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
         style: FilledButton.styleFrom(
           backgroundColor: _primary,
           foregroundColor: _surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       ),
@@ -615,7 +639,10 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: (constraints.maxHeight - 48).clamp(0, double.infinity),
+                minHeight: (constraints.maxHeight - 48).clamp(
+                  0,
+                  double.infinity,
+                ),
               ),
               child: Center(
                 child: ConstrainedBox(
@@ -636,7 +663,11 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
                         textAlign: widget.mode == AuthSupportMode.welcome
                             ? TextAlign.center
                             : TextAlign.left,
-                        style: const TextStyle(color: _ink, fontSize: 26, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          color: _ink,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -644,7 +675,11 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
                         textAlign: widget.mode == AuthSupportMode.welcome
                             ? TextAlign.center
                             : TextAlign.left,
-                        style: const TextStyle(color: _muted, fontSize: 13, height: 1.4),
+                        style: const TextStyle(
+                          color: _muted,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
                       ),
                       const SizedBox(height: 32),
                       _form(),
