@@ -60,7 +60,7 @@ class AppointmentServiceTest {
                 .host(hostUser)
                 .requester(requesterUser)
                 .roomPost(samplePost)
-                .appointmentTime(LocalDateTime.now().plusDays(2))
+                .appointmentTime(java.time.OffsetDateTime.now().plusDays(2))
                 .status(AppointmentStatus.PENDING)
                 .build();
 
@@ -158,5 +158,51 @@ class AppointmentServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST))
                 .hasMessageContaining("Trạng thái lịch hẹn không hợp lệ");
+    }
+
+    @Test
+    @DisplayName("createAppointment() ném ngoại lệ khi appointmentTime ở quá khứ")
+    void createAppointment_WhenPastTime_ShouldThrowRuntimeException() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(requesterUser.getEmail(), null, List.of())
+        );
+        when(userRepository.findByEmail(requesterUser.getEmail())).thenReturn(Optional.of(requesterUser));
+        samplePost.setStatus(RoomPost.PostStatus.APPROVED);
+        when(roomPostRepository.findById(10L)).thenReturn(Optional.of(samplePost));
+
+        com.roommate.hub.dto.CreateAppointmentDTO dto = com.roommate.hub.dto.CreateAppointmentDTO.builder()
+                .roomPostId(10L)
+                .appointmentTime(java.time.OffsetDateTime.now().minusMinutes(10))
+                .build();
+
+        assertThatThrownBy(() -> appointmentService.createAppointment(dto))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Thời gian xem phòng phải ở trong tương lai");
+    }
+
+    @Test
+    @DisplayName("createAppointment() thành công khi appointmentTime ở tương lai với timezone offset")
+    void createAppointment_WhenFutureTime_ShouldSucceed() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(requesterUser.getEmail(), null, List.of())
+        );
+        when(userRepository.findByEmail(requesterUser.getEmail())).thenReturn(Optional.of(requesterUser));
+        samplePost.setStatus(RoomPost.PostStatus.APPROVED);
+        when(roomPostRepository.findById(10L)).thenReturn(Optional.of(samplePost));
+        when(appointmentRepository.save(any(ViewingAppointment.class))).thenAnswer(inv -> {
+            ViewingAppointment a = inv.getArgument(0);
+            a.setId(200L);
+            return a;
+        });
+
+        com.roommate.hub.dto.CreateAppointmentDTO dto = com.roommate.hub.dto.CreateAppointmentDTO.builder()
+                .roomPostId(10L)
+                .appointmentTime(java.time.OffsetDateTime.now().plusDays(1))
+                .build();
+
+        var result = appointmentService.createAppointment(dto);
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(200L);
+        assertThat(result.getStatus()).isEqualTo("PENDING");
     }
 }

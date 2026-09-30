@@ -29,7 +29,7 @@ public class AppointmentResponseDTO {
     private String roomAddress;
     private Double roomPrice;
 
-    private LocalDateTime appointmentTime;
+    private java.time.OffsetDateTime appointmentTime;
     private String status;
     private String note;
     private LocalDateTime createdAt;

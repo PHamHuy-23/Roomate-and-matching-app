@@ -38,7 +38,7 @@ public class AppointmentService {
             throw new RuntimeException("Chỉ có thể đặt lịch xem các phòng đã được duyệt và đang mở!");
         }
 
-        if (dto.getAppointmentTime() == null || !dto.getAppointmentTime().isAfter(java.time.LocalDateTime.now())) {
+        if (dto.getAppointmentTime() == null || !dto.getAppointmentTime().isAfter(java.time.OffsetDateTime.now())) {
             throw new RuntimeException("Thời gian xem phòng phải ở trong tương lai!");
         }
 

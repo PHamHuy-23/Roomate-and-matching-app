@@ -54,4 +54,37 @@ void main() {
     expect(post.amenities, ['Wifi', 'Máy giặt']);
     expect(post.currentOccupants, 0);
   });
+
+  test('RoomPost correctly parses status from payload or defaults to PENDING', () {
+    final pendingPost = RoomPost.fromJson({
+      'id': 1,
+      'title': 'Test PENDING',
+      'price': 1000000,
+      'status': 'PENDING',
+    });
+    expect(pendingPost.status, 'PENDING');
+
+    final rejectedPost = RoomPost.fromJson({
+      'id': 2,
+      'title': 'Test REJECTED',
+      'price': 1000000,
+      'status': 'REJECTED',
+    });
+    expect(rejectedPost.status, 'REJECTED');
+
+    final closedPost = RoomPost.fromJson({
+      'id': 3,
+      'title': 'Test CLOSED',
+      'price': 1000000,
+      'status': 'CLOSED',
+    });
+    expect(closedPost.status, 'CLOSED');
+
+    final fallbackPost = RoomPost.fromJson({
+      'id': 4,
+      'title': 'Test Missing status',
+      'price': 1000000,
+    });
+    expect(fallbackPost.status, 'UNKNOWN');
+  });
 }

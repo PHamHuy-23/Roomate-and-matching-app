@@ -55,11 +55,11 @@ class ViewingAppointment {
       roomTitle: (json['roomTitle'] as String?) ?? 'Phòng trọ',
       roomAddress: (json['roomAddress'] as String?) ?? '',
       roomPrice: (json['roomPrice'] as num?)?.toDouble() ?? 0.0,
-      appointmentTime: DateTime.parse(json['appointmentTime'] as String),
+      appointmentTime: DateTime.parse(json['appointmentTime'] as String).toLocal(),
       status: (json['status'] as String?) ?? 'PENDING',
       note: json['note'] as String?,
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
           : DateTime.now(),
     );
   }

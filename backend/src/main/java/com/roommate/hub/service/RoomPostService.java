@@ -86,6 +86,7 @@ public class RoomPostService {
                 .maxOccupants(post.getMaxOccupants())
                 .currentOccupants(post.getCurrentOccupants())
                 .amenities(post.getAmenities())
+                .status(post.getStatus() != null ? post.getStatus().name() : null)
                 .createdAt(post.getCreatedAt())
                 .status(post.getStatus().name())
                 .moderationReason(post.getModerationReason())

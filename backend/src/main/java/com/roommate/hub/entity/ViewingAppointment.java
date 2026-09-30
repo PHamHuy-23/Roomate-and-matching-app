@@ -33,7 +33,7 @@ public class ViewingAppointment {
     private RoomPost roomPost;
 
     @Column(nullable = false)
-    private LocalDateTime appointmentTime;
+    private java.time.OffsetDateTime appointmentTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

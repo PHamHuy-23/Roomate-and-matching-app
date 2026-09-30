@@ -610,6 +610,17 @@ class ApiService {
     throw _errorFrom(response, 'Không thể thay đổi trạng thái người dùng');
   }
 
+  static String _formatIsoWithOffset(DateTime dateTime) {
+    if (dateTime.isUtc) {
+      return dateTime.toIso8601String();
+    }
+    final offset = dateTime.timeZoneOffset;
+    final sign = offset.isNegative ? '-' : '+';
+    final hours = offset.inHours.abs().toString().padLeft(2, '0');
+    final minutes = (offset.inMinutes.abs() % 60).toString().padLeft(2, '0');
+    return '${dateTime.toIso8601String()}$sign$hours:$minutes';
+  }
+
   // --- LỊCH HẸN XEM PHÒNG (APPOINTMENTS) ---
   Future<ViewingAppointment> createAppointment({
     required int roomPostId,
@@ -621,7 +632,7 @@ class ApiService {
       '/appointments',
       body: {
         'roomPostId': roomPostId,
-        'appointmentTime': appointmentTime.toIso8601String(),
+        'appointmentTime': _formatIsoWithOffset(appointmentTime),
         'note': note,
       },
     );

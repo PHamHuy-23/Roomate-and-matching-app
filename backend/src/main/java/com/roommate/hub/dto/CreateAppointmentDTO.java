@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -20,7 +20,7 @@ public class CreateAppointmentDTO {
 
     @NotNull(message = "Thời gian xem phòng không được để trống")
     @Future(message = "Thời gian xem phòng phải ở trong tương lai")
-    private LocalDateTime appointmentTime;
+    private OffsetDateTime appointmentTime;
 
     private String note;
 }

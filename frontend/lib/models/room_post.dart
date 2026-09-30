@@ -34,7 +34,7 @@ class RoomPost {
     this.amenities = const <String>[],
     this.deposit,
     this.electricityWaterCost,
-    this.status = 'AVAILABLE',
+    this.status = 'UNKNOWN',
     this.moderationReason,
     this.createdAt,
   });
@@ -74,7 +74,9 @@ class RoomPost {
       amenities: amenities,
       deposit: (json['deposit'] as num?)?.toDouble(),
       electricityWaterCost: (json['electricityWaterCost'] as num?)?.toDouble(),
-      status: json['status'] as String? ?? 'UNKNOWN',
+      status: (json['status'] as String?)?.trim().isNotEmpty == true
+          ? (json['status'] as String).trim()
+          : 'UNKNOWN',
       moderationReason: json['moderationReason'] as String?,
       createdAt: json['createdAt'] as String?,
     );

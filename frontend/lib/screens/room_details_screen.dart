@@ -176,6 +176,40 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      RoomFlowScreen(post: post, mode: RoomFlowMode.location),
+                ),
+              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.map_outlined, color: _primary),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Vị trí & bản đồ khu vực',
+                        style: TextStyle(
+                          color: _ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: _muted),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 22),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,

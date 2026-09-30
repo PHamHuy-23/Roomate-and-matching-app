@@ -10,9 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.roommate.hub.exception.ForbiddenException;
 
+import com.roommate.hub.exception.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,45 +35,67 @@ public class MatchRequestService {
             throw new RuntimeException("Không thể tự ghép đôi với chính mình!");
         }
 
-        // Serialize both directions of a pair in a stable order.
-        userRepository.findByIdForUpdate(Math.min(senderId, receiverId))
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
-        userRepository.findByIdForUpdate(Math.max(senderId, receiverId))
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+        Long firstId = Math.min(senderId, receiverId);
+        Long secondId = Math.max(senderId, receiverId);
+
+        // Khóa bi-directional theo thứ tự ID tăng dần để ngăn race condition và loại trừ deadlock
+        userRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + firstId));
+        userRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + secondId));
+
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found: " + senderId));
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Receiver not found: " + receiverId));
         requireConnectable(sender, receiver);
+
         Double score = matchingService.getRecommendations(sender).stream()
                 .filter(recommendation -> receiverId.equals(recommendation.getUserId()))
                 .map(recommendation -> recommendation.getTotalScore())
                 .findFirst().orElse(0.0);
 
         MatchRequest request = matchRequestRepository.findConnectionBetweenUsers(senderId, receiverId)
+                .map(existing -> {
+                    if (existing.getStatus() == MatchRequest.MatchStatus.REJECTED) {
+                        existing.setStatus(MatchRequest.MatchStatus.PENDING);
+                        existing.setMatchScore(score);
+                        return matchRequestRepository.save(existing);
+                    }
+                    return existing;
+                })
                 .orElseGet(() -> matchRequestRepository.save(MatchRequest.builder()
                         .sender(sender)
                         .receiver(receiver)
                         .matchScore(score)
                         .status(MatchRequest.MatchStatus.PENDING)
                         .build()));
-        if (request.getStatus() == MatchRequest.MatchStatus.REJECTED) {
-            throw new IllegalArgumentException("Yêu cầu trước đã bị từ chối. Không thể gửi lại yêu cầu này.");
-        }
-        boolean accepted = request.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
-        return MatchRequestResponseDTO.builder().requestId(request.getId()).partnerId(receiver.getId())
-                .partnerName(receiver.getFullName()).partnerAvatar(receiver.getAvatarUrl())
-                .matchScore(request.getMatchScore()).status(request.getStatus().name())
+
+        boolean isAccepted = request.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
+        return buildResponse(request, receiver, isAccepted);
+    }
+
+    private MatchRequestResponseDTO buildResponse(MatchRequest request, User partner, boolean isAccepted) {
+        return MatchRequestResponseDTO.builder()
+                .requestId(request.getId())
+                .partnerId(partner.getId())
+                .partnerName(partner.getFullName())
+                .partnerAvatar(partner.getAvatarUrl())
+                .matchScore(request.getMatchScore())
+                .status(request.getStatus().name())
                 .createdAt(request.getCreatedAt())
-                .contactPhone(accepted ? receiver.getPhone() : null)
-                .contactEmail(accepted ? receiver.getEmail() : null).build();
+                .contactPhone(isAccepted ? partner.getPhone() : null)
+                .contactEmail(isAccepted ? partner.getEmail() : null)
+                .build();
     }
 
     @Transactional
     public Map<String, Object> respondRequest(Long requestId, boolean isAccepted, Long currentUserId) {
         MatchRequest request = matchRequestRepository.findByIdForUpdate(requestId)
-                .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại!"));
-        if (!request.getReceiver().getId().equals(currentUserId)) throw new ForbiddenException("Không có quyền xử lý yêu cầu này!");
+                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu không tồn tại!"));
+        if (!request.getReceiver().getId().equals(currentUserId)) {
+            throw new ForbiddenException("Không có quyền xử lý yêu cầu này!");
+        }
         requireConnectable(request.getSender(), request.getReceiver());
         if (request.getStatus() != MatchRequest.MatchStatus.PENDING) {
             throw new IllegalArgumentException("Yêu cầu đã được xử lý");
@@ -115,7 +142,7 @@ public class MatchRequestService {
         }).collect(Collectors.toList());
     }
 
-    // Danh sách đã gửi đi (mình là sender)
+    // Danh sách đã gửi (mình là sender)
     @Transactional(readOnly = true)
     public List<MatchRequestResponseDTO> getSentRequests(Long userId) {
         List<MatchRequest> list = matchRequestRepository.findBySenderId(userId);
