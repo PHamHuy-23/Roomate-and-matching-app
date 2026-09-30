@@ -11,7 +11,7 @@ public interface UserPreferenceRepository extends JpaRepository<UserPreference, 
     Optional<UserPreference> findByUserId(Long userId);
 
     @Query("SELECT p FROM UserPreference p JOIN p.user u " +
-            "WHERE u.id != :currentUserId AND u.gender = :gender AND p.targetDistrict = :district")
+            "WHERE u.id != :currentUserId AND (:gender = 'ANY' OR u.gender = :gender) AND p.targetDistrict = :district")
     List<UserPreference> findCandidates(
             @Param("currentUserId") Long currentUserId,
             @Param("gender") String gender,

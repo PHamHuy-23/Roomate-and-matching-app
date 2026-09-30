@@ -38,7 +38,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+        ipRateLimitService.checkAndIncrement(extractClientIp(httpRequest), "login");
         return ResponseEntity.ok(authService.login(request));
     }
 

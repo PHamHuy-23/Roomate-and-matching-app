@@ -87,6 +87,8 @@ public class RoomPostService {
                 .currentOccupants(post.getCurrentOccupants())
                 .amenities(post.getAmenities())
                 .createdAt(post.getCreatedAt())
+                .status(post.getStatus().name())
+                .moderationReason(post.getModerationReason())
                 .imageUrl(post.getImageUrl())
                 .build();
     }

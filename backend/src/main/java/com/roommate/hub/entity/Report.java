@@ -40,6 +40,9 @@ public class Report {
     @Column(name = "action_note", columnDefinition = "TEXT")
     private String actionNote;
 
+    @Column(name = "evidence_url", length = 1000)
+    private String evidenceUrl;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

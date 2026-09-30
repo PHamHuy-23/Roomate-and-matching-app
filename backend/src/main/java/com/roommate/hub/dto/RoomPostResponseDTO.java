@@ -28,5 +28,7 @@ public class RoomPostResponseDTO {
     private Integer maxOccupants;
     private Integer currentOccupants;
     private String amenities;
+    private String status;
+    private String moderationReason;
     private LocalDateTime createdAt;
 }

@@ -22,6 +22,7 @@ public class AdminReportResponseDTO {
     private String reason;
     private String status;
     private String actionNote;
+    private String evidenceUrl;
     private LocalDateTime createdAt;
 
     public static AdminReportResponseDTO from(Report report) {
@@ -35,6 +36,7 @@ public class AdminReportResponseDTO {
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .actionNote(report.getActionNote())
+                .evidenceUrl(report.getEvidenceUrl())
                 .createdAt(report.getCreatedAt())
                 .build();
     }

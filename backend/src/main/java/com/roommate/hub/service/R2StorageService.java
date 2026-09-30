@@ -31,7 +31,7 @@ public class R2StorageService {
             "image/jpeg", ".jpg",
             "image/png", ".png",
             "image/webp", ".webp");
-    private static final Set<String> PURPOSES = Set.of("avatar", "room-post", "chat");
+    private static final Set<String> PURPOSES = Set.of("avatar", "room-post", "chat", "report");
 
     private final S3Presigner presigner;
     private final R2Properties properties;
@@ -41,6 +41,7 @@ public class R2StorageService {
             case "avatar" -> "avatars";
             case "room-post" -> "room-posts";
             case "chat" -> "chat";
+            case "report" -> "reports";
             default -> "misc";
         };
     }

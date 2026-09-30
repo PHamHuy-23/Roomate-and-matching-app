@@ -62,6 +62,9 @@ public class RoomPost {
     @Column(nullable = false, length = 20)
     private PostStatus status; // AVAILABLE, FILLED
 
+    @Column(name = "moderation_reason", columnDefinition = "TEXT")
+    private String moderationReason;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

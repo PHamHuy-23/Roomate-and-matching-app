@@ -43,7 +43,11 @@ public class AdminService {
         RoomPost post = roomPostRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Bài đăng không tồn tại!"));
 
+        if (status == null || !List.of("APPROVED", "REJECTED", "CLOSED").contains(status.toUpperCase())) {
+            throw new IllegalArgumentException("Trạng thái kiểm duyệt không hợp lệ");
+        }
         post.setStatus(RoomPost.PostStatus.valueOf(status.toUpperCase()));
+        post.setModerationReason(reason == null || reason.isBlank() ? null : reason.trim());
         return roomPostRepository.save(post);
     }
 
@@ -87,6 +91,9 @@ public class AdminService {
     public AdminReportResponseDTO moderateReport(Long reportId, String status, String note) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Báo cáo không tồn tại!"));
+        if (status == null || !List.of("PENDING", "RESOLVED", "DISMISSED").contains(status.toUpperCase())) {
+            throw new IllegalArgumentException("Trạng thái báo cáo không hợp lệ");
+        }
         report.setStatus(status.toUpperCase());
         if (note != null && !note.isBlank()) {
             report.setActionNote(note.trim());

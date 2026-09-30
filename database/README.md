@@ -33,4 +33,6 @@ Mật khẩu chung: `123456`.
 
 ## Lưu ý migration
 
-Schema PostgreSQL là nguồn sự thật mới. Các file cũ trong `database/migrations/` được viết cho MySQL và không được chạy trên Supabase. Nếu cần chuyển dữ liệu thật từ MySQL, export dữ liệu thành CSV rồi import theo thứ tự: `users`, `user_preferences`, `room_posts`, `match_requests`.
+`01_schema.sql` dùng để tạo database mới và sẽ xóa dữ liệu cũ trước khi tạo lại bảng. Với project Supabase đã có dữ liệu, **không chạy lại** file này; chỉ chạy migration PostgreSQL `20260930_moderation_reason.sql`. File `20260916_add_user_academic_profile.sql` là migration MySQL cũ, không được chạy trên Supabase. Migration mới bổ sung trạng thái tìm kiếm, tiêu chí ghép đôi có kiểu dữ liệu, lý do kiểm duyệt, ảnh bằng chứng và danh sách tin đã lưu mà không xóa dữ liệu hiện có.
+
+Nếu cần chuyển dữ liệu thật từ hệ thống khác, export dữ liệu thành CSV rồi import theo thứ tự: `users`, `user_preferences`, `room_posts`, `match_requests`.

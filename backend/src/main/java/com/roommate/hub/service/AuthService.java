@@ -53,12 +53,13 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
+        String normalizedEmail = req.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new RuntimeException("Email đã được đăng ký!");
         }
 
         User user = User.builder()
-                .email(req.getEmail())
+                .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .fullName(req.getFullName())
                 .gender(req.getGender().toUpperCase())
@@ -89,7 +90,8 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
-        User user = userRepository.findByEmail(req.getEmail())
+        String normalizedEmail = req.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!"));
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
@@ -115,6 +117,9 @@ public class AuthService {
             userRepository.save(user);
         }
 
+        // Mỗi lần đăng nhập mới tạo một phiên duy nhất. Refresh token cũ không còn
+        // được phép cấp access token mới sau khi người dùng đăng nhập lại.
+        tokenRevocationService.revokeAllUserTokens(user);
         Map<String, Object> rtData = createRefreshToken(user);
         String rawRefreshToken = (String) rtData.get("rawToken");
         String token = jwtUtils.generateToken(user.getEmail(), user.getId());

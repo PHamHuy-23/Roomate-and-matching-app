@@ -22,6 +22,7 @@ public class MatchingService {
     private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
 
     public List<MatchRecommendationDTO> getRecommendations(User currentUser) {
+        if (!"ACTIVE".equalsIgnoreCase(currentUser.getStatus()) || !currentUser.isSearchActive()) return List.of();
         java.util.Optional<UserPreference> myPrefOpt = preferenceRepository.findByUserId(currentUser.getId());
         if (myPrefOpt.isEmpty()) {
             return java.util.Collections.emptyList();
@@ -31,7 +32,7 @@ public class MatchingService {
         // 1. LỌC CỨNG (SQL): Cùng giới tính & cùng quận
         List<UserPreference> candidates = preferenceRepository.findCandidates(
                 currentUser.getId(),
-                currentUser.getGender(),
+                myPref.getTargetGender() == null ? currentUser.getGender() : myPref.getTargetGender(),
                 myPref.getTargetDistrict()
         );
 
@@ -46,14 +47,20 @@ public class MatchingService {
 
         // 2. TÍNH TOÁN % TỔNG THỂ & CHI TIẾT TỪNG TIÊU CHÍ (QĐ 1)
         return candidates.stream()
+                .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getUser().getStatus()) && candidate.getUser().isSearchActive())
+                .filter(candidate -> candidate.getTargetGender() == null || "ANY".equals(candidate.getTargetGender()) || currentUser.getGender().equals(candidate.getTargetGender()))
+                .filter(candidate -> !"SMOKING".equals(myPref.getTopPriority()) || !Boolean.TRUE.equals(candidate.getIsSmoking()))
                 .filter(candidate -> !blockedUserIds.contains(candidate.getUser().getId()))
                 .map(candidate -> {
                     MatchCriteriaDetailDTO details = calculateCriteriaDetail(myPref, candidate);
-                    double total = (0.30 * details.getBudgetMatch())
-                            + (0.25 * details.getSleepMatch())
-                            + (0.20 * details.getCleanlinessMatch())
-                            + (0.15 * details.getSmokingMatch())
-                            + (0.10 * details.getPetMatch());
+                    double budgetWeight = "BUDGET".equals(myPref.getTopPriority()) ? 0.60 : 0.30;
+                    double sleepWeight = "SLEEP".equals(myPref.getTopPriority()) ? 0.50 : 0.25;
+                    double cleanWeight = "CLEAN".equals(myPref.getTopPriority()) ? 0.40 : 0.20;
+                    double total = (budgetWeight * details.getBudgetMatch()
+                            + sleepWeight * details.getSleepMatch()
+                            + cleanWeight * details.getCleanlinessMatch()
+                            + 0.15 * details.getSmokingMatch()
+                            + 0.10 * details.getPetMatch()) / (budgetWeight + sleepWeight + cleanWeight + 0.25);
 
                     double roundedTotal = Math.round(total * 10.0) / 10.0;
 
@@ -85,6 +92,10 @@ public class MatchingService {
         // Ngân sách: độ lệch tương đối
         double maxBudget = Math.max(a.getBudgetAmount(), b.getBudgetAmount());
         double simBudget = (maxBudget == 0) ? 1.0 : 1.0 - (Math.abs(a.getBudgetAmount() - b.getBudgetAmount()) / maxBudget);
+        if (a.getBudgetMin() != null && a.getBudgetMax() != null && b.getBudgetMin() != null && b.getBudgetMax() != null) {
+            double gap = Math.max(a.getBudgetMin(), b.getBudgetMin()) - Math.min(a.getBudgetMax(), b.getBudgetMax());
+            simBudget = gap <= 0 ? 1.0 : Math.max(0.0, 1.0 - gap / 5_000_000.0);
+        }
 
         // Giờ giấc ngủ (thang đo 1-3)[cite: 1]
         double simSleep = 1.0 - (Math.abs(a.getSleepHabit() - b.getSleepHabit()) / 2.0);

@@ -3,6 +3,7 @@
 
 BEGIN;
 
+DROP TABLE IF EXISTS user_saved_posts CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS auth_otps CASCADE;
 DROP TABLE IF EXISTS chat_messages CASCADE;
@@ -29,6 +30,7 @@ CREATE TABLE users (
         CHECK (role IN ('ROLE_ADMIN', 'ROLE_USER')),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
         CHECK (status IN ('ACTIVE', 'LOCKED')),
+    search_active BOOLEAN NOT NULL DEFAULT TRUE,
     password_changed_at TIMESTAMPTZ,
     logged_out_at TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
@@ -40,6 +42,10 @@ CREATE TABLE user_preferences (
     user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     target_district VARCHAR(100) NOT NULL,
     budget_amount DOUBLE PRECISION NOT NULL,
+    budget_min DOUBLE PRECISION,
+    budget_max DOUBLE PRECISION,
+    target_gender VARCHAR(10),
+    top_priority VARCHAR(10),
     sleep_habit INTEGER NOT NULL CHECK (sleep_habit BETWEEN 1 AND 3),
     cleanliness_level INTEGER NOT NULL CHECK (cleanliness_level BETWEEN 1 AND 5),
     is_smoking BOOLEAN NOT NULL DEFAULT FALSE,
@@ -65,6 +71,7 @@ CREATE TABLE room_posts (
     image_url VARCHAR(1000),
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('AVAILABLE', 'PENDING', 'APPROVED', 'REJECTED', 'CLOSED')),
+    moderation_reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (current_occupants <= max_occupants)
 );
@@ -112,7 +119,14 @@ CREATE TABLE reports (
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('PENDING', 'RESOLVED', 'DISMISSED')),
     action_note TEXT,
+    evidence_url VARCHAR(1000),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_saved_posts (
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    post_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, post_id)
 );
 
 CREATE TABLE blocked_users (
@@ -162,5 +176,6 @@ CREATE INDEX idx_chat_messages_sender_receiver ON chat_messages(sender_id, recei
 CREATE INDEX idx_auth_otps_email_type ON auth_otps(email, type);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_user_saved_posts_post_id ON user_saved_posts(post_id);
 
 COMMIT;
