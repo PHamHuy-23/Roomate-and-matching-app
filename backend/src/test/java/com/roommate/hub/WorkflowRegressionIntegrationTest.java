@@ -56,10 +56,12 @@ class WorkflowRegressionIntegrationTest {
     @Test void reciprocalSendReusesRequestAndCanOnlyBeRespondedToOnce() {
         User a = user("A"), b = user("B");
         Long id = matches.sendRequest(a.getId(), b.getId()).getRequestId();
-        assertThat(matches.sendRequest(b.getId(), a.getId()).getRequestId()).isEqualTo(id);
+        com.roommate.hub.dto.MatchRequestResponseDTO reciprocal = matches.sendRequest(b.getId(), a.getId());
+        assertThat(reciprocal.getRequestId()).isEqualTo(id);
+        assertThat(reciprocal.getStatus()).isEqualTo(MatchRequest.MatchStatus.ACCEPTED.name());
         assertThat(requests.findAllBetweenUsers(a.getId(), b.getId())).hasSize(1);
-        matches.respondRequest(id, true, b.getId());
-        assertThatThrownBy(() -> matches.respondRequest(id, false, b.getId())).isInstanceOf(IllegalArgumentException.class);
+        assertThat(requests.findById(id).orElseThrow().getStatus()).isEqualTo(MatchRequest.MatchStatus.ACCEPTED);
+        assertThatThrownBy(() -> matches.respondRequest(id, true, b.getId())).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test void legacyReciprocalRowsDoNotCrashLookupAndCancelRemovesBoth() {

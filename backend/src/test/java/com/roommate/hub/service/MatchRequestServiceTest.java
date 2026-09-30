@@ -55,7 +55,7 @@ class MatchRequestServiceTest {
     }
 
     @Test
-    @DisplayName("sendRequest() tái sử dụng yêu cầu khi đối phương đã gửi yêu cầu trước đó")
+    @DisplayName("sendRequest() tự động chấp nhận (auto-accept) khi đối phương đã gửi yêu cầu PENDING trước đó")
     void sendRequest_WhenReverseRequestExists_ShouldAutoAcceptWithoutDuplicateRecord() {
         MatchRequest reverseRequest = MatchRequest.builder()
                 .id(99L)
@@ -66,12 +66,39 @@ class MatchRequestServiceTest {
                 .build();
 
         when(matchRequestRepository.findConnectionBetweenUsers(1L, 2L)).thenReturn(Optional.of(reverseRequest));
+        when(matchRequestRepository.save(any(MatchRequest.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MatchRequestResponseDTO result = matchRequestService.sendRequest(1L, 2L);
 
         assertThat(result.getRequestId()).isEqualTo(99L);
         assertThat(result.getPartnerId()).isEqualTo(2L);
+        assertThat(result.getStatus()).isEqualTo(MatchRequest.MatchStatus.ACCEPTED.name());
+        assertThat(reverseRequest.getStatus()).isEqualTo(MatchRequest.MatchStatus.ACCEPTED);
+        assertThat(result.getContactPhone()).isEqualTo(userB.getPhone());
+        assertThat(result.getContactEmail()).isEqualTo(userB.getEmail());
+        verify(matchRequestRepository, times(1)).save(reverseRequest);
+    }
+
+    @Test
+    @DisplayName("sendRequest() khi cùng chiều A->B đang PENDING thì giữ nguyên trạng thái PENDING và không duplicate")
+    void sendRequest_WhenDirectRequestPending_ShouldReturnExistingPending() {
+        MatchRequest directPending = MatchRequest.builder()
+                .id(100L)
+                .sender(userA)
+                .receiver(userB)
+                .matchScore(85.0)
+                .status(MatchRequest.MatchStatus.PENDING)
+                .build();
+
+        when(matchRequestRepository.findConnectionBetweenUsers(1L, 2L)).thenReturn(Optional.of(directPending));
+
+        MatchRequestResponseDTO result = matchRequestService.sendRequest(1L, 2L);
+
+        assertThat(result.getRequestId()).isEqualTo(100L);
+        assertThat(result.getPartnerId()).isEqualTo(2L);
         assertThat(result.getStatus()).isEqualTo(MatchRequest.MatchStatus.PENDING.name());
+        assertThat(result.getContactPhone()).isNull();
+        verify(matchRequestRepository, never()).save(any());
     }
 
     @Test

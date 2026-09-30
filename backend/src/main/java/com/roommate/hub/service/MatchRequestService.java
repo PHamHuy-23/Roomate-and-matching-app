@@ -66,6 +66,14 @@ public class MatchRequestService {
                         existing.setCreatedAt(LocalDateTime.now());
                         return matchRequestRepository.save(existing);
                     }
+                    if (existing.getStatus() == MatchRequest.MatchStatus.PENDING
+                            && !existing.getSender().getId().equals(senderId)) {
+                        existing.setStatus(MatchRequest.MatchStatus.ACCEPTED);
+                        if (existing.getMatchScore() == null || existing.getMatchScore() == 0.0) {
+                            existing.setMatchScore(score);
+                        }
+                        return matchRequestRepository.save(existing);
+                    }
                     return existing;
                 })
                 .orElseGet(() -> matchRequestRepository.save(MatchRequest.builder()
