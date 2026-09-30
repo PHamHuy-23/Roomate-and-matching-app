@@ -25,6 +25,12 @@ public class UserPreference {
 
     @Column(nullable = false)
     private Double budgetAmount; // VNĐ
+    private Double budgetMin;
+    private Double budgetMax;
+    @Column(length = 10)
+    private String targetGender;
+    @Column(length = 10)
+    private String topPriority;
 
     @Column(nullable = false)
     private Integer sleepHabit; // 1: Ngủ sớm, 2: Bình thường, 3: Cú đêm

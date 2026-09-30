@@ -1,0 +1,21 @@
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:5000",
+      "https://YOUR_WEB_DOMAIN"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "Content-Type",
+      "Content-Length"
+    ],
+    "ExposeHeaders": [
+      "ETag"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]

@@ -1,0 +1,681 @@
+import 'package:flutter/material.dart';
+
+import '../../navigation/app_routes.dart';
+import '../../services/api_service.dart';
+import '../../widgets/admin_profile_avatar.dart';
+
+class _AdminReport {
+  const _AdminReport({
+    required this.rawId,
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.reason,
+    required this.sender,
+    required this.note,
+    this.status = 'PENDING',
+    this.evidenceUrl,
+  });
+
+  final int rawId;
+  final String id;
+  final String title;
+  final String subtitle;
+  final String reason;
+  final String sender;
+  final String note;
+  final String status;
+  final String? evidenceUrl;
+}
+
+class AdminReportsScreen extends StatefulWidget {
+  const AdminReportsScreen({super.key, this.apiService});
+  final ApiService? apiService;
+
+  @override
+  State<AdminReportsScreen> createState() => _AdminReportsScreenState();
+}
+
+class _AdminReportsScreenState extends State<AdminReportsScreen> {
+  ApiService get _api => widget.apiService ?? ApiService();
+  bool _isLoading = false;
+  bool _isResolving = false;
+  final _noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  List<_AdminReport> _reports = [];
+  String? _loadError;
+
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    if (!_api.hasAuthToken) {
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final list = await _api.getAdminReports();
+      if (!mounted) return;
+      final loaded = list.map((item) {
+        final map = item as Map<String, dynamic>;
+        final rawId = map['id'] is int
+            ? map['id'] as int
+            : int.tryParse(map['id'].toString()) ?? 1;
+        final targetType = map['targetType']?.toString() ?? 'USER';
+        final targetId = map['targetId']?.toString() ?? '0';
+        final reason = map['reason']?.toString() ?? 'Không rõ lý do';
+        final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
+        final status = map['status']?.toString() ?? 'PENDING';
+        final note =
+            map['actionNote']?.toString() ??
+            (status == 'RESOLVED'
+                ? 'Đã xử lý vi phạm.'
+                : 'Đang chờ quản trị viên kiểm tra nội dung.');
+        final prefix = targetType == 'ROOM_POST'
+            ? 'Tin RH-$targetId'
+            : 'Người dùng #$targetId';
+        final statusVi = status == 'RESOLVED'
+            ? 'Đã xử lý'
+            : status == 'DISMISSED'
+            ? 'Đã bác bỏ'
+            : 'Đang chờ';
+        final evidenceUrl =
+            map['evidenceUrl']?.toString() ?? map['imageUrl']?.toString();
+        return _AdminReport(
+          rawId: rawId,
+          id: 'BC-${rawId.toString().padLeft(3, '0')}',
+          title: reason.length > 25 ? '${reason.substring(0, 25)}...' : reason,
+          subtitle: '$prefix · $statusVi',
+          reason: reason,
+          sender: sender,
+          note: note,
+          status: status,
+          evidenceUrl: evidenceUrl,
+        );
+      }).toList();
+
+      setState(() {
+        _reports = loaded;
+        _loadError = null;
+        if (_selectedIndex >= _reports.length) _selectedIndex = 0;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _reports = [];
+          _loadError = 'Không tải được báo cáo: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  _AdminReport get _selectedReport =>
+      _reports.isNotEmpty && _selectedIndex < _reports.length
+      ? _reports[_selectedIndex]
+      : _AdminReport(
+          rawId: 0,
+          id: 'BC-000',
+          title: 'Không có báo cáo',
+          subtitle: '',
+          reason: _loadError ?? 'Hiện chưa có báo cáo vi phạm nào.',
+          sender: '',
+          note: '',
+        );
+
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title, {
+    bool isActive = false,
+    String? route,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        if (!isActive && route != null) {
+          Navigator.pushReplacementNamed(context, route);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF087E6B) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            fontFamily: 'SourceSansPro',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportItem(_AdminReport report, {required bool isActive}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: Key('admin_report_${report.id}'),
+        onTap: () => setState(() {
+          _selectedIndex = _reports.indexOf(report);
+        }),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFEAF8F5) : const Color(0xFFF5F8F7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${report.id} · ${report.title}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'SourceSansPro',
+                  color: Color(0xFF142523),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                report.subtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'SourceSansPro',
+                  color: Color(0xFF65746F),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F8F7),
+      body: Row(
+        children: [
+          // Sidebar
+          Container(
+            width: 224,
+            color: const Color(0xFF142523),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 34, 28, 48),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'RH / Admin',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'SourceSansPro',
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'ROOMMATE HUB',
+                        style: TextStyle(
+                          color: Color(0xFF8FB8AC),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'SourceSansPro',
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  route: '/admin/dashboard',
+                ),
+                _buildSidebarItem(context, 'Người dùng', route: '/admin/users'),
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: '/admin/moderate-post',
+                ),
+                _buildSidebarItem(context, 'Báo cáo vi phạm', isActive: true),
+
+                const Spacer(),
+
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
+                  child: Text(
+                    'Không gian quản trị',
+                    style: TextStyle(
+                      color: Color(0xFF8FB8AC),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'SourceSansPro',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Main Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Báo cáo vi phạm',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'SourceSansPro',
+                              color: Color(0xFF142523),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Ưu tiên xử lý các báo cáo về an toàn và thông tin sai',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'SourceSansPro',
+                              color: Color(0xFF65746F),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const AdminProfileAvatar(),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Two columns
+                  SizedBox(
+                    height: 620,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Left Column (List)
+                        Expanded(
+                          flex: 48, // approx 480 width
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Báo cáo đang chờ',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'SourceSansPro',
+                                        color: Color(0xFF142523),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '(${_reports.length})',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF65746F),
+                                      ),
+                                    ),
+
+                                    if (_isLoading) ...[
+                                      const SizedBox(width: 8),
+                                      const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                Expanded(
+                                  child: _reports.isEmpty
+                                      ? const Center(
+                                          child: Text(
+                                            'Chưa có báo cáo vi phạm nào.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xFF65746F),
+                                              fontFamily: 'SourceSansPro',
+                                            ),
+                                          ),
+                                        )
+                                      : ListView(
+                                          children: [
+                                            for (
+                                              var index = 0;
+                                              index < _reports.length;
+                                              index++
+                                            )
+                                              _buildReportItem(
+                                                _reports[index],
+                                                isActive:
+                                                    index == _selectedIndex,
+                                              ),
+                                          ],
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+
+                        // Right Column (Details)
+                        Expanded(
+                          flex: 52, // approx 520 width
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_selectedReport.id} / Chi tiết báo cáo',
+                                  style: TextStyle(
+                                    fontSize: 23,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF142523),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Lý do: ${_selectedReport.reason}\nNgười gửi: ${_selectedReport.sender}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF142523),
+                                    height: 1.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 224,
+                                    height: 147,
+                                    color: Colors.grey.shade300,
+                                    child:
+                                        _selectedReport.evidenceUrl != null &&
+                                            _selectedReport
+                                                .evidenceUrl!
+                                                .isNotEmpty
+                                        ? Image.network(
+                                            _selectedReport.evidenceUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stack) =>
+                                                    const Center(
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        size: 48,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                          )
+                                        : const Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .image_not_supported_outlined,
+                                                  size: 36,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  'Không có ảnh đính kèm',
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Bằng chứng đính kèm',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF65746F),
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Text(
+                                  'Ghi chú xử lý',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF142523),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F8F7),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _selectedReport.note,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w400,
+                                      fontFamily: 'SourceSansPro',
+                                      color: Color(0xFF142523),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isResolving ||
+                                            _selectedReport.rawId <= 0 ||
+                                            _selectedReport.status != 'PENDING'
+                                        ? null
+                                        : () async {
+                                            final reportId =
+                                                _selectedReport.rawId;
+                                            final noteController =
+                                                _noteController..clear();
+                                            final note = await showDialog<String>(
+                                              context: context,
+                                              builder: (dialogContext) =>
+                                                  AlertDialog(
+                                                    title: const Text(
+                                                      'Kết quả xem xét báo cáo',
+                                                    ),
+                                                    content: TextField(
+                                                      controller:
+                                                          noteController,
+                                                      maxLines: 3,
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            labelText:
+                                                                'Ghi rõ kết quả và hành động thực tế đã thực hiện',
+                                                          ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                            ),
+                                                        child: const Text(
+                                                          'Hủy',
+                                                        ),
+                                                      ),
+                                                      FilledButton(
+                                                        onPressed: () {
+                                                          if (noteController
+                                                              .text
+                                                              .trim()
+                                                              .isNotEmpty) {
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                              noteController
+                                                                  .text
+                                                                  .trim(),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text(
+                                                          'Lưu kết quả',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+                                            // The dialog owns the controller until its closing animation ends.
+                                            if (!context.mounted ||
+                                                note == null) {
+                                              return;
+                                            }
+                                            setState(() => _isResolving = true);
+                                            try {
+                                              if (reportId > 0) {
+                                                await _api.moderateAdminReport(
+                                                  reportId,
+                                                  status: 'RESOLVED',
+                                                  note: note,
+                                                );
+                                              }
+                                              if (!mounted || !context.mounted) {
+                                                return;
+                                              }
+                                              Navigator.pushReplacementNamed(
+                                                context,
+                                                AppRoutes.adminReportResolved,
+                                              );
+                                            } catch (e) {
+                                              if (!mounted || !context.mounted) {
+                                                return;
+                                              }
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Lỗi: $e'),
+                                                ),
+                                              );
+                                            } finally {
+                                              if (mounted) {
+                                                setState(
+                                                  () => _isResolving = false,
+                                                );
+                                              }
+                                            }
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF087E6B),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isResolving
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Đánh dấu đã xử lý',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'SourceSansPro',
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

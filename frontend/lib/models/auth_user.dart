@@ -2,6 +2,7 @@ class AuthUser {
   static const Object _sentinel = Object();
 
   final String token;
+  final String? refreshToken;
   final int userId;
   final String email;
   final String fullName;
@@ -14,6 +15,7 @@ class AuthUser {
 
   AuthUser({
     required this.token,
+    this.refreshToken,
     required this.userId,
     required this.email,
     required this.fullName,
@@ -32,12 +34,14 @@ class AuthUser {
     if (tokenValue is! String || tokenValue.isEmpty) {
       throw const FormatException('Auth response không chứa access token');
     }
+    final rawRefreshToken = json['refreshToken'] as String?;
 
     final rawPhone = user['phone'] ?? json['phone'];
     final rawAvatar = user['avatarUrl'] ?? json['avatarUrl'];
 
     return AuthUser(
       token: tokenValue,
+      refreshToken: rawRefreshToken,
       userId: (user['id'] ?? user['userId']) as int,
       email: user['email'] as String,
       fullName: user['fullName'] as String,
@@ -54,6 +58,7 @@ class AuthUser {
 
   AuthUser copyWith({
     String? token,
+    String? refreshToken,
     int? userId,
     String? email,
     String? fullName,
@@ -66,6 +71,7 @@ class AuthUser {
   }) {
     return AuthUser(
       token: token ?? this.token,
+      refreshToken: refreshToken ?? this.refreshToken,
       userId: userId ?? this.userId,
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,

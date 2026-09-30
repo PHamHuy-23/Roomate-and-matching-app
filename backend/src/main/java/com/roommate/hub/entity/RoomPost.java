@@ -35,8 +35,25 @@ public class RoomPost {
     @Column(nullable = false, length = 255)
     private String address;
 
+    @Column(length = 100)
+    private String district;
+
+    private Double deposit;
+
+    @Column(name = "electricity_water_cost")
+    private Double electricityWaterCost;
+
+    private Double area;
+
     @Column(nullable = false)
     private Integer maxOccupants;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer currentOccupants = 0;
+
+    @Column(length = 500)
+    private String amenities;
 
     @Column(length = 255)
     private String imageUrl;
@@ -45,14 +62,31 @@ public class RoomPost {
     @Column(nullable = false, length = 20)
     private PostStatus status; // AVAILABLE, FILLED
 
+    @Column(name = "moderation_reason", columnDefinition = "TEXT")
+    private String moderationReason;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = PostStatus.PENDING;
+        }
+        if (currentOccupants == null) {
+            currentOccupants = 0;
+        }
+    }
 
     public enum PostStatus {
         PENDING,    // Chờ Admin duyệt
         APPROVED,   // Đã duyệt (hiển thị công khai)
         REJECTED,   // Bị từ chối
-        AVAILABLE   // Tương đương APPROVED
+        AVAILABLE,  // Tương đương APPROVED
+        CLOSED      // Đã đóng tin (ẩn khỏi danh sách công khai, giữ lịch sử lịch hẹn)
     }
 }

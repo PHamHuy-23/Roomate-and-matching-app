@@ -16,6 +16,14 @@ public class UserPreferenceDTO {
     @NotNull(message = "Ngân sách không được để trống")
     @Min(value = 500000, message = "Ngân sách tối thiểu là 500.000 VNĐ")
     private Double budgetAmount;
+    @Min(0)
+    private Double budgetMin;
+    @Min(500000)
+    private Double budgetMax;
+    @jakarta.validation.constraints.Pattern(regexp = "ANY|MALE|FEMALE")
+    private String targetGender;
+    @jakarta.validation.constraints.Pattern(regexp = "BUDGET|SLEEP|CLEAN|SMOKING")
+    private String topPriority;
 
     @NotNull(message = "Giờ giấc sinh hoạt không được để trống")
     private Integer sleepHabit; // 1: Ngủ sớm, 2: Bình thường, 3: Cú đêm

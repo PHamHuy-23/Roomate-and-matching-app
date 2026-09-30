@@ -40,6 +40,9 @@ public class MatchRequest {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Version
+    private Long version;
+
     public enum MatchStatus {
         PENDING, ACCEPTED, REJECTED
     }

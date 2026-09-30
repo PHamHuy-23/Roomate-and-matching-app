@@ -16,10 +16,19 @@ public class RoomPostResponseDTO {
     private Long authorId;
     private String authorName;
     private String authorAvatar;
+    private String imageUrl;
     private String title;
     private String description;
     private Double price;
     private String address;
+    private String district;
+    private Double deposit;
+    private Double electricityWaterCost;
+    private Double area;
     private Integer maxOccupants;
+    private Integer currentOccupants;
+    private String amenities;
+    private String status;
+    private String moderationReason;
     private LocalDateTime createdAt;
 }

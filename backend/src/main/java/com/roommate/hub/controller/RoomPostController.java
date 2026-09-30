@@ -22,8 +22,29 @@ public class RoomPostController {
         return ResponseEntity.ok(roomPostService.getAllAvailablePosts());
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<RoomPostResponseDTO>> getMyPosts() {
+        return ResponseEntity.ok(roomPostService.getMyPosts());
+    }
+
     @PostMapping
     public ResponseEntity<RoomPostResponseDTO> createPost(@Valid @RequestBody CreateRoomPostDTO dto) {
         return ResponseEntity.ok(roomPostService.createPost(dto));
+    }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<RoomPostResponseDTO> updatePost(@PathVariable Long postId, @RequestBody CreateRoomPostDTO dto) {
+        return ResponseEntity.ok(roomPostService.updatePost(postId, dto));
+    }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<RoomPostResponseDTO> getPost(@PathVariable Long postId) {
+        return ResponseEntity.ok(roomPostService.getPost(postId));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
+        roomPostService.deletePost(postId);
+        return ResponseEntity.noContent().build();
     }
 }
