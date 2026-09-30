@@ -14,6 +14,7 @@ import com.roommate.hub.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +59,11 @@ public class MatchRequestService {
         MatchRequest request = matchRequestRepository.findConnectionBetweenUsers(senderId, receiverId)
                 .map(existing -> {
                     if (existing.getStatus() == MatchRequest.MatchStatus.REJECTED) {
+                        existing.setSender(sender);
+                        existing.setReceiver(receiver);
                         existing.setStatus(MatchRequest.MatchStatus.PENDING);
                         existing.setMatchScore(score);
+                        existing.setCreatedAt(LocalDateTime.now());
                         return matchRequestRepository.save(existing);
                     }
                     return existing;

@@ -110,6 +110,32 @@ class MatchRequestServiceTest {
     }
 
     @Test
+    @DisplayName("sendRequest() khi B gửi lại cho A sau khi A->B bị REJECTED phải đảo sender/receiver thành B->A")
+    void sendRequest_WhenReverseWasRejected_ShouldFlipSenderReceiverAndResetToPending() {
+        MatchRequest rejectedDirect = MatchRequest.builder()
+                .id(202L)
+                .sender(userA)
+                .receiver(userB)
+                .matchScore(70.0)
+                .status(MatchRequest.MatchStatus.REJECTED)
+                .build();
+
+        when(matchRequestRepository.findConnectionBetweenUsers(2L, 1L)).thenReturn(Optional.of(rejectedDirect));
+        when(matchRequestRepository.save(any(MatchRequest.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        MatchRequestResponseDTO result = matchRequestService.sendRequest(2L, 1L);
+
+        assertThat(result.getRequestId()).isEqualTo(202L);
+        assertThat(result.getPartnerId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo(MatchRequest.MatchStatus.PENDING.name());
+        assertThat(rejectedDirect.getSender()).isEqualTo(userB);
+        assertThat(rejectedDirect.getReceiver()).isEqualTo(userA);
+        assertThat(rejectedDirect.getStatus()).isEqualTo(MatchRequest.MatchStatus.PENDING);
+        assertThat(rejectedDirect.getCreatedAt()).isNotNull();
+        verify(matchRequestRepository, times(1)).save(rejectedDirect);
+    }
+
+    @Test
     @DisplayName("respondRequest() ném lỗi khi yêu cầu đã ở trạng thái ACCEPTED hoặc REJECTED")
     void respondRequest_WhenAlreadyFinalized_ShouldThrowBadRequest() {
         MatchRequest acceptedRequest = MatchRequest.builder()

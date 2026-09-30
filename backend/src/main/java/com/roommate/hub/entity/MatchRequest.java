@@ -37,7 +37,7 @@ public class MatchRequest {
     private MatchStatus status; // PENDING, ACCEPTED, REJECTED
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column
     private LocalDateTime createdAt;
 
     @Version
