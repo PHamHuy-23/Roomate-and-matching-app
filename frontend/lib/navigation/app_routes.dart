@@ -273,7 +273,7 @@ class AppRoutes {
             final matchScore =
                 arguments is Map && arguments['matchScore'] is num
                 ? (arguments['matchScore'] as num).toDouble()
-                : 0.0;
+                : null;
             return SendRequestScreen(
               currentUserId: user.userId,
               partnerId: partnerId,
@@ -353,7 +353,8 @@ class AppRoutes {
                 ? null
                 : <String, String>{
                     for (final entry in rawDetailUser.entries)
-                      entry.key.toString(): entry.value.toString(),
+                      if (entry.value != null)
+                        entry.key.toString(): entry.value.toString(),
                   };
             final onStatusChanged =
                 arguments is Map &&
@@ -375,7 +376,8 @@ class AppRoutes {
                 ? null
                 : <String, String>{
                     for (final entry in rawConfirmUser.entries)
-                      entry.key.toString(): entry.value.toString(),
+                      if (entry.value != null)
+                        entry.key.toString(): entry.value.toString(),
                   };
             final onStatusChanged =
                 arguments is Map &&

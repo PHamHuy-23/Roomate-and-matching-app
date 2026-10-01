@@ -6,12 +6,15 @@ import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.entity.Report;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.exception.ForbiddenException;
 import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.ReportRepository;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,8 +67,13 @@ public class AdminService {
     // Khóa hoặc mở khóa người dùng
     @Transactional
     public Map<String, Object> toggleUserStatus(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
+        User user = userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
+
+        Authentication actor = SecurityContextHolder.getContext().getAuthentication();
+        if (actor == null || user.getEmail().equals(actor.getName())) {
+            throw new ForbiddenException("Bạn không được khóa chính tài khoản đang đăng nhập!");
+        }
 
         // Nếu trạng thái đang là ACTIVE thì đổi thành LOCKED và ngược lại
         String newStatus = "ACTIVE".equalsIgnoreCase(user.getStatus()) ? "LOCKED" : "ACTIVE";

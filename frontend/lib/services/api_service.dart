@@ -24,7 +24,10 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  ApiService._internal();
+  ApiService._internal() : _client = http.Client();
+
+  @visibleForTesting
+  ApiService.withClient(http.Client client) : _client = client;
 
   factory ApiService() => _instance;
 
@@ -38,7 +41,7 @@ class ApiService {
 
   static void Function()? _onUnauthorized;
 
-  final http.Client _client = http.Client();
+  final http.Client _client;
   String? _token;
   String? _refreshToken;
   bool _isHandlingUnauthorized = false;
@@ -337,13 +340,27 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách gợi ý');
   }
 
-  Future<bool> sendMatchRequest(int receiverId) async {
+  Future<MatchRequestItem> sendMatchRequest(int receiverId) async {
     final response = await _request(
       'POST',
       '/matches/requests',
       queryParameters: {'receiverId': '$receiverId'},
     );
-    if (response.statusCode == 200 || response.statusCode == 201) return true;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      try {
+        final data = _decodeData(response);
+        if (data is! Map<String, dynamic>) throw const FormatException();
+        final request = MatchRequestItem.fromJson(data);
+        if (request.partnerId != receiverId ||
+            !['PENDING', 'ACCEPTED'].contains(request.status) ||
+            !request.matchScore.isFinite) {
+          throw const FormatException();
+        }
+        return request;
+      } catch (_) {
+        throw const ApiException('Dữ liệu lời mời từ máy chủ không hợp lệ');
+      }
+    }
     throw _errorFrom(response, 'Không thể gửi yêu cầu kết nối');
   }
 

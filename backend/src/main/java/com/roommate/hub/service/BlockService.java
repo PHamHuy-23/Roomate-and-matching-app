@@ -70,7 +70,6 @@ public class BlockService {
                 .blockedUserId(b.getBlockedUser().getId())
                 .blockedUserName(b.getBlockedUser().getFullName())
                 .blockedUserAvatar(b.getBlockedUser().getAvatarUrl())
-                .blockedUserEmail(b.getBlockedUser().getEmail())
                 .createdAt(b.getCreatedAt())
                 .build();
     }

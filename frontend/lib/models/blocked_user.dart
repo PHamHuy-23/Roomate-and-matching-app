@@ -3,7 +3,6 @@ class BlockedUser {
   final int blockedUserId;
   final String blockedUserName;
   final String? blockedUserAvatar;
-  final String? blockedUserEmail;
   final DateTime? createdAt;
 
   const BlockedUser({
@@ -11,7 +10,6 @@ class BlockedUser {
     required this.blockedUserId,
     required this.blockedUserName,
     this.blockedUserAvatar,
-    this.blockedUserEmail,
     this.createdAt,
   });
 
@@ -21,7 +19,6 @@ class BlockedUser {
       blockedUserId: json['blockedUserId'] as int? ?? 0,
       blockedUserName: json['blockedUserName'] as String? ?? 'Người dùng',
       blockedUserAvatar: json['blockedUserAvatar'] as String?,
-      blockedUserEmail: json['blockedUserEmail'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,

@@ -108,12 +108,14 @@ class ContactDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = contactName ?? 'Người dùng Roommate Hub';
-    final displayPhone = (phone != null && phone!.isNotEmpty)
-        ? phone!
-        : '0903 333 444';
-    final displayEmail = (email != null && email!.isNotEmpty)
-        ? email!
-        : 'nguoidung@roommatehub.vn';
+    final actualPhone = phone?.trim();
+    final actualEmail = email?.trim();
+    final displayPhone = actualPhone?.isNotEmpty == true
+        ? actualPhone!
+        : 'Chưa cập nhật số điện thoại';
+    final displayEmail = actualEmail?.isNotEmpty == true
+        ? actualEmail!
+        : 'Chưa cập nhật email';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),

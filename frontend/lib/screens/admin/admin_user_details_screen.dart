@@ -31,15 +31,23 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
     _status = widget.user?['status'] ?? 'Không xác định';
   }
 
-  String get _userName => widget.user?['fullName'] ?? 'Người dùng';
-  String get _userEmail => widget.user?['email'] ?? 'Chưa có email';
+  String _field(String key, String fallback) {
+    final value = widget.user?[key]?.trim();
+    return value?.isNotEmpty == true ? value! : fallback;
+  }
+
+  String get _userName => _field('fullName', 'Người dùng');
+  String get _userEmail => _field('email', 'Chưa có email');
   String get _userId => widget.user?['id']?.toString() ?? '—';
-  String get _university =>
-      widget.user?['university']?.toString() ?? 'Chưa cập nhật trường';
-  String get _phone => widget.user?['phone']?.toString() ?? 'Chưa cập nhật SĐT';
-  String get _gender => widget.user?['gender'] == 'MALE'
-      ? 'Nam'
-      : (widget.user?['gender'] == 'FEMALE' ? 'Nữ' : 'Khác');
+  String get _university => _field('university', 'Chưa cập nhật trường');
+  String get _phone => _field('phone', 'Chưa cập nhật SĐT');
+  String get _birthDate => _field('birthDate', 'Chưa cập nhật');
+  String get _gender => switch (widget.user?['gender']?.trim().toUpperCase()) {
+    'MALE' => 'Nam',
+    'FEMALE' => 'Nữ',
+    'OTHER' => 'Khác',
+    _ => 'Chưa cập nhật',
+  };
   bool get _isLocked =>
       _status == 'Đã khóa' || _status == 'BANNED' || _status == 'LOCKED';
 
@@ -299,9 +307,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              _isLocked
-                                  ? 'Đã xác minh email · Đã khóa'
-                                  : 'Đã xác minh email · Hoạt động',
+                              _status,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -346,7 +352,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
                                 ),
                                 SizedBox(height: 24),
                                 Text(
-                                  'Mã tài khoản: $_userId\nEmail: $_userEmail\nSố điện thoại: $_phone\nGiới tính: $_gender\nTrường học: $_university\nTrạng thái: $_status',
+                                  'Mã tài khoản: $_userId\nEmail: $_userEmail\nSố điện thoại: $_phone\nGiới tính: $_gender\nNgày sinh: $_birthDate\nTrường học: $_university\nTrạng thái: $_status',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w400,

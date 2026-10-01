@@ -19,6 +19,8 @@ Authorization: Bearer <access_token>
 
 - Access token: JWT ký bằng `HMAC-SHA256`, thời hạn `24 giờ`.
 - Refresh token: thời hạn `7 ngày`, chỉ dùng tại endpoint refresh token.
+- Access token mới chứa claim `refresh_token_id`, trỏ tới bản ghi phiên trong `refresh_tokens` (không chứa refresh token thô hoặc hash). Backend chỉ chấp nhận grant chưa thu hồi, chưa hết hạn và mới nhất của đúng tài khoản. Đăng nhập lại hoặc xoay vòng refresh token vô hiệu hóa access token trước đó; logout/đổi hoặc đặt lại mật khẩu thu hồi toàn bộ grant. Không phụ thuộc vào việc các thao tác xảy ra cùng giây.
+- Sau khi nâng cấp backend, JWT cũ không có claim này sẽ nhận `401`: client cần refresh bằng refresh token còn hiệu lực hoặc đăng nhập lại. Không cần migration SQL cho thay đổi phiên này.
 - Backend lấy `userId`, `email` và `role` từ JWT. Client không được truyền `userId` của người đang đăng nhập để thay thế danh tính trong token.
 - Endpoint `/admin/**` yêu cầu role `ROLE_ADMIN`.
 
@@ -397,6 +399,14 @@ Validation:
 - `isSmoking`, `allowPets`: bắt buộc.
 - Priority: `REQUIRED`, `IMPORTANT`, `OPTIONAL`.
 
+Validation của endpoint hiện tại `PUT /api/v1/profile/preferences/{userId}`:
+
+- Ngân sách phải hữu hạn; `budgetAmount >= 500000`. `budgetMin` và `budgetMax` cùng có hoặc cùng bỏ trống (tương thích dữ liệu cũ), với `0 <= budgetMin <= budgetMax` và `budgetMax >= 500000`.
+- `sleepHabit` trong `1..3`, `cleanlinessLevel` trong `1..5`, khu vực không trống và tối đa 100 ký tự. Vi phạm trả `400`, không ghi đè tiêu chí đang lưu.
+- Flutter giữ nguyên khoảng ngân sách hợp lệ đã lưu kể cả ngoài khoảng hiển thị mặc định 1–15 triệu. Nếu tải tiêu chí thất bại hoặc khoảng lưu sai cấu trúc, hiển thị lỗi và cho thử lại; không dùng mặc định để ghi đè dữ liệu cũ.
+- Khi tạo/cập nhật tin phòng: `maxOccupants >= 1`, `0 <= currentOccupants <= maxOccupants`. Cập nhật một phần kiểm tra cả giá trị đang lưu: không giảm sức chứa xuống thấp hơn số người hiện tại. Vi phạm trả `400` trước khi thay đổi nội dung/trạng thái tin.
+- Không có thay đổi schema SQL cho các kiểm tra này; dữ liệu cũ không được tự động sửa.
+
 ### 4.2. GET `/matching/recommendations`
 
 Query parameters:
@@ -532,15 +542,14 @@ Response `200 OK`:
 
 ### 5.1. Match Request
 
-Tạo yêu cầu:
+Endpoint hiện hành: `POST /api/v1/matches/requests?receiverId=2`, không nhận body.
 
-```json
-{
-  "receiverId": 2
-}
-```
+Server tự tính lại `matchScore`; không tin điểm do client gửi. Response gồm `requestId`, `partnerId`, `partnerName`, `partnerAvatar`, `matchScore`, `status` và `createdAt`. `contactPhone`/`contactEmail` chỉ có giá trị sau khi Double Opt-in thành công.
 
-Server tự tính lại `matchScore`; không tin điểm do client gửi. Response gồm `requestId`, thông tin partner, `matchScore`, `status` và `createdAt`. `phone`/`email` chỉ xuất hiện sau khi Double Opt-in thành công.
+- Yêu cầu mới trả `PENDING`. Gửi lại cùng chiều sử dụng lời mời hiện có, không tạo thêm dòng.
+- Nếu đối phương đã gửi lời mời `PENDING`, thao tác gửi ngược chiều sẽ chấp nhận kết nối và trả `ACCEPTED`. Kết nối đã chấp nhận cũng trả `ACCEPTED` khi gửi lại.
+- Flutter dùng trạng thái trả về để phân biệt **đã gửi lời mời** và **đã kết nối**, không suy luận thành công chỉ từ mã HTTP. Điểm hiển thị lấy từ dữ liệu gợi ý hoặc response, không dùng điểm mẫu.
+- API chưa hỗ trợ lời nhắn kèm lời mời. Ô nhập trên màn gửi lời mời hiện bị vô hiệu hóa và ghi rõ hạn chế; người dùng có thể chat sau khi kết nối. Không có thay đổi schema cho lần sửa này.
 
 ### 5.2. Room Post
 
@@ -583,14 +592,39 @@ Trạng thái: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`. Server lấy `r
 
 ### 5.5. Admin status update
 
+Endpoint hiện hành: `PUT`/`PATCH /admin/users/{userId}/status` hoặc `/toggle-status`, không nhận body và đảo trạng thái khóa/mở khóa. Ví dụ response:
+
 ```json
 {
-  "status": "LOCKED",
-  "reason": "Vi phạm tiêu chuẩn cộng đồng"
+  "userId": 12,
+  "status": "LOCKED"
 }
 ```
 
 Admin không được khóa chính tài khoản đang đăng nhập.
+
+Hành vi khóa tài khoản (`ACTIVE` → `LOCKED`) trên các endpoint hiện hành:
+
+- Tự khóa tài khoản đang đăng nhập trả `403` và không đổi trạng thái.
+- Tin `APPROVED`/`AVAILABLE` của tài khoản bị khóa bị ẩn khỏi danh sách công khai; xem chi tiết và lưu tin mới trả `404`. Admin vẫn xem được tin để kiểm duyệt.
+- Tạo lịch hẹn mới với chủ phòng bị khóa trả `403`. Lịch hẹn cũ không bị xóa hay tự đổi trạng thái; người đặt vẫn xem và hủy lịch hẹn theo quyền hiện hành.
+- Mở khóa hiển thị lại tin đã duyệt/đang mở. Không tự duyệt tin `PENDING` hoặc mở lại tin `CLOSED`, và không xóa dấu lưu tin cũ. Người dùng vẫn có thể bỏ lưu tin đã bị ẩn.
+- Đây là thay đổi kiểm tra quyền/khả năng hiển thị ở backend; không cần thay đổi schema hoặc chạy thêm SQL.
+
+### 5.6. Thông tin hồ sơ trong trang quản lý tài khoản
+
+`GET /admin/users` và `GET /admin/users/{userId}` trả `UserResponseDTO`, gồm thông tin hồ sơ hiện có (`phone`, `gender`, `university`, `birthDate`, `avatarUrl`) và `createdAt` từ thời điểm tạo tài khoản trong database. Các trường tùy chọn chưa cập nhật giữ nguyên `null`; không trả mật khẩu hoặc refresh token.
+
+Frontend giữ các trường này khi chuyển từ danh sách sang chi tiết admin. Thông tin liên hệ trống/chuỗi trắng hiển thị “Chưa cập nhật”, không thay bằng số điện thoại/email mẫu. Trang admin không khẳng định email đã xác minh khi API chưa cung cấp trạng thái xác minh.
+
+Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên hệ, ngày sinh hoặc ngày tạo tài khoản. `createdAt` đã có trong bảng `users`, nên nhóm sửa này không yêu cầu migration SQL.
+
+### 5.7. Trạng thái tải kết nối và lịch sử chat
+
+- Màn kết nối chỉ hiển thị dữ liệu sau khi cả danh sách đã nhận và đã gửi tải thành công. Lỗi mạng, HTTP hoặc dữ liệu không hợp lệ hiển thị lỗi và nút “Thử lại”, không bị coi là danh sách trống. Có thể kéo để tải lại cả khi danh sách thực sự trống.
+- Chat dùng các endpoint hiện hành `GET /chat/messages/{partnerId}` và `POST /chat/messages`. Lỗi tải lần đầu hiển thị lỗi thay vì lời chào cho cuộc trò chuyện trống. Nếu cập nhật định kỳ thất bại, giữ lịch sử đã tải và hiển thị cảnh báo; cập nhật thành công xóa cảnh báo. Không chạy các lượt tải lịch sử chồng nhau.
+- Chỉ xóa nội dung/ảnh đang soạn khi API xác nhận gửi thành công; gửi thất bại giữ bản nháp để thử lại. Giao diện không tự khẳng định người nhận “trực tuyến” khi chưa có dữ liệu trạng thái online từ backend.
+- Nhóm sửa này chỉ đổi trạng thái và xử lý lỗi ở Flutter, không thêm bảng/cột hay yêu cầu migration SQL.
 
 ## 6. Sự kiện tự động và quyền riêng tư
 
@@ -598,6 +632,7 @@ Admin không được khóa chính tài khoản đang đăng nhập.
 - Accept/Reject: tạo thông báo cho người gửi.
 - Double Opt-in thành công: tạo hai bản ghi `contact_permissions`, mở liên hệ cho đúng hai người và tạo thông báo cho cả hai.
 - Block: hai người không còn xuất hiện trong kết quả tìm kiếm/gợi ý của nhau và không thể tạo Match Request mới.
+- `GET /blocks` và `POST /blocks` chỉ trả `id`, `blockedUserId`, `blockedUserName`, `blockedUserAvatar`, `createdAt`; không trả email, số điện thoại hoặc dữ liệu xác thực, kể cả khi hai người từng kết nối.
 - Hủy kết nối không xóa lịch sử audit; thông tin liên hệ bị khóa lại.
 - API hồ sơ/matching tuyệt đối không trả `passwordHash`, refresh token hoặc thông tin liên hệ chưa được cấp quyền.
 

@@ -11,20 +11,31 @@ import '../widgets/penpot_back_button.dart';
 class ChatScreen extends StatefulWidget {
   final int? partnerId;
   final String? partnerName;
+  final ApiService? apiService;
 
-  const ChatScreen({super.key, this.partnerId, this.partnerName});
+  const ChatScreen({
+    super.key,
+    this.partnerId,
+    this.partnerName,
+    this.apiService,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api = widget.apiService ?? ApiService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
+  bool _isFetching = false;
+  int _messageRevision = 0;
+  bool _hasLoadedMessages = false;
+  String? _loadError;
+  bool get _hasPartner => widget.partnerId != null && widget.partnerId! > 0;
   bool _isSending = false;
   bool _isUploadingImage = false;
   Timer? _pollingTimer;
@@ -39,9 +50,11 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _fetchMessages();
     // Polling định kỳ mỗi 3 giây để cập nhật tin nhắn mới
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) _fetchMessages(silent: true);
-    });
+    if (_hasPartner) {
+      _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (mounted) _fetchMessages(silent: true);
+      });
+    }
   }
 
   @override
@@ -53,31 +66,70 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _fetchMessages({bool silent = false}) async {
+    if (_isFetching || _isSending) return;
     final partnerId = widget.partnerId;
-    if (partnerId == null) {
-      if (!silent && mounted) setState(() => _isLoading = false);
+    if (!_hasPartner) {
+      setState(() {
+        _isLoading = false;
+        _loadError = 'Không xác định được người nhận tin nhắn.';
+      });
       return;
     }
-
+    _isFetching = true;
+    final revision = _messageRevision;
+    if (!silent) setState(() => _isLoading = !_hasLoadedMessages);
     try {
-      final list = await _api.getChatMessages(partnerId);
+      final list = await _api.getChatMessages(partnerId!);
       if (!mounted) return;
+      // A response started before a successful send must not erase that message.
+      if (revision != _messageRevision) return;
       final previousCount = _messages.length;
       setState(() {
         _messages = list;
         _isLoading = false;
+        _hasLoadedMessages = true;
+        _loadError = null;
       });
 
       // Nếu có tin nhắn mới, tự động cuộn xuống cuối
       if (list.length > previousCount) {
         _scrollToBottom();
       }
+    } on ApiException catch (error) {
+      _showLoadError(error.message);
     } catch (_) {
-      if (!silent && mounted) {
-        setState(() => _isLoading = false);
-      }
+      _showLoadError('Không thể tải tin nhắn, vui lòng thử lại.');
+    } finally {
+      _isFetching = false;
     }
   }
+
+  void _showLoadError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _loadError = message.trim().isNotEmpty
+          ? message
+          : 'Không thể tải tin nhắn, vui lòng thử lại.';
+    });
+  }
+
+  Widget _buildLoadError() => Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(_loadError!, textAlign: TextAlign.center),
+        if (_hasLoadedMessages)
+          const Text(
+            'Đang hiển thị lịch sử đã tải trước đó.',
+            textAlign: TextAlign.center,
+          ),
+        if (_hasPartner)
+          TextButton(onPressed: _fetchMessages, child: const Text('Thử lại')),
+      ],
+    ),
+  );
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -129,9 +181,9 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể chọn ảnh: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không thể chọn ảnh: $e')));
     }
   }
 
@@ -142,7 +194,10 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text(
           'Nhập link hình ảnh',
-          style: TextStyle(fontFamily: 'SourceSansPro', fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontFamily: 'SourceSansPro',
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: TextField(
           controller: urlCtrl,
@@ -225,11 +280,17 @@ class _ChatScreenState extends State<ChatScreen> {
               ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: Color(0xFFEAF8F5),
-                  child: Icon(Icons.photo_library_outlined, color: Color(0xFF087E6B)),
+                  child: Icon(
+                    Icons.photo_library_outlined,
+                    color: Color(0xFF087E6B),
+                  ),
                 ),
                 title: const Text(
                   'Thư viện ảnh',
-                  style: TextStyle(fontFamily: 'SourceSansPro', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontFamily: 'SourceSansPro',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 subtitle: const Text(
                   'Chọn ảnh từ bộ nhớ thiết bị',
@@ -243,11 +304,17 @@ class _ChatScreenState extends State<ChatScreen> {
               ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: Color(0xFFEAF8F5),
-                  child: Icon(Icons.photo_camera_outlined, color: Color(0xFF087E6B)),
+                  child: Icon(
+                    Icons.photo_camera_outlined,
+                    color: Color(0xFF087E6B),
+                  ),
                 ),
                 title: const Text(
                   'Chụp ảnh mới',
-                  style: TextStyle(fontFamily: 'SourceSansPro', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontFamily: 'SourceSansPro',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 subtitle: const Text(
                   'Mở máy ảnh để chụp ảnh phòng',
@@ -265,7 +332,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 title: const Text(
                   'Dán link ảnh (URL)',
-                  style: TextStyle(fontFamily: 'SourceSansPro', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontFamily: 'SourceSansPro',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 subtitle: const Text(
                   'Nhập liên kết hình ảnh trực tiếp',
@@ -286,10 +356,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     final partnerId = widget.partnerId;
-    final hasImage = _stagedImageBytes != null ||
+    final hasImage =
+        _stagedImageBytes != null ||
         (_stagedImageUrl != null && _stagedImageUrl!.isNotEmpty);
 
-    if ((text.isEmpty && !hasImage) || partnerId == null || _isSending) return;
+    if ((text.isEmpty && !hasImage) || !_hasPartner || _isSending) return;
 
     setState(() => _isSending = true);
 
@@ -306,6 +377,11 @@ class _ChatScreenState extends State<ChatScreen> {
           purpose: 'chat',
         );
         finalImageUrl = ticket.publicUrl;
+        if (!mounted) return;
+        setState(() {
+          _stagedImageUrl = finalImageUrl;
+          _stagedImageFile = null;
+        });
       } catch (uploadError) {
         if (!mounted) return;
         setState(() {
@@ -325,25 +401,27 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     }
 
-    _messageController.clear();
-    _clearStagedImage();
-
     try {
       final sent = await _api.sendChatMessage(
-        receiverId: partnerId,
+        receiverId: partnerId!,
         content: text.isNotEmpty ? text : '[Hình ảnh]',
         imageUrl: finalImageUrl,
       );
       if (!mounted) return;
+      _messageController.clear();
+      _clearStagedImage();
       setState(() {
         _messages.add(sent);
+        _messageRevision++;
+        _hasLoadedMessages = true;
+        _isLoading = false;
       });
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể gửi tin nhắn: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không thể gửi tin nhắn: $e')));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -383,7 +461,11 @@ class _ChatScreenState extends State<ChatScreen> {
               top: 40,
               right: 20,
               child: IconButton(
-                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 30),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
                 onPressed: () => Navigator.pop(ctx),
               ),
             ),
@@ -630,10 +712,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   : Image.network(
                       _stagedImageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
-                        color: Colors.grey,
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.broken_image, color: Colors.grey),
                     ),
             ),
           ),
@@ -713,7 +793,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Đã kết nối · Trực tuyến',
+                          'Trò chuyện',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
@@ -737,48 +817,51 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             const Divider(height: 1, color: Color(0xFFE2EBE8)),
+            if (_loadError != null && _hasLoadedMessages) _buildLoadError(),
 
             // Chat List
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
+                  : _loadError != null && !_hasLoadedMessages
+                  ? Center(child: _buildLoadError())
                   : _messages.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                size: 48,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Hãy gửi lời chào tới $name!',
-                                style: const TextStyle(
-                                  color: Color(0xFF65746F),
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 48,
+                            color: Colors.grey.shade400,
                           ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
+                          const SizedBox(height: 12),
+                          Text(
+                            'Hãy gửi lời chào tới $name!',
+                            style: const TextStyle(
+                              color: Color(0xFF65746F),
+                              fontSize: 15,
+                            ),
                           ),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) {
-                            final msg = _messages[index];
-                            if (msg.fromMe) {
-                              return _buildSentMessage(msg);
-                            } else {
-                              return _buildReceivedMessage(msg);
-                            }
-                          },
-                        ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        if (msg.fromMe) {
+                          return _buildSentMessage(msg);
+                        } else {
+                          return _buildReceivedMessage(msg);
+                        }
+                      },
+                    ),
             ),
 
             // Staged Image Preview
@@ -796,7 +879,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: Color(0xFF087E6B),
                       size: 26,
                     ),
-                    onPressed: _isSending ? null : _showImageOptions,
+                    onPressed: _isSending || !_hasPartner
+                        ? null
+                        : _showImageOptions,
                     tooltip: 'Đính kèm hình ảnh',
                   ),
                   Expanded(
@@ -807,11 +892,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: TextField(
+                        enabled: _hasPartner,
+                        readOnly: _isSending,
                         controller: _messageController,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
-                          hintText: _stagedImageBytes != null ||
+                          hintText:
+                              _stagedImageBytes != null ||
                                   (_stagedImageUrl != null &&
                                       _stagedImageUrl!.isNotEmpty)
                               ? 'Thêm chú thích ảnh…'
@@ -833,7 +921,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 10),
                   GestureDetector(
-                    onTap: _sendMessage,
+                    onTap: _isSending || !_hasPartner ? null : _sendMessage,
                     child: Container(
                       width: 48,
                       height: 48,

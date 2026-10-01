@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
+import '../models/match_request_item.dart';
 import '../models/room_post.dart';
 import '../navigation/app_routes.dart';
 import 'candidate_profile_screen.dart';
@@ -17,8 +18,14 @@ import '../widgets/match_card.dart';
 class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
   final int initialTab;
+  final ApiService? apiService;
 
-  const HomeScreen({super.key, required this.currentUser, this.initialTab = 0});
+  const HomeScreen({
+    super.key,
+    required this.currentUser,
+    this.initialTab = 0,
+    this.apiService,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,7 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   static const _discoveryPrimary = DiscoveryPalette.primary;
 
-  final ApiService _api = ApiService();
+  late final ApiService _api = widget.apiService ?? ApiService();
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   late Future<List<MatchRecommendation>> _matchesFuture;
@@ -56,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _districtFilter = 'Tất cả';
   final Set<int> _connectingUserIds = {};
   final Set<int> _savingPostIds = {};
-  final Set<int> _sentRequestUserIds = {};
+  final Map<int, MatchRequestItem> _connectionRequests = {};
   Set<int> get _savedPostIds => _api.savedPostIds;
 
   @override
@@ -140,42 +147,39 @@ class _HomeScreenState extends State<HomeScreen> {
     await refreshed;
   }
 
-  Future<bool> _sendMatchRequest(MatchRecommendation item) async {
-    if (_connectingUserIds.contains(item.userId) ||
-        _sentRequestUserIds.contains(item.userId)) {
-      return false;
+  Future<MatchRequestItem?> _sendMatchRequest(MatchRecommendation item) async {
+    if (_connectingUserIds.contains(item.userId)) {
+      return null;
     }
 
     setState(() => _connectingUserIds.add(item.userId));
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final sent = await _api.sendMatchRequest(item.userId);
-      if (!mounted) return false;
-      if (sent) {
-        setState(() => _sentRequestUserIds.add(item.userId));
-      }
+      final request = await _api.sendMatchRequest(item.userId);
+      if (!mounted) return null;
+      setState(() => _connectionRequests[item.userId] = request);
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            sent
-                ? 'Đã gửi lời mời tới ${item.fullName}!'
-                : 'Không thể gửi lời mời, vui lòng thử lại.',
+            request.status == 'ACCEPTED'
+                ? 'Bạn và ${request.partnerName} đã kết nối!'
+                : 'Đã gửi lời mời tới ${request.partnerName}!',
           ),
         ),
       );
-      return sent;
+      return request;
     } on ApiException catch (error) {
-      if (!mounted) return false;
+      if (!mounted) return null;
       messenger.showSnackBar(SnackBar(content: Text(error.message)));
-      return false;
+      return null;
     } catch (_) {
-      if (!mounted) return false;
+      if (!mounted) return null;
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Không thể gửi lời mời, vui lòng thử lại.'),
         ),
       );
-      return false;
+      return null;
     } finally {
       if (mounted) {
         setState(() => _connectingUserIds.remove(item.userId));
@@ -189,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute<void>(
         builder: (_) => CandidateProfileScreen(
           item: item,
-          requestSent: _sentRequestUserIds.contains(item.userId),
+          initialRequest: _connectionRequests[item.userId],
           onConnect: () => _sendMatchRequest(item),
         ),
       ),
@@ -270,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _districtFilter = 'Tất cả';
         }
         final matches = _filterMatches(allMatches);
-        return ColoredBox(
+        return Material(
           color: DiscoveryPalette.canvas,
           child: RefreshIndicator(
             color: _discoveryPrimary,

@@ -15,6 +15,5 @@ public class BlockedUserDTO {
     private Long blockedUserId;
     private String blockedUserName;
     private String blockedUserAvatar;
-    private String blockedUserEmail;
     private LocalDateTime createdAt;
 }

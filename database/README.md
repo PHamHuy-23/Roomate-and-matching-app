@@ -33,6 +33,13 @@ Mật khẩu chung: `123456`.
 
 ## Lưu ý migration
 
-`01_schema.sql` dùng để tạo database mới và sẽ xóa dữ liệu cũ trước khi tạo lại bảng. Với project Supabase đã có dữ liệu, **không chạy lại** file này; chỉ chạy migration PostgreSQL `20260930_moderation_reason.sql`. File `20260916_add_user_academic_profile.sql` là migration MySQL cũ, không được chạy trên Supabase. Migration mới bổ sung trạng thái tìm kiếm, tiêu chí ghép đôi có kiểu dữ liệu, lý do kiểm duyệt, ảnh bằng chứng và danh sách tin đã lưu mà không xóa dữ liệu hiện có.
+`01_schema.sql` dùng để tạo database mới và sẽ xóa dữ liệu cũ trước khi tạo lại bảng. Với project Supabase đã có dữ liệu, **không chạy lại** `01_schema.sql` hoặc `02_seed_data.sql`; chỉ chạy các migration PostgreSQL cần thiết theo thứ tự:
+
+1. `migrations/20260930_moderation_reason.sql` nếu chưa chạy: bổ sung trạng thái tìm kiếm, tiêu chí ghép đôi, lý do kiểm duyệt, ảnh bằng chứng và danh sách tin đã lưu.
+2. `migrations/20261001_match_request_version.sql`: bổ sung cột `match_requests.version` cho cơ chế khóa lạc quan (`@Version`) của backend. Migration điền `0` cho các dòng thiếu version, giữ nguyên version khác `NULL`, đặt mặc định `0` và không cho phép `NULL`. Có thể chạy lại migration này mà không đặt lại version hoặc xóa lời mời hiện có.
+
+Trước khi nâng cấp, sao lưu dữ liệu và dừng backend. Mở **SQL Editor**, dán toàn bộ nội dung từng migration rồi **Run**; chỉ chuyển sang file tiếp theo khi file trước đã thành công. Khởi động lại backend sau khi migration hoàn tất. Không cần tạo lại project Supabase.
+
+Database mới tạo bằng `01_schema.sql` hiện tại đã có cột version, không cần chạy riêng migration version. Không dựa vào `JPA_DDL_AUTO=update` để sửa dữ liệu version của các dòng cũ. File `20260916_add_user_academic_profile.sql` là migration MySQL cũ, **không chạy trên Supabase**.
 
 Nếu cần chuyển dữ liệu thật từ hệ thống khác, export dữ liệu thành CSV rồi import theo thứ tự: `users`, `user_preferences`, `room_posts`, `match_requests`.

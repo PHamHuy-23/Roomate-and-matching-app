@@ -1,150 +1,125 @@
 package com.roommate.hub.config;
 
+import com.roommate.hub.entity.RefreshToken;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.repository.RefreshTokenRepository;
 import com.roommate.hub.repository.UserRepository;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockFilterChain;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
-
-    @Mock
-    private JwtUtils jwtUtils;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private HttpServletRequest request;
-
-    @Mock
-    private HttpServletResponse response;
-
-    @Mock
-    private FilterChain filterChain;
-
-    @InjectMocks
+    private static final String TEST_SECRET = "test-only-secret-that-is-at-least-32-chars";
+    @Mock UserRepository users;
+    @Mock RefreshTokenRepository refreshTokens;
+    private final JwtUtils jwtUtils = new JwtUtils(TEST_SECRET);
     private JwtAuthenticationFilter filter;
+    private User user;
+    private RefreshToken grant;
 
-    private User sampleUser;
-
-    @BeforeEach
-    void setUp() {
+    @BeforeEach void setUp() {
         SecurityContextHolder.clearContext();
-        sampleUser = User.builder()
-                .id(1L)
-                .email("quochuy@example.com")
-                .role(User.Role.ROLE_USER)
-                .status("ACTIVE")
-                .build();
+        filter = new JwtAuthenticationFilter(jwtUtils, users, refreshTokens);
+        user = User.builder().id(1L).email("session@test.invalid").role(User.Role.ROLE_USER).build();
+        grant = RefreshToken.builder().id(100L).user(user).expiresAt(LocalDateTime.now().plusDays(7)).build();
+        lenient().when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
+    @AfterEach void tearDown() { SecurityContextHolder.clearContext(); }
 
-    @Test
-    @DisplayName("doFilterInternal() xác thực thành công khi token hợp lệ và phiên hoạt động bình thường")
-    void doFilter_WhenValidToken_ShouldAuthenticate() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn("Bearer valid_jwt");
-        when(jwtUtils.validateToken("valid_jwt")).thenReturn(true);
-        when(jwtUtils.isAccessToken("valid_jwt")).thenReturn(true);
-        when(jwtUtils.extractEmail("valid_jwt")).thenReturn("quochuy@example.com");
-        when(jwtUtils.extractIssuedAt("valid_jwt")).thenReturn(new Date());
-        when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-
-        filter.doFilterInternal(request, response, filterChain);
-
+    @Test void currentActiveGrantAuthenticatesEvenWithSameSecondAuditTimestamps() throws Exception {
+        LocalDateTime sameSecond = LocalDateTime.now().withNano(0);
+        user.setLastLoginAt(sameSecond);
+        user.setLoggedOutAt(sameSecond);
+        user.setPasswordChangedAt(sameSecond);
+        when(refreshTokens.findFirstByUserIdAndRevokedFalseOrderByIdDesc(1L)).thenReturn(Optional.of(grant));
+        request(jwtUtils.generateToken(user.getEmail(), 1L, 100L));
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("quochuy@example.com");
-        verify(filterChain).doFilter(request, response);
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo(user.getEmail());
     }
 
-    @Test
-    @DisplayName("doFilterInternal() từ chối token khi token được cấp trước thời điểm logout")
-    void doFilter_WhenTokenIssuedBeforeLogout_ShouldReject() throws ServletException, IOException {
-        LocalDateTime logoutTime = LocalDateTime.now();
-        sampleUser.setLoggedOutAt(logoutTime);
-
-        // Token issued 10 seconds before logout
-        Date issuedAt = Date.from(logoutTime.minusSeconds(10).atZone(ZoneId.systemDefault()).toInstant());
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer stale_jwt");
-        when(jwtUtils.validateToken("stale_jwt")).thenReturn(true);
-        when(jwtUtils.isAccessToken("stale_jwt")).thenReturn(true);
-        when(jwtUtils.extractEmail("stale_jwt")).thenReturn("quochuy@example.com");
-        when(jwtUtils.extractIssuedAt("stale_jwt")).thenReturn(issuedAt);
-        when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-
-        filter.doFilterInternal(request, response, filterChain);
-
+    @Test void tokensIssuedInExactlyTheSameSecondAreDistinguishedByGrant() throws Exception {
+        grant.setId(101L);
+        when(refreshTokens.findFirstByUserIdAndRevokedFalseOrderByIdDesc(1L)).thenReturn(Optional.of(grant));
+        Date issuedAt = new Date(System.currentTimeMillis() / 1000 * 1000);
+        String oldToken = signedToken(100L, issuedAt), newToken = signedToken(101L, issuedAt);
+        assertThat(jwtUtils.extractIssuedAt(oldToken)).isEqualTo(jwtUtils.extractIssuedAt(newToken));
+        request(oldToken);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @DisplayName("doFilterInternal() từ chối token khi token được cấp trong cùng giây với logout")
-    void doFilter_WhenTokenIssuedSameSecondAsLogout_ShouldReject() throws ServletException, IOException {
-        LocalDateTime logoutTime = LocalDateTime.now();
-        sampleUser.setLoggedOutAt(logoutTime);
-
-        // Token issued in same second as logout
-        Date issuedAt = Date.from(logoutTime.atZone(ZoneId.systemDefault()).toInstant());
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer same_second_jwt");
-        when(jwtUtils.validateToken("same_second_jwt")).thenReturn(true);
-        when(jwtUtils.isAccessToken("same_second_jwt")).thenReturn(true);
-        when(jwtUtils.extractEmail("same_second_jwt")).thenReturn("quochuy@example.com");
-        when(jwtUtils.extractIssuedAt("same_second_jwt")).thenReturn(issuedAt);
-        when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    @DisplayName("doFilterInternal() chấp nhận token mới được cấp sau thời điểm logout")
-    void doFilter_WhenTokenIssuedAfterLogout_ShouldAuthenticate() throws ServletException, IOException {
-        LocalDateTime logoutTime = LocalDateTime.now().minusMinutes(5);
-        sampleUser.setLoggedOutAt(logoutTime);
-
-        // Token issued now (after logout)
-        Date issuedAt = new Date();
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer fresh_jwt");
-        when(jwtUtils.validateToken("fresh_jwt")).thenReturn(true);
-        when(jwtUtils.isAccessToken("fresh_jwt")).thenReturn(true);
-        when(jwtUtils.extractEmail("fresh_jwt")).thenReturn("quochuy@example.com");
-        when(jwtUtils.extractIssuedAt("fresh_jwt")).thenReturn(issuedAt);
-        when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-
-        filter.doFilterInternal(request, response, filterChain);
-
+        request(newToken);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("quochuy@example.com");
-        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test void noActiveGrantAfterLogoutRejectsToken() throws Exception {
+        when(refreshTokens.findFirstByUserIdAndRevokedFalseOrderByIdDesc(1L)).thenReturn(Optional.empty());
+        request(jwtUtils.generateToken(user.getEmail(), 1L, 100L));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test void expiredGrantRejectsToken() throws Exception {
+        grant.setExpiresAt(LocalDateTime.now().minusSeconds(1));
+        when(refreshTokens.findFirstByUserIdAndRevokedFalseOrderByIdDesc(1L)).thenReturn(Optional.of(grant));
+        request(jwtUtils.generateToken(user.getEmail(), 1L, 100L));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test void grantBelongingToAnotherAccountCannotBeUsed() throws Exception {
+        when(refreshTokens.findFirstByUserIdAndRevokedFalseOrderByIdDesc(1L)).thenReturn(Optional.of(grant));
+        request(jwtUtils.generateToken(user.getEmail(), 1L, 999L));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test void lockedAccountIsRejectedEvenWithActiveGrant() throws Exception {
+        user.setStatus("LOCKED");
+        request(jwtUtils.generateToken(user.getEmail(), 1L, 100L));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verifyNoInteractions(refreshTokens);
+    }
+
+    @Test void legacyJwtWithoutGrantMustRefreshOrLogInAgain() throws Exception {
+        request(signedToken(null, new Date()));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verifyNoInteractions(refreshTokens);
+    }
+
+    @Test void invalidSignatureIsRejectedBeforeLookingUpAnAccount() throws Exception {
+        request("invalid.jwt.signature");
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verifyNoInteractions(users, refreshTokens);
+    }
+
+    private void request(String token) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/blocks");
+        request.addHeader("Authorization", "Bearer " + token);
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
+        assertThat(chain.getRequest()).isSameAs(request);
+    }
+
+    private String signedToken(Long grantId, Date issuedAt) {
+        return Jwts.builder().setSubject(user.getEmail()).claim("userId", 1L).claim("token_type", "ACCESS")
+                .claim("refresh_token_id", grantId).setIssuedAt(issuedAt)
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000L))
+                .signWith(Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+                .compact();
     }
 }

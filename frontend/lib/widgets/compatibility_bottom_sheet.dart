@@ -10,12 +10,17 @@ class CompatibilityBottomSheet extends StatelessWidget {
     required this.onConnect,
     this.isConnecting = false,
     this.requestSent = false,
+    this.requestAccepted = false,
+    this.matchScore,
   });
 
   final MatchRecommendation item;
   final Future<void> Function() onConnect;
   final bool isConnecting;
   final bool requestSent;
+  final bool requestAccepted;
+  final double? matchScore;
+  double get _score => matchScore ?? item.totalScore;
 
   List<({String label, double score})> get _criteria => [
     (label: 'Ngân sách', score: item.criteriaDetail.budgetMatch),
@@ -48,8 +53,8 @@ class CompatibilityBottomSheet extends StatelessWidget {
       .toList();
 
   String get _scoreDescription {
-    if (item.totalScore >= 80) return 'Nhiều tiêu chí tương đồng';
-    if (item.totalScore >= 60) return 'Khá phù hợp';
+    if (_score >= 80) return 'Nhiều tiêu chí tương đồng';
+    if (_score >= 60) return 'Khá phù hợp';
     return 'Cần trao đổi thêm';
   }
 
@@ -116,7 +121,7 @@ class CompatibilityBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 34),
                   Text(
-                    '${item.totalScore.toStringAsFixed(0)}%',
+                    '${_score.toStringAsFixed(0)}%',
                     style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w800,
@@ -162,7 +167,9 @@ class CompatibilityBottomSheet extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: requestSent || isConnecting ? null : onConnect,
+                      onPressed: requestSent || requestAccepted || isConnecting
+                          ? null
+                          : onConnect,
                       style: FilledButton.styleFrom(
                         backgroundColor: DiscoveryPalette.primary,
                         foregroundColor: Colors.white,
@@ -180,7 +187,9 @@ class CompatibilityBottomSheet extends StatelessWidget {
                               ),
                             )
                           : Text(
-                              requestSent
+                              requestAccepted
+                                  ? 'Đã kết nối'
+                                  : requestSent
                                   ? 'Đã gửi yêu cầu kết nối'
                                   : 'Gửi yêu cầu kết nối',
                             ),

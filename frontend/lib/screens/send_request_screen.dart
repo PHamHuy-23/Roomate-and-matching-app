@@ -10,14 +10,16 @@ class SendRequestScreen extends StatefulWidget {
   /// `matchScore` is supplied by discovery when the request is opened from a
   /// recommendation. It is kept separate from the display copy so this screen
   /// can also be opened directly from a deep link.
-  final double matchScore;
+  final double? matchScore;
+  final ApiService? apiService;
 
   const SendRequestScreen({
     super.key,
     required this.currentUserId,
     this.partnerId,
     this.partnerName,
-    this.matchScore = 0,
+    this.matchScore,
+    this.apiService,
   });
 
   @override
@@ -25,7 +27,7 @@ class SendRequestScreen extends StatefulWidget {
 }
 
 class _SendRequestScreenState extends State<SendRequestScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api = widget.apiService ?? ApiService();
   bool _isSending = false;
 
   Future<void> _sendRequest() async {
@@ -41,12 +43,18 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
 
     setState(() => _isSending = true);
     try {
-      await _api.sendMatchRequest(partnerId);
+      final request = await _api.sendMatchRequest(partnerId);
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context, true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Đã gửi lời mời kết nối thành công!')),
+        SnackBar(
+          content: Text(
+            request.status == 'ACCEPTED'
+                ? 'Hai bạn đã kết nối thành công!'
+                : 'Đã gửi lời mời kết nối thành công!',
+          ),
+        ),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -148,9 +156,11 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                '94% phù hợp · Bình Thạnh',
-                                style: TextStyle(
+                              Text(
+                                widget.matchScore == null
+                                    ? 'Chưa có điểm phù hợp'
+                                    : '${widget.matchScore!.toStringAsFixed(0)}% phù hợp',
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'SourceSansPro',
@@ -184,10 +194,11 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: TextField(
+                      enabled: false,
                       maxLines: 4,
                       decoration: const InputDecoration(
                         hintText:
-                            'Chào bạn, mình cũng đang tìm phòng\nở Bình Thạnh. Mình muốn trao đổi thêm!',
+                            'Lời nhắn chưa được hỗ trợ.\nBạn có thể trò chuyện sau khi kết nối.',
                         hintStyle: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,

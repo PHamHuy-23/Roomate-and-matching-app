@@ -9,13 +9,16 @@ RoomPost _post({
   int id = 2,
   String title = 'Tin phòng Bình Thạnh',
   int authorId = 4,
+  int maxOccupants = 2,
+  int currentOccupants = 0,
 }) => RoomPost(
   id: id,
   title: title,
   description: 'Phòng sáng, có nội thất cơ bản.',
   price: 2200000,
   address: 'Bình Thạnh, TP.HCM',
-  maxOccupants: 2,
+  maxOccupants: maxOccupants,
+  currentOccupants: currentOccupants,
   authorName: 'Minh Anh',
   authorId: authorId,
   district: 'Bình Thạnh',
@@ -80,6 +83,43 @@ class _MockListingApi implements ApiService {
 }
 
 void main() {
+  for (final occupants in [2, 3]) {
+    testWidgets(
+      'editing capacity 2 with $occupants occupants validates before saving',
+      (tester) async {
+        final api = _MockListingApi(
+          posts: [_post(currentOccupants: occupants)],
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ListingManagementScreen(
+              mode: ListingFlowMode.edit,
+              authorId: 4,
+              posts: api.posts,
+              apiService: api,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Lưu & gửi kiểm duyệt'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Lưu & gửi kiểm duyệt'));
+        await tester.pumpAndSettle();
+        if (occupants > 2) {
+          expect(api.updatedId, isNull);
+          expect(
+            find.textContaining(
+              'Số người tối đa không được nhỏ hơn số người đang ở.',
+            ),
+            findsOneWidget,
+          );
+        } else {
+          expect(api.updatedId, 2);
+        }
+      },
+    );
+  }
+
   testWidgets('Quản lý tin đăng mở được flow xem trước và gửi tin', (
     tester,
   ) async {

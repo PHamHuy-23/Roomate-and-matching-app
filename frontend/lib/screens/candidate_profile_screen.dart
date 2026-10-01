@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/match_recommendation.dart';
+import '../models/match_request_item.dart';
 import '../theme/discovery_palette.dart';
 import '../widgets/compatibility_bottom_sheet.dart';
 import '../widgets/match_card.dart';
@@ -10,19 +11,21 @@ class CandidateProfileScreen extends StatefulWidget {
     super.key,
     required this.item,
     required this.onConnect,
-    required this.requestSent,
+    this.initialRequest,
   });
 
   final MatchRecommendation item;
-  final Future<bool> Function() onConnect;
-  final bool requestSent;
+  final Future<MatchRequestItem?> Function() onConnect;
+  final MatchRequestItem? initialRequest;
 
   @override
   State<CandidateProfileScreen> createState() => _CandidateProfileScreenState();
 }
 
 class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
-  late bool _requestSent = widget.requestSent;
+  late MatchRequestItem? _request = widget.initialRequest;
+  bool get _requestSent => _request?.status == 'PENDING';
+  bool get _requestAccepted => _request?.status == 'ACCEPTED';
   bool _connecting = false;
 
   String get _nameAndAge => widget.item.age == null
@@ -38,11 +41,11 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
   }
 
   Future<void> _connect() async {
-    if (_requestSent || _connecting) return;
+    if (_requestSent || _requestAccepted || _connecting) return;
     setState(() => _connecting = true);
     try {
-      final sent = await widget.onConnect();
-      if (mounted && sent) setState(() => _requestSent = true);
+      final request = await widget.onConnect();
+      if (mounted && request != null) setState(() => _request = request);
     } finally {
       if (mounted) setState(() => _connecting = false);
     }
@@ -57,6 +60,8 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
       builder: (sheetContext) => CompatibilityBottomSheet(
         item: widget.item,
         requestSent: _requestSent,
+        requestAccepted: _requestAccepted,
+        matchScore: _request?.matchScore,
         onConnect: () async {
           Navigator.pop(sheetContext);
           await _connect();
@@ -185,7 +190,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 17),
                   ),
                   child: Text(
-                    '${item.totalScore.toStringAsFixed(0)}% phù hợp · Xem lý do',
+                    '${(_request?.matchScore ?? item.totalScore).toStringAsFixed(0)}% phù hợp · Xem lý do',
                   ),
                 ),
               ),
@@ -208,7 +213,9 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
-                  onPressed: _requestSent || _connecting ? null : _connect,
+                  onPressed: _requestSent || _requestAccepted || _connecting
+                      ? null
+                      : _connect,
                   style: FilledButton.styleFrom(
                     backgroundColor: DiscoveryPalette.primary,
                   ),
@@ -221,7 +228,9 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
                           ),
                         )
                       : Text(
-                          _requestSent
+                          _requestAccepted
+                              ? 'Đã kết nối'
+                              : _requestSent
                               ? 'Đã gửi lời mời kết nối'
                               : 'Gửi lời mời kết nối',
                         ),

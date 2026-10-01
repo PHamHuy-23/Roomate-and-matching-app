@@ -52,6 +52,7 @@ public class AuthService {
         return action.doInTransaction(null);
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest req) {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
         if (userRepository.existsByEmail(normalizedEmail)) {
@@ -73,7 +74,7 @@ public class AuthService {
 
         Map<String, Object> rtData = createRefreshToken(user);
         String rawRefreshToken = (String) rtData.get("rawToken");
-        String token = jwtUtils.generateToken(user.getEmail(), user.getId());
+        String token = createAccessToken(user, rtData);
         return AuthResponse.builder()
                 .token(token)
                 .refreshToken(rawRefreshToken)
@@ -89,6 +90,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest req) {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
         User user = userRepository.findByEmail(normalizedEmail)
@@ -102,27 +104,16 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa hoặc chưa được kích hoạt!");
         }
 
-        // Ghi nhận thời điểm đăng nhập để vô hiệu hóa mọi access token từ phiên trước.
-        // KHÔNG xóa loggedOutAt: mốc thu hồi phiên cũ phải được giữ nguyên để
-        // JwtAuthenticationFilter tiếp tục từ chối các token bị đánh cắp từ trước lần logout.
-        //
-        // lastLoginAt được đặt về "1 giây trước hiện tại" để filter dùng so sánh `<=` vẫn
-        // chấp nhận token mới (issuedAt = giây hiện tại > lastLoginAt = giây trước)
-        // trong khi từ chối mọi token từ phiên cũ (issuedAt <= lastLoginAt).
-        user.setLastLoginAt(LocalDateTime.now().minusSeconds(1));
+        // Timestamps are audit data; grant revocation distinguishes old and new sessions.
+        user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
-
-        if (user.getPasswordChangedAt() != null && !user.getPasswordChangedAt().isBefore(LocalDateTime.now())) {
-            user.setPasswordChangedAt(LocalDateTime.now().minusSeconds(1));
-            userRepository.save(user);
-        }
 
         // Mỗi lần đăng nhập mới tạo một phiên duy nhất. Refresh token cũ không còn
         // được phép cấp access token mới sau khi người dùng đăng nhập lại.
         tokenRevocationService.revokeAllUserTokens(user);
         Map<String, Object> rtData = createRefreshToken(user);
         String rawRefreshToken = (String) rtData.get("rawToken");
-        String token = jwtUtils.generateToken(user.getEmail(), user.getId());
+        String token = createAccessToken(user, rtData);
         return AuthResponse.builder()
                 .token(token)
                 .refreshToken(rawRefreshToken)
@@ -207,7 +198,7 @@ public class AuthService {
 
         // Phát hiện lạm dụng / tấn công phát lại (Token Reuse Detection):
         // Nếu một token đã thu hồi được dùng lại, có thể chuỗi token đã bị lộ -> thu hồi toàn bộ phiên của tài khoản
-        // Gọi qua TokenRevocationService (REQUIRES_NEW) để commit ngay lập tức dù sau đó ném UNAUTHORIZED exception
+        // noRollbackFor commits revocation even when this method throws UNAUTHORIZED.
         if (tokenEntity.isRevoked()) {
             tokenRevocationService.revokeAllUserTokens(user);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cảnh báo bảo mật: Refresh token đã bị thu hồi trước đó. Toàn bộ phiên đăng nhập đã bị hủy để bảo vệ tài khoản!");
@@ -236,7 +227,7 @@ public class AuthService {
 
         Map<String, Object> newRtData = createRefreshToken(user);
         String newRawRefreshToken = (String) newRtData.get("rawToken");
-        String newAccessToken = jwtUtils.generateToken(user.getEmail(), user.getId());
+        String newAccessToken = createAccessToken(user, newRtData);
 
         return Map.of(
                 "token", newAccessToken,
@@ -256,8 +247,13 @@ public class AuthService {
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .revoked(false)
                 .build();
-        refreshTokenRepository.save(rt);
+        rt = refreshTokenRepository.save(rt);
         return Map.of("rawToken", rawToken, "entity", rt);
+    }
+
+    private String createAccessToken(User user, Map<String, Object> refreshTokenData) {
+        RefreshToken grant = (RefreshToken) refreshTokenData.get("entity");
+        return jwtUtils.generateToken(user.getEmail(), user.getId(), grant.getId());
     }
 
     private String hashToken(String rawToken) {

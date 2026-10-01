@@ -72,10 +72,8 @@ public class User {
     @Column(name = "logged_out_at")
     private LocalDateTime loggedOutAt;
 
-    /** Timestamp của lần đăng nhập thành công gần nhất.
-     *  JwtAuthenticationFilter dùng trường này để vô hiệu hóa
-     *  mọi access token được phát hành trước mốc này (từ phiên đăng nhập cũ),
-     *  KHÔNG xóa loggedOutAt để mốc thu hồi logout không bị mất.
+    /** Timestamp thực của lần đăng nhập thành công gần nhất, dùng cho audit.
+     *  Việc thu hồi access token dựa vào refresh-token grant, không so sánh timestamp.
      */
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;

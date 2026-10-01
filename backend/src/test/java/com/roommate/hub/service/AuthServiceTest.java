@@ -102,7 +102,7 @@ class AuthServiceTest {
         req.setPassword("secret_pass");
 
         when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-        when(jwtUtils.generateToken("quochuy@example.com", 1L)).thenReturn("jwt-sample-token");
+        when(jwtUtils.generateToken("quochuy@example.com", 1L, 100L)).thenReturn("jwt-sample-token");
 
         AuthResponse res = authService.login(req);
 
@@ -129,7 +129,7 @@ class AuthServiceTest {
         req.setPhone("0987654321");
 
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
-        when(jwtUtils.generateToken(eq("newuser@example.com"), any())).thenReturn("jwt-registered-token");
+        when(jwtUtils.generateToken(eq("newuser@example.com"), any(), eq(100L))).thenReturn("jwt-registered-token");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(2L);
@@ -230,7 +230,7 @@ class AuthServiceTest {
                 .expiresAt(LocalDateTime.now().plusDays(5))
                 .build();
         when(refreshTokenRepository.findByTokenForUpdate(anyString())).thenReturn(Optional.of(rt));
-        when(jwtUtils.generateToken(sampleUser.getEmail(), sampleUser.getId())).thenReturn("new_access_token");
+        when(jwtUtils.generateToken(sampleUser.getEmail(), sampleUser.getId(), 100L)).thenReturn("new_access_token");
 
         Map<String, Object> response = authService.refreshToken("valid_rt_string");
 
@@ -525,7 +525,7 @@ class AuthServiceTest {
         LocalDateTime logoutTime = LocalDateTime.now().minusMinutes(5);
         sampleUser.setLoggedOutAt(logoutTime);
         when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-        when(jwtUtils.generateToken("quochuy@example.com", 1L)).thenReturn("new-jwt-token");
+        when(jwtUtils.generateToken("quochuy@example.com", 1L, 100L)).thenReturn("new-jwt-token");
 
         LoginRequest req = new LoginRequest();
         req.setEmail("quochuy@example.com");
@@ -536,32 +536,34 @@ class AuthServiceTest {
         assertThat(res).isNotNull();
         // loggedOutAt phải được giữ nguyên để filter vẫn có thể từ chối các token bị đánh cắp từ trước logout
         assertThat(sampleUser.getLoggedOutAt()).isEqualTo(logoutTime);
-        // lastLoginAt được đặt về now()-1s để filter dùng <= vẫn chấp nhận token mới (phát hành tại now())
+        // Audit timestamp is real; the JWT is tied to a new persisted grant.
         assertThat(sampleUser.getLastLoginAt()).isNotNull();
-        assertThat(sampleUser.getLastLoginAt()).isBefore(LocalDateTime.now());
+        assertThat(sampleUser.getLastLoginAt()).isBeforeOrEqualTo(LocalDateTime.now());
         assertThat(sampleUser.getLastLoginAt()).isAfter(logoutTime);
         verify(userRepository, atLeastOnce()).save(sampleUser);
     }
 
     @Test
-    @DisplayName("login() đặt lastLoginAt = now()-1s để filter <= chấp nhận token mới nhưng từ chối token cùng giây từ phiên cũ")
-    void login_ShouldSetLastLoginAtOneSecondBeforeNow() {
+    @DisplayName("login() ghi nhận thời gian thực và giữ nguyên lịch sử đổi mật khẩu")
+    void login_ShouldSetRealLastLoginAtWithoutRewritingPasswordHistory() {
         sampleUser.setLoggedOutAt(LocalDateTime.now().minusMinutes(2));
+        LocalDateTime passwordChangedAt = LocalDateTime.now().plusSeconds(1);
+        sampleUser.setPasswordChangedAt(passwordChangedAt);
         when(userRepository.findByEmail("quochuy@example.com")).thenReturn(Optional.of(sampleUser));
-        when(jwtUtils.generateToken("quochuy@example.com", 1L)).thenReturn("token");
+        when(jwtUtils.generateToken("quochuy@example.com", 1L, 100L)).thenReturn("token");
 
         LoginRequest req = new LoginRequest();
         req.setEmail("quochuy@example.com");
         req.setPassword("secret_pass");
 
-        LocalDateTime before = LocalDateTime.now().minusSeconds(2);
+        LocalDateTime before = LocalDateTime.now();
         authService.login(req);
         LocalDateTime after = LocalDateTime.now();
 
-        // lastLoginAt phải là giây trước hiện tại (now()-1s), không phải bằng now()
         assertThat(sampleUser.getLastLoginAt()).isNotNull();
         assertThat(sampleUser.getLastLoginAt()).isAfterOrEqualTo(before);
-        assertThat(sampleUser.getLastLoginAt()).isBefore(after);
+        assertThat(sampleUser.getLastLoginAt()).isBeforeOrEqualTo(after);
+        assertThat(sampleUser.getPasswordChangedAt()).isEqualTo(passwordChangedAt);
     }
 
     @Test

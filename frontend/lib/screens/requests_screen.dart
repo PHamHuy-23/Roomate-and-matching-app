@@ -5,19 +5,25 @@ import '../navigation/app_routes.dart';
 
 class RequestsScreen extends StatefulWidget {
   final int currentUserId;
-  const RequestsScreen({super.key, required this.currentUserId});
+  final ApiService? apiService;
+  const RequestsScreen({
+    super.key,
+    required this.currentUserId,
+    this.apiService,
+  });
 
   @override
   State<RequestsScreen> createState() => _RequestsScreenState();
 }
 
 class _RequestsScreenState extends State<RequestsScreen> {
-  final ApiService _api = ApiService();
-  
+  late final ApiService _api = widget.apiService ?? ApiService();
+
   List<MatchRequestItem> _receivedRequests = [];
   List<MatchRequestItem> _sentRequests = [];
-  bool _isLoading = true;
-  
+  bool _isLoading = false;
+  String? _error;
+
   // 0: Đã kết nối, 1: Đã nhận, 2: Đã gửi
   int _selectedTabIndex = 0;
 
@@ -28,11 +34,15 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final received = await _api.getReceivedRequests(widget.currentUserId);
       final sent = await _api.getSentRequests(widget.currentUserId);
-      
+
       if (mounted) {
         setState(() {
           _receivedRequests = received;
@@ -40,16 +50,27 @@ class _RequestsScreenState extends State<RequestsScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } on ApiException catch (error) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _error = error.message.trim().isNotEmpty
+              ? error.message
+              : 'Không thể tải kết nối, vui lòng thử lại.';
+        });
       }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Không thể tải kết nối, vui lòng thử lại.';
+      });
     }
   }
 
   Widget _buildFilterChip(int index, String label) {
     final isSelected = _selectedTabIndex == index;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -70,7 +91,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
             fontSize: 13,
             fontWeight: FontWeight.w600,
             fontFamily: 'SourceSansPro',
-            color: isSelected ? const Color(0xFF087E6B) : const Color(0xFF65746F),
+            color: isSelected
+                ? const Color(0xFF087E6B)
+                : const Color(0xFF65746F),
           ),
         ),
       ),
@@ -152,12 +175,20 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pendingReceived = _receivedRequests.where((r) => r.status == 'PENDING').toList();
-    final pendingSent = _sentRequests.where((r) => r.status == 'PENDING').toList();
-    
+    final received = _error == null && !_isLoading
+        ? _receivedRequests
+        : <MatchRequestItem>[];
+    final sent = _error == null && !_isLoading
+        ? _sentRequests
+        : <MatchRequestItem>[];
+    final pendingReceived = received
+        .where((r) => r.status == 'PENDING')
+        .toList();
+    final pendingSent = sent.where((r) => r.status == 'PENDING').toList();
+
     final connected = [
-      ..._receivedRequests.where((r) => r.status == 'ACCEPTED'),
-      ..._sentRequests.where((r) => r.status == 'ACCEPTED'),
+      ...received.where((r) => r.status == 'ACCEPTED'),
+      ...sent.where((r) => r.status == 'ACCEPTED'),
     ];
 
     List<MatchRequestItem> currentList = [];
@@ -203,136 +234,166 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 ],
               ),
             ),
-            
+
             // Filters
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
                   _buildFilterChip(0, 'Đã kết nối'),
-                  _buildFilterChip(1, pendingReceived.isNotEmpty ? 'Đã nhận · ${pendingReceived.length}' : 'Đã nhận'),
-                  _buildFilterChip(2, pendingSent.isNotEmpty ? 'Đã gửi · ${pendingSent.length}' : 'Đã gửi'),
+                  _buildFilterChip(
+                    1,
+                    pendingReceived.isNotEmpty
+                        ? 'Đã nhận · ${pendingReceived.length}'
+                        : 'Đã nhận',
+                  ),
+                  _buildFilterChip(
+                    2,
+                    pendingSent.isNotEmpty
+                        ? 'Đã gửi · ${pendingSent.length}'
+                        : 'Đã gửi',
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // List
             Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: _loadData,
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      children: [
-                        if (currentList.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Text(
-                                'Không có kết nối nào',
-                                style: TextStyle(
-                                  color: Color(0xFF65746F),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        children: [
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 32),
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.cloud_off_outlined,
+                                    color: Color(0xFF65746F),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(_error!, textAlign: TextAlign.center),
+                                  const SizedBox(height: 12),
+                                  OutlinedButton(
+                                    onPressed: _loadData,
+                                    child: const Text('Thử lại'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_error == null && currentList.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: Text(
+                                  'Không có kết nối nào',
+                                  style: TextStyle(color: Color(0xFF65746F)),
                                 ),
                               ),
                             ),
-                          ),
-                          
-                        ...currentList.map((item) {
-                          String subtitle = '';
-                          if (_selectedTabIndex == 0) {
-                            subtitle = 'Đã kết nối · Xem thông tin liên hệ';
-                          } else if (_selectedTabIndex == 1) {
-                            subtitle = 'Lời mời mới · ${item.matchScore}% phù hợp';
-                          } else {
-                            subtitle = 'Chờ chấp nhận · ${item.matchScore}% phù hợp';
-                          }
-                          
-                          return _buildConnectionItem(
-                            name: item.partnerName,
-                            subtitle: subtitle,
-                            onTap: () async {
-                              if (_selectedTabIndex == 0) {
-                                final res = await Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.contactDetails,
-                                  arguments: {
-                                    'contactId': item.partnerId,
-                                    'partnerName': item.partnerName,
-                                    'phone': item.contactPhone,
-                                    'email': item.contactEmail,
-                                    'avatarUrl': item.partnerAvatar,
-                                  },
-                                );
-                                if (res == true && mounted) {
-                                  _loadData();
+
+                          ...currentList.map((item) {
+                            String subtitle = '';
+                            if (_selectedTabIndex == 0) {
+                              subtitle = 'Đã kết nối · Xem thông tin liên hệ';
+                            } else if (_selectedTabIndex == 1) {
+                              subtitle =
+                                  'Lời mời mới · ${item.matchScore}% phù hợp';
+                            } else {
+                              subtitle =
+                                  'Chờ chấp nhận · ${item.matchScore}% phù hợp';
+                            }
+
+                            return _buildConnectionItem(
+                              name: item.partnerName,
+                              subtitle: subtitle,
+                              onTap: () async {
+                                if (_selectedTabIndex == 0) {
+                                  final res = await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.contactDetails,
+                                    arguments: {
+                                      'contactId': item.partnerId,
+                                      'partnerName': item.partnerName,
+                                      'phone': item.contactPhone,
+                                      'email': item.contactEmail,
+                                      'avatarUrl': item.partnerAvatar,
+                                    },
+                                  );
+                                  if (res == true && mounted) {
+                                    _loadData();
+                                  }
+                                } else if (_selectedTabIndex == 1) {
+                                  await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.receivedRequests,
+                                  );
+                                  if (mounted) {
+                                    _loadData();
+                                  }
+                                } else {
+                                  final res = await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.sentRequest,
+                                    arguments: {
+                                      'partnerId': item.partnerId,
+                                      'partnerName': item.partnerName,
+                                    },
+                                  );
+                                  if (res == true && mounted) {
+                                    _loadData();
+                                  }
                                 }
-                              } else if (_selectedTabIndex == 1) {
-                                await Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.receivedRequests,
-                                );
-                                if (mounted) {
-                                  _loadData();
-                                }
-                              } else {
-                                final res = await Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.sentRequest,
-                                  arguments: {
-                                    'partnerId': item.partnerId,
-                                    'partnerName': item.partnerName,
-                                  },
-                                );
-                                if (res == true && mounted) {
-                                  _loadData();
-                                }
-                              }
-                            },
-                          );
-                        }),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // Privacy Info Box
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF8F5),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'Kết nối có sự đồng thuận',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'SourceSansPro',
-                                  color: Color(0xFF142523),
+                              },
+                            );
+                          }),
+
+                          const SizedBox(height: 16),
+
+                          // Privacy Info Box
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEAF8F5),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Kết nối có sự đồng thuận',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF142523),
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Trao đổi nhu cầu, xem phòng trực tiếp\nvà thống nhất chi phí',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'SourceSansPro',
-                                  color: Color(0xFF142523),
-                                  height: 1.4,
+                                SizedBox(height: 8),
+                                Text(
+                                  'Trao đổi nhu cầu, xem phòng trực tiếp\nvà thống nhất chi phí',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'SourceSansPro',
+                                    color: Color(0xFF142523),
+                                    height: 1.4,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: 32),
-                      ],
+
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
-                  ),
             ),
           ],
         ),

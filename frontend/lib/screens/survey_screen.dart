@@ -27,6 +27,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
   int _currentStep = 0;
   bool _isLoading = true;
+  String? _loadError;
   bool _isSaving = false;
 
   // Các trường hiển thị trong handoff Penpot. Một số trường chưa có cột tương
@@ -38,6 +39,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
   // Bước 1: Ngân sách, Khu vực & Giới tính (UC-07, FR-07 - Tiêu chí cứng)
   RangeValues _budgetRange = const RangeValues(2000000, 4000000);
+  double _budgetSliderMin = 1000000;
+  double _budgetSliderMax = 15000000;
   String _district = 'Binh Thanh';
   String _targetGender = 'ANY'; // ANY, MALE, FEMALE (Theo UC-07)
 
@@ -328,10 +331,29 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Future<void> _loadPreferences() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final data = await _api.getPreferences(widget.userId);
       if (data != null) {
         if (!mounted) return;
+        final minBudget = data['budgetMin'];
+        final maxBudget = data['budgetMax'];
+        if (minBudget != null || maxBudget != null) {
+          if (minBudget is! num ||
+              maxBudget is! num ||
+              !minBudget.isFinite ||
+              !maxBudget.isFinite ||
+              minBudget < 0 ||
+              maxBudget < 500000 ||
+              minBudget > maxBudget) {
+            throw const ApiException(
+              'Khoảng ngân sách đã lưu không hợp lệ. Vui lòng kiểm tra lại dữ liệu.',
+            );
+          }
+        }
         setState(() {
           final targetDist = data['targetDistrict'] as String?;
           if (targetDist != null && targetDist.isNotEmpty) {
@@ -361,10 +383,23 @@ class _SurveyScreenState extends State<SurveyScreen> {
               (data['budgetMax'] as num).toDouble(),
             );
           }
+          // Extend the slider once on load, keeping its scale stable while dragging.
+          _budgetSliderMin = _budgetRange.start < 1000000
+              ? _budgetRange.start
+              : 1000000;
+          _budgetSliderMax = _budgetRange.end > 15000000
+              ? _budgetRange.end
+              : 15000000;
         });
       }
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _loadError = error.message);
     } catch (_) {
-      // Giữ giá trị mặc định nếu người dùng mới chưa từng làm khảo sát
+      if (mounted) {
+        setState(
+          () => _loadError = 'Không thể đọc tiêu chí đã lưu, vui lòng thử lại.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -517,9 +552,18 @@ class _SurveyScreenState extends State<SurveyScreen> {
           _showWarningSnackBar('Vui lòng chọn Quận/Huyện mong muốn tìm phòng!');
           return false;
         }
-        if (_budgetRange.start >= _budgetRange.end) {
+        if (!_budgetRange.start.isFinite ||
+            !_budgetRange.end.isFinite ||
+            _budgetRange.start < 0 ||
+            _budgetRange.end < 500000) {
           _showWarningSnackBar(
-            'Ngân sách tối thiểu phải nhỏ hơn ngân sách tối đa!',
+            'Ngân sách tối đa phải từ 500.000 VNĐ và tối thiểu không được âm!',
+          );
+          return false;
+        }
+        if (_budgetRange.start > _budgetRange.end) {
+          _showWarningSnackBar(
+            'Ngân sách tối thiểu không được lớn hơn ngân sách tối đa!',
           );
           return false;
         }
@@ -617,6 +661,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Future<void> _save() async {
+    if (_isSaving || _loadError != null) return;
     for (int s = 0; s <= 3; s++) {
       if (!_validateStep(s)) {
         setState(() => _currentStep = s);
@@ -715,6 +760,27 @@ class _SurveyScreenState extends State<SurveyScreen> {
       );
     }
 
+    if (_loadError != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Tiêu chí ở trọ')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_loadError!, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: _loadPreferences,
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: _penpotCanvas,
       body: SafeArea(
@@ -983,8 +1049,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
               ),
               RangeSlider(
                 values: _budgetRange,
-                min: 1000000,
-                max: 15000000,
+                min: _budgetSliderMin,
+                max: _budgetSliderMax,
                 divisions: 28,
                 activeColor: _penpotPrimary,
                 inactiveColor: const Color(0xFFD5E4DF),
@@ -1589,9 +1655,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
         const SizedBox(height: 8),
         RangeSlider(
           values: _budgetRange,
-          min: 1000000,
-          max: 15000000,
-          divisions: 28, // Bước nhảy 500.000 VNĐ từ 1M đến 15M
+          min: _budgetSliderMin,
+          max: _budgetSliderMax,
+          divisions: 28,
           activeColor: Colors.indigo,
           inactiveColor: Colors.indigo.shade100,
           labels: RangeLabels(

@@ -25,11 +25,20 @@ class _LegacyDistrictApi implements ApiService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _NewPreferencesApi extends _LegacyDistrictApi {
+  @override
+  Future<Map<String, dynamic>?> getPreferences(int userId) async => null;
+}
+
 void main() {
   testWidgets('SurveyScreen follows the five Penpot onboarding screens', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SurveyScreen(userId: 1)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SurveyScreen(userId: 1, apiService: _NewPreferencesApi()),
+      ),
+    );
 
     // Wait for mock / loadPreferences future to settle
     await tester.pumpAndSettle();
@@ -58,10 +67,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: SurveyScreen(
-          userId: 1,
-          apiService: _LegacyDistrictApi(),
-        ),
+        home: SurveyScreen(userId: 1, apiService: _LegacyDistrictApi()),
       ),
     );
     await tester.pumpAndSettle();

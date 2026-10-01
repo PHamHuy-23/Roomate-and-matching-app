@@ -154,6 +154,16 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   void _validatePost() {
+    final currentOccupants = _editingExisting
+        ? (_selectedPost?.currentOccupants ?? 0)
+        : 0;
+    if (_maxOccupants < 1 ||
+        currentOccupants < 0 ||
+        currentOccupants > _maxOccupants) {
+      throw const FormatException(
+        'Số người tối đa không được nhỏ hơn số người đang ở.',
+      );
+    }
     if (_titleCtrl.text.trim().isEmpty ||
         _addressCtrl.text.trim().isEmpty ||
         _districtCtrl.text.trim().isEmpty ||

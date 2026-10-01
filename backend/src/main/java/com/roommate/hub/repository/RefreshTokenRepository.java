@@ -18,6 +18,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     Optional<RefreshToken> findByToken(String token);
 
+    Optional<RefreshToken> findFirstByUserIdAndRevokedFalseOrderByIdDesc(Long userId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM RefreshToken r WHERE r.token = :token")
     Optional<RefreshToken> findByTokenForUpdate(@Param("token") String token);

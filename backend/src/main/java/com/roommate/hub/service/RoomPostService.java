@@ -26,8 +26,10 @@ public class RoomPostService {
     private final UserRepository userRepository;
     private final ObjectProvider<R2StorageService> storageServiceProvider;
 
+    @Transactional(readOnly = true)
     public List<RoomPostResponseDTO> getAllAvailablePosts() {
-        return roomPostRepository.findByStatusIn(List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE))
+        return roomPostRepository.findByStatusInAndAuthorStatus(
+                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE), "ACTIVE")
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -35,6 +37,7 @@ public class RoomPostService {
 
     @Transactional
     public RoomPostResponseDTO createPost(CreateRoomPostDTO dto) {
+        validateOccupancy(dto.getMaxOccupants(), dto.getCurrentOccupants() == null ? 0 : dto.getCurrentOccupants());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User author = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
@@ -96,8 +99,8 @@ public class RoomPostService {
 
     @Transactional(readOnly = true)
     public RoomPostResponseDTO getPost(Long postId) {
-        return convertToDTO(roomPostRepository.findByIdAndStatusIn(postId,
-                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE))
+        return convertToDTO(roomPostRepository.findByIdAndStatusInAndAuthorStatus(postId,
+                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE), "ACTIVE")
                 .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!")));
     }
 
@@ -136,6 +139,9 @@ public class RoomPostService {
             throw new ForbiddenException("Bạn không có quyền sửa bài đăng này!");
         }
 
+        validateOccupancy(dto.getMaxOccupants() == null ? post.getMaxOccupants() : dto.getMaxOccupants(),
+                dto.getCurrentOccupants() == null ? post.getCurrentOccupants() : dto.getCurrentOccupants());
+
         // Khi người dùng chỉnh sửa nội dung tin, chuyển về trạng thái PENDING để kiểm duyệt lại
         if (!admin) {
             post.setStatus(RoomPost.PostStatus.PENDING);
@@ -163,5 +169,14 @@ public class RoomPostService {
         }
 
         return convertToDTO(roomPostRepository.save(post));
+    }
+
+    private void validateOccupancy(Integer maxOccupants, Integer currentOccupants) {
+        if (maxOccupants == null || maxOccupants < 1) {
+            throw new IllegalArgumentException("Số người tối đa phải lớn hơn hoặc bằng 1");
+        }
+        if (currentOccupants == null || currentOccupants < 0 || currentOccupants > maxOccupants) {
+            throw new IllegalArgumentException("Số người hiện tại phải từ 0 đến số người tối đa");
+        }
     }
 }

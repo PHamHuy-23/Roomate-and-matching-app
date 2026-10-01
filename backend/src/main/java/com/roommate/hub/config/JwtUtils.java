@@ -22,11 +22,15 @@ public class JwtUtils {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email, Long userId) {
+    public String generateToken(String email, Long userId, Long refreshTokenId) {
+        if (refreshTokenId == null || refreshTokenId <= 0) {
+            throw new IllegalArgumentException("Access token requires a persisted refresh-token grant");
+        }
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
                 .claim("token_type", "ACCESS")
+                .claim("refresh_token_id", refreshTokenId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -47,6 +51,15 @@ public class JwtUtils {
     public String extractEmail(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public Long extractRefreshTokenId(String token) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(key).build()
+                    .parseClaimsJws(token).getBody().get("refresh_token_id", Long.class);
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public Date extractIssuedAt(String token) {

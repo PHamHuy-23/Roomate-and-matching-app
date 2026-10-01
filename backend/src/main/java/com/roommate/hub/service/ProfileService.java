@@ -55,6 +55,11 @@ public class ProfileService {
 
     @Transactional
     public UserPreferenceDTO saveOrUpdatePreferences(Long userId, UserPreferenceDTO dto) {
+        if ((dto.getBudgetAmount() != null && !Double.isFinite(dto.getBudgetAmount()))
+                || (dto.getBudgetMin() != null && !Double.isFinite(dto.getBudgetMin()))
+                || (dto.getBudgetMax() != null && !Double.isFinite(dto.getBudgetMax()))) {
+            throw new IllegalArgumentException("Ngân sách phải là số hữu hạn");
+        }
         if ((dto.getBudgetMin() == null) != (dto.getBudgetMax() == null)
                 || (dto.getBudgetMin() != null && dto.getBudgetMin() > dto.getBudgetMax())) {
             throw new IllegalArgumentException("Khoảng ngân sách không hợp lệ");

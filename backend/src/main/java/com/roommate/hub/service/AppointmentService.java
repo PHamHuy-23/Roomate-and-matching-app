@@ -34,6 +34,10 @@ public class AppointmentService {
         RoomPost post = roomPostRepository.findById(dto.getRoomPostId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bài đăng phòng không tồn tại!"));
 
+        if (!"ACTIVE".equalsIgnoreCase(post.getAuthor().getStatus())) {
+            throw new ForbiddenException("Không thể đặt lịch xem phòng vì tài khoản chủ phòng đã bị khóa!");
+        }
+
         if (post.getStatus() != RoomPost.PostStatus.APPROVED && post.getStatus() != RoomPost.PostStatus.AVAILABLE) {
             throw new RuntimeException("Chỉ có thể đặt lịch xem các phòng đã được duyệt và đang mở!");
         }

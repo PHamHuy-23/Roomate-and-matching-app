@@ -44,7 +44,8 @@ public class ProfileController {
         User user = currentUser();
         user = userRepository.findByIdForUpdate(user.getId()).orElseThrow();
         if (saved) {
-            roomPostRepository.findByIdAndStatusIn(postId, java.util.List.of(com.roommate.hub.entity.RoomPost.PostStatus.APPROVED, com.roommate.hub.entity.RoomPost.PostStatus.AVAILABLE))
+            roomPostRepository.findByIdAndStatusInAndAuthorStatus(postId,
+                    java.util.List.of(com.roommate.hub.entity.RoomPost.PostStatus.APPROVED, com.roommate.hub.entity.RoomPost.PostStatus.AVAILABLE), "ACTIVE")
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tin không còn hiển thị"));
             user.getSavedPostIds().add(postId);
         } else user.getSavedPostIds().remove(postId);

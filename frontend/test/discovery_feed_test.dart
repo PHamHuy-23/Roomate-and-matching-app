@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:roommate_hub_mobile/models/match_criteria_detail.dart';
 import 'package:roommate_hub_mobile/models/match_recommendation.dart';
+import 'package:roommate_hub_mobile/models/match_request_item.dart';
 import 'package:roommate_hub_mobile/screens/candidate_profile_screen.dart';
 import 'package:roommate_hub_mobile/widgets/compatibility_bottom_sheet.dart';
 import 'package:roommate_hub_mobile/widgets/match_card.dart';
@@ -160,10 +161,15 @@ void main() {
       MaterialApp(
         home: CandidateProfileScreen(
           item: recommendation(),
-          requestSent: false,
           onConnect: () async {
             requests++;
-            return true;
+            return MatchRequestItem(
+              requestId: 1,
+              partnerId: 2,
+              partnerName: 'Tuấn Minh',
+              matchScore: 88,
+              status: 'PENDING',
+            );
           },
         ),
       ),

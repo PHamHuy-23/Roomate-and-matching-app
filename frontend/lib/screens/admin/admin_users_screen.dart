@@ -67,14 +67,31 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return {
       'id': id == null ? '—' : '#$id',
       'userId': id?.toString() ?? '',
-      'fullName': raw['fullName']?.toString() ?? 'Chưa đặt tên',
-      'email': raw['email']?.toString() ?? 'Chưa có email',
+      'fullName': _nonBlank(raw['fullName']) ?? 'Chưa đặt tên',
+      'email': _nonBlank(raw['email']) ?? 'Chưa có email',
       'role': role == 'ROLE_ADMIN' || role == 'ADMIN'
           ? 'Quản trị viên'
           : 'Thành viên',
-      'status': status == 'LOCKED' ? 'Đã khóa' : 'Hoạt động',
+      'status': switch (status) {
+        'LOCKED' => 'Đã khóa',
+        'ACTIVE' => 'Hoạt động',
+        _ => 'Không xác định',
+      },
       'createdAt': createdLabel,
+      for (final field in [
+        'phone',
+        'gender',
+        'university',
+        'birthDate',
+        'avatarUrl',
+      ])
+        if (_nonBlank(raw[field]) case final String value) field: value,
     };
+  }
+
+  String? _nonBlank(Object? value) {
+    final text = value?.toString().trim();
+    return text?.isNotEmpty == true ? text : null;
   }
 
   @override
