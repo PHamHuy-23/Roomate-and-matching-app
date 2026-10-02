@@ -1,6 +1,7 @@
 package com.roommate.hub.service;
 
 import com.roommate.hub.dto.CreateRoomPostDTO;
+import com.roommate.hub.util.DistrictNames;
 import com.roommate.hub.dto.RoomPostResponseDTO;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
@@ -37,6 +38,7 @@ public class RoomPostService {
 
     @Transactional
     public RoomPostResponseDTO createPost(CreateRoomPostDTO dto) {
+        validateFiniteNumbers(dto);
         validateOccupancy(dto.getMaxOccupants(), dto.getCurrentOccupants() == null ? 0 : dto.getCurrentOccupants());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User author = userRepository.findByEmail(authentication.getName())
@@ -58,7 +60,7 @@ public class RoomPostService {
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .address(dto.getAddress())
-                .district(dto.getDistrict())
+                .district(DistrictNames.canonical(dto.getDistrict()))
                 .deposit(dto.getDeposit())
                 .electricityWaterCost(dto.getElectricityWaterCost())
                 .area(dto.getArea())
@@ -82,7 +84,7 @@ public class RoomPostService {
                 .description(post.getDescription())
                 .price(post.getPrice())
                 .address(post.getAddress())
-                .district(post.getDistrict())
+                .district(DistrictNames.canonical(post.getDistrict()))
                 .deposit(post.getDeposit())
                 .electricityWaterCost(post.getElectricityWaterCost())
                 .area(post.getArea())
@@ -139,6 +141,7 @@ public class RoomPostService {
             throw new ForbiddenException("Bạn không có quyền sửa bài đăng này!");
         }
 
+        validateFiniteNumbers(dto);
         validateOccupancy(dto.getMaxOccupants() == null ? post.getMaxOccupants() : dto.getMaxOccupants(),
                 dto.getCurrentOccupants() == null ? post.getCurrentOccupants() : dto.getCurrentOccupants());
 
@@ -151,7 +154,7 @@ public class RoomPostService {
         if (dto.getDescription() != null) post.setDescription(dto.getDescription());
         if (dto.getPrice() != null) post.setPrice(dto.getPrice());
         if (dto.getAddress() != null) post.setAddress(dto.getAddress());
-        if (dto.getDistrict() != null) post.setDistrict(dto.getDistrict());
+        if (dto.getDistrict() != null) post.setDistrict(DistrictNames.canonical(dto.getDistrict()));
         if (dto.getDeposit() != null) post.setDeposit(dto.getDeposit());
         if (dto.getElectricityWaterCost() != null) post.setElectricityWaterCost(dto.getElectricityWaterCost());
         if (dto.getArea() != null) post.setArea(dto.getArea());
@@ -169,6 +172,14 @@ public class RoomPostService {
         }
 
         return convertToDTO(roomPostRepository.save(post));
+    }
+
+    private void validateFiniteNumbers(CreateRoomPostDTO dto) {
+        for (Double value : new Double[]{dto.getPrice(), dto.getDeposit(), dto.getElectricityWaterCost(), dto.getArea()}) {
+            if (value != null && !Double.isFinite(value)) {
+                throw new IllegalArgumentException("Giá, tiền cọc, chi phí điện nước và diện tích phải là số hữu hạn");
+            }
+        }
     }
 
     private void validateOccupancy(Integer maxOccupants, Integer currentOccupants) {

@@ -1,14 +1,22 @@
 package com.roommate.hub.service;
 
 import com.roommate.hub.dto.UserPreferenceDTO;
+import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.PublicProfileResponseDTO;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.entity.UserPreference;
 import com.roommate.hub.repository.UserPreferenceRepository;
 import com.roommate.hub.repository.UserRepository;
+import com.roommate.hub.util.DistrictNames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +24,51 @@ public class ProfileService {
 
     private final UserPreferenceRepository preferenceRepository;
     private final UserRepository userRepository;
+
+    @Transactional
+    public UserResponseDTO updateUserInfo(Long userId, String fullName, String phone,
+            String gender, LocalDate birthDate, String university, String bioNote) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.roommate.hub.exception.ResourceNotFoundException("Người dùng không tồn tại!"));
+        String normalizedName = fullName.trim();
+        String normalizedGender = gender.toUpperCase(Locale.ROOT);
+        String normalizedUniversity = university == null ? null : university.trim();
+        if (normalizedName.isEmpty() || normalizedName.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ và tên không hợp lệ");
+        }
+        if (phone.length() > 20 || !(normalizedGender.equals("MALE") || normalizedGender.equals("FEMALE"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thông tin hồ sơ không hợp lệ");
+        }
+        if (birthDate != null && birthDate.isAfter(LocalDate.now().minusYears(18))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Người dùng phải đủ 18 tuổi");
+        }
+        if (normalizedUniversity != null
+                && (normalizedUniversity.isEmpty() || normalizedUniversity.length() > 150)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trường đại học không hợp lệ");
+        }
+        UserPreference pref = bioNote == null ? null : preferenceRepository.findByUserId(userId).orElse(null);
+        if (bioNote != null && !bioNote.isBlank() && pref == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hãy thiết lập tiêu chí trước khi thêm giới thiệu");
+        }
+
+        // Validate everything first; profile and biography are saved in one transaction.
+        user.setFullName(normalizedName);
+        user.setPhone(phone);
+        user.setGender(normalizedGender);
+        if (birthDate != null) user.setBirthDate(birthDate);
+        if (normalizedUniversity != null) user.setUniversity(normalizedUniversity);
+        if (pref != null) {
+            // The survey stores metadata in the leading bracketed line. Edit only its note.
+            String existing = pref.getBioDescription();
+            var metadata = Pattern.compile("^\\[(.*?)\\](?:\\n(.*))?$", Pattern.DOTALL)
+                    .matcher(existing == null ? "" : existing);
+            String note = bioNote.trim();
+            pref.setBioDescription(metadata.matches() ? "[" + metadata.group(1) + "]"
+                    + (note.isEmpty() ? "" : "\n" + note) : note);
+            preferenceRepository.save(pref);
+        }
+        return UserResponseDTO.from(userRepository.save(user));
+    }
 
     @Transactional(readOnly = true)
     public PublicProfileResponseDTO getPublicProfile(Long userId) {
@@ -25,7 +78,7 @@ public class ProfileService {
         UserPreference pref = preferenceRepository.findByUserId(userId).orElse(null);
         return PublicProfileResponseDTO.builder()
                 .userId(user.getId()).fullName(user.getFullName()).avatarUrl(user.getAvatarUrl()).university(user.getUniversity())
-                .targetDistrict(pref == null ? null : pref.getTargetDistrict())
+                .targetDistrict(pref == null ? null : DistrictNames.canonical(pref.getTargetDistrict()))
                 .budgetMin(pref == null ? null : pref.getBudgetMin()).budgetMax(pref == null ? null : pref.getBudgetMax())
                 .sleepHabit(pref == null ? null : pref.getSleepHabit()).cleanlinessLevel(pref == null ? null : pref.getCleanlinessLevel())
                 .isSmoking(pref == null ? null : pref.getIsSmoking()).allowPets(pref == null ? null : pref.getAllowPets())
@@ -41,10 +94,12 @@ public class ProfileService {
         }
 
         return UserPreferenceDTO.builder()
-                .targetDistrict(pref.getTargetDistrict())
+                .targetDistrict(DistrictNames.canonical(pref.getTargetDistrict()))
                 .budgetAmount(pref.getBudgetAmount())
                 .budgetMin(pref.getBudgetMin()).budgetMax(pref.getBudgetMax())
                 .targetGender(pref.getTargetGender()).topPriority(pref.getTopPriority())
+                .moveInDate(pref.getMoveInDate()).roomType(pref.getRoomType())
+                .workSchedule(pref.getWorkSchedule()).personalValue(pref.getPersonalValue())
                 .sleepHabit(pref.getSleepHabit())
                 .cleanlinessLevel(pref.getCleanlinessLevel())
                 .isSmoking(pref.getIsSmoking())
@@ -70,6 +125,7 @@ public class ProfileService {
         UserPreference pref = preferenceRepository.findByUserId(userId)
                 .orElse(UserPreference.builder().user(user).build());
 
+        dto.setTargetDistrict(DistrictNames.canonical(dto.getTargetDistrict()));
         pref.setTargetDistrict(dto.getTargetDistrict());
         pref.setBudgetAmount(dto.getBudgetAmount());
         pref.setBudgetMin(dto.getBudgetMin()); pref.setBudgetMax(dto.getBudgetMax());
@@ -80,7 +136,13 @@ public class ProfileService {
         pref.setAllowPets(dto.getAllowPets());
         pref.setBioDescription(dto.getBioDescription());
 
+        // Older clients omit these optional fields. Do not erase saved choices.
+        if (dto.getMoveInDate() != null) pref.setMoveInDate(dto.getMoveInDate());
+        if (dto.getRoomType() != null) pref.setRoomType(dto.getRoomType());
+        if (dto.getWorkSchedule() != null) pref.setWorkSchedule(dto.getWorkSchedule());
+        if (dto.getPersonalValue() != null) pref.setPersonalValue(dto.getPersonalValue());
+
         preferenceRepository.save(pref);
-        return dto;
+        return getPreferences(userId);
     }
 }

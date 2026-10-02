@@ -5,6 +5,10 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.OptBoolean;
 import lombok.*;
 
 @Data
@@ -27,6 +31,16 @@ public class UserPreferenceDTO {
     private String targetGender;
     @jakarta.validation.constraints.Pattern(regexp = "BUDGET|SLEEP|CLEAN|SMOKING")
     private String topPriority;
+
+    // Optional for clients and profiles created before these survey fields existed.
+    @JsonFormat(pattern = "uuuu-MM-dd", lenient = OptBoolean.FALSE)
+    private LocalDate moveInDate;
+    @Pattern(regexp = "PRIVATE|SHARED", message = "Loại phòng không hợp lệ")
+    private String roomType;
+    @Pattern(regexp = "DAY|NIGHT", message = "Lịch học/làm việc không hợp lệ")
+    private String workSchedule;
+    @Pattern(regexp = "PRIVACY|SCHEDULE|CLEAN", message = "Điều trân trọng không hợp lệ")
+    private String personalValue;
 
     @NotNull(message = "Giờ giấc sinh hoạt không được để trống")
     @Min(value = 1, message = "Giờ giấc sinh hoạt phải từ 1 đến 3")

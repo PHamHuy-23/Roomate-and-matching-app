@@ -99,33 +99,11 @@ public class ProfileController {
             @RequestParam String gender,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthDate,
-            @RequestParam(required = false) String university) {
+            @RequestParam(required = false) String university,
+            @RequestParam(required = false) String bioNote) {
         assertCurrentUser(userId);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
-        user.setFullName(fullName);
-        user.setPhone(phone);
-        user.setGender(gender.toUpperCase());
-        if (birthDate != null) {
-            if (birthDate.isAfter(LocalDate.now().minusYears(18))) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Người dùng phải đủ 18 tuổi"
-                );
-            }
-            user.setBirthDate(birthDate);
-        }
-        if (university != null) {
-            String normalizedUniversity = university.trim();
-            if (normalizedUniversity.isEmpty() || normalizedUniversity.length() > 150) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Trường đại học không hợp lệ"
-                );
-            }
-            user.setUniversity(normalizedUniversity);
-        }
-        return ResponseEntity.ok(UserResponseDTO.from(userRepository.save(user)));
+        return ResponseEntity.ok(profileService.updateUserInfo(
+                userId, fullName, phone, gender, birthDate, university, bioNote));
     }
 
     private void assertCurrentUser(Long userId) {

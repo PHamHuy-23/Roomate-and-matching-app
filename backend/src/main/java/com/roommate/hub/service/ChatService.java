@@ -57,6 +57,12 @@ public class ChatService {
             throw new RuntimeException("Bạn không thể tự gửi tin nhắn cho chính mình!");
         }
 
+        // Existing matches or appointments must not bypass an admin account lock.
+        if (!"ACTIVE".equalsIgnoreCase(receiver.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Không thể gửi tin nhắn vì tài khoản người nhận đã bị khóa hoặc chưa được kích hoạt!");
+        }
+
         // 1. Kiểm tra quan hệ chặn (Block)
         if (blockedUserRepository.existsByUserIdAndBlockedUserId(sender.getId(), receiver.getId()) ||
             blockedUserRepository.existsByUserIdAndBlockedUserId(receiver.getId(), sender.getId())) {

@@ -2,6 +2,7 @@ package com.roommate.hub.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "user_preferences")
@@ -31,6 +32,14 @@ public class UserPreference {
     private String targetGender;
     @Column(length = 10)
     private String topPriority;
+
+    private LocalDate moveInDate;
+    @Column(length = 10)
+    private String roomType;
+    @Column(length = 10)
+    private String workSchedule;
+    @Column(length = 10)
+    private String personalValue;
 
     @Column(nullable = false)
     private Integer sleepHabit; // 1: Ngủ sớm, 2: Bình thường, 3: Cú đêm

@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class ChatServiceTest {
 
@@ -64,6 +65,35 @@ class ChatServiceTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void rejectsLockedReceiverBeforeSavingAnyMessage() {
+        receiver.setStatus("LOCKED");
+        SendMessageDTO dto = SendMessageDTO.builder().receiverId(2L).content("Hello").build();
+
+        assertThatThrownBy(() -> chatService.sendMessage(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.FORBIDDEN));
+        verifyNoInteractions(chatMessageRepository);
+    }
+
+    @Test
+    void activeReceiverStillCannotReceiveChatWhenEitherUserHasBlockedTheOther() {
+        SendMessageDTO dto = SendMessageDTO.builder().receiverId(2L).content("Hello").build();
+        for (boolean senderBlocks : new boolean[]{true, false}) {
+            when(blockedUserRepository.existsByUserIdAndBlockedUserId(1L, 2L)).thenReturn(senderBlocks);
+            when(blockedUserRepository.existsByUserIdAndBlockedUserId(2L, 1L)).thenReturn(!senderBlocks);
+            assertThatThrownBy(() -> chatService.sendMessage(dto))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .satisfies(ex -> {
+                        ResponseStatusException error = (ResponseStatusException) ex;
+                        assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+                        assertThat(error.getReason()).contains("chặn nhau");
+                    });
+        }
+        verifyNoInteractions(chatMessageRepository);
     }
 
     @Test

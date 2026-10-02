@@ -2,10 +2,13 @@ package com.roommate.hub;
 
 import com.roommate.hub.config.JwtUtils;
 import com.roommate.hub.entity.RefreshToken;
+import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.entity.ViewingAppointment;
 import com.roommate.hub.repository.RefreshTokenRepository;
+import com.roommate.hub.repository.ChatMessageRepository;
+import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.repository.ViewingAppointmentRepository;
@@ -39,6 +42,8 @@ class AccountLockIntegrationTest {
     @Autowired RoomPostRepository posts;
     @Autowired ViewingAppointmentRepository appointments;
     @Autowired RefreshTokenRepository refreshTokens;
+    @Autowired ChatMessageRepository messages;
+    @Autowired MatchRequestRepository matches;
     @Autowired JwtUtils jwtUtils;
     @Autowired WebApplicationContext webContext;
     @Autowired FilterChainProxy securityFilterChain;
@@ -80,14 +85,23 @@ class AccountLockIntegrationTest {
         RoomPost available = room(host, RoomPost.PostStatus.AVAILABLE);
         RoomPost pending = room(host, RoomPost.PostStatus.PENDING);
         RoomPost closed = room(host, RoomPost.PostStatus.CLOSED);
+        RoomPost rejected = room(host, RoomPost.PostStatus.REJECTED);
         RoomPost other = room(user("Other", User.Role.ROLE_USER), RoomPost.PostStatus.APPROVED);
         assertPublicVisibility(approved, true);
         assertPublicVisibility(available, true);
+        assertAdminVisibility(admin, approved, true);
+        assertAdminVisibility(admin, available, true);
+        assertAdminVisibility(admin, pending, false);
+        assertAdminVisibility(admin, closed, false);
+        assertAdminVisibility(admin, rejected, false);
 
         toggle(admin, host, "LOCKED");
         assertPublicVisibility(approved, false);
         assertPublicVisibility(available, false);
         assertPublicVisibility(other, true);
+        assertAdminVisibility(admin, approved, false);
+        assertAdminVisibility(admin, available, false);
+        assertAdminVisibility(admin, other, true);
         mvc.perform(get("/api/v1/admin/posts").header("Authorization", bearer(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id", hasItem(approved.getId().intValue())))
@@ -100,8 +114,66 @@ class AccountLockIntegrationTest {
         assertPublicVisibility(available, true);
         assertPublicVisibility(pending, false);
         assertPublicVisibility(closed, false);
+        assertAdminVisibility(admin, approved, true);
+        assertAdminVisibility(admin, available, true);
+        assertAdminVisibility(admin, pending, false);
+        assertAdminVisibility(admin, closed, false);
+        assertAdminVisibility(admin, rejected, false);
         mvc.perform(get("/api/v1/posts/my").header("Authorization", bearer(host)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(4));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(5));
+    }
+
+    @Test void lockedMatchedReceiverCannotReceiveChatAndUnlockRestoresSending() throws Exception {
+        User admin = user("Admin", User.Role.ROLE_ADMIN), receiver = user("Receiver", User.Role.ROLE_USER);
+        User sender = user("Sender", User.Role.ROLE_USER);
+        MatchRequest match = matches.saveAndFlush(MatchRequest.builder().sender(sender).receiver(receiver)
+                .matchScore(85.0).status(MatchRequest.MatchStatus.ACCEPTED).build());
+
+        assertChatLockLifecycle(admin, sender, receiver);
+
+        assertThat(matches.findById(match.getId()).orElseThrow().getStatus())
+                .isEqualTo(MatchRequest.MatchStatus.ACCEPTED);
+    }
+
+    @Test void lockedAppointmentHostCannotReceiveChatAndUnlockRestoresSending() throws Exception {
+        User admin = user("Admin", User.Role.ROLE_ADMIN), host = user("Host", User.Role.ROLE_USER);
+        User viewer = user("Viewer", User.Role.ROLE_USER);
+        ViewingAppointment appointment = appointments.saveAndFlush(ViewingAppointment.builder()
+                .requester(viewer).host(host).roomPost(room(host, RoomPost.PostStatus.APPROVED))
+                .appointmentTime(OffsetDateTime.now().plusDays(2))
+                .status(ViewingAppointment.AppointmentStatus.CONFIRMED).build());
+
+        assertChatLockLifecycle(admin, viewer, host);
+
+        assertThat(appointments.findById(appointment.getId()).orElseThrow().getStatus())
+                .isEqualTo(ViewingAppointment.AppointmentStatus.CONFIRMED);
+    }
+
+    private void assertChatLockLifecycle(User admin, User sender, User receiver) throws Exception {
+        String authorization = bearer(sender);
+        String body = "{\"receiverId\":" + receiver.getId() + ",\"content\":\"Chat lock regression\"}";
+        long before = messages.count();
+        mvc.perform(post("/api/v1/chat/messages").header("Authorization", authorization)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+        assertThat(messages.count()).isEqualTo(before + 1);
+
+        toggle(admin, receiver, "LOCKED");
+        mvc.perform(post("/api/v1/chat/messages").header("Authorization", authorization)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isForbidden());
+        assertThat(messages.count()).isEqualTo(before + 1);
+        mvc.perform(get("/api/v1/chat/messages/{id}", receiver.getId()).header("Authorization", authorization))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+
+        toggle(admin, receiver, "ACTIVE");
+        mvc.perform(post("/api/v1/chat/messages").header("Authorization", authorization)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+        assertThat(messages.count()).isEqualTo(before + 2);
+    }
+
+    private void assertAdminVisibility(User admin, RoomPost post, boolean visible) throws Exception {
+        mvc.perform(get("/api/v1/admin/posts").header("Authorization", bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + post.getId() + ")].publiclyVisible", hasItem(visible)));
     }
 
     @Test void lockedHostCannotReceiveNewAppointmentsAndUnlockAllowsThemAgain() throws Exception {

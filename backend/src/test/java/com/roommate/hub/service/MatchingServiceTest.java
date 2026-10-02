@@ -49,7 +49,7 @@ class MatchingServiceTest {
         UserPreference candidatePreference = preference(candidate, 2_100_000.0);
 
         when(preferenceRepository.findByUserId(1L)).thenReturn(Optional.of(currentPreference));
-        when(preferenceRepository.findCandidates(1L, "MALE", "Thu Duc"))
+        when(preferenceRepository.findCandidatesByGender(1L, "MALE"))
                 .thenReturn(List.of(candidatePreference));
         when(blockedUserRepository.findByUserId(1L)).thenReturn(List.of());
         when(blockedUserRepository.findByBlockedUserId(1L)).thenReturn(List.of());

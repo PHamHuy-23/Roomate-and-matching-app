@@ -9,5 +9,17 @@ import java.time.LocalDateTime;
 public class AdminPostResponseDTO {
     Long id; Long authorId; String authorName; String title; String description; Double price;
     String address; Integer maxOccupants; String imageUrl; String status; LocalDateTime createdAt;
-    public static AdminPostResponseDTO from(RoomPost p) { return AdminPostResponseDTO.builder().id(p.getId()).authorId(p.getAuthor().getId()).authorName(p.getAuthor().getFullName()).title(p.getTitle()).description(p.getDescription()).price(p.getPrice()).address(p.getAddress()).maxOccupants(p.getMaxOccupants()).imageUrl(p.getImageUrl()).status(p.getStatus().name()).createdAt(p.getCreatedAt()).build(); }
+    boolean publiclyVisible;
+
+    public static AdminPostResponseDTO from(RoomPost p) {
+        // Match the public feed: an approved/available post owned by an active account.
+        boolean visible = "ACTIVE".equals(p.getAuthor().getStatus())
+                && (p.getStatus() == RoomPost.PostStatus.APPROVED
+                || p.getStatus() == RoomPost.PostStatus.AVAILABLE);
+        return AdminPostResponseDTO.builder()
+                .id(p.getId()).authorId(p.getAuthor().getId()).authorName(p.getAuthor().getFullName())
+                .title(p.getTitle()).description(p.getDescription()).price(p.getPrice())
+                .address(p.getAddress()).maxOccupants(p.getMaxOccupants()).imageUrl(p.getImageUrl())
+                .status(p.getStatus().name()).createdAt(p.getCreatedAt()).publiclyVisible(visible).build();
+    }
 }

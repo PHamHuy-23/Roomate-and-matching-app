@@ -6,6 +6,7 @@ import com.roommate.hub.service.RoomPostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,12 +29,13 @@ public class RoomPostController {
     }
 
     @PostMapping
-    public ResponseEntity<RoomPostResponseDTO> createPost(@Valid @RequestBody CreateRoomPostDTO dto) {
+    public ResponseEntity<RoomPostResponseDTO> createPost(
+            @Validated(CreateRoomPostDTO.OnCreate.class) @RequestBody CreateRoomPostDTO dto) {
         return ResponseEntity.ok(roomPostService.createPost(dto));
     }
 
     @PutMapping("/{postId}")
-    public ResponseEntity<RoomPostResponseDTO> updatePost(@PathVariable Long postId, @RequestBody CreateRoomPostDTO dto) {
+    public ResponseEntity<RoomPostResponseDTO> updatePost(@PathVariable Long postId, @Valid @RequestBody CreateRoomPostDTO dto) {
         return ResponseEntity.ok(roomPostService.updatePost(postId, dto));
     }
 

@@ -5,6 +5,7 @@ import com.roommate.hub.dto.MatchRecommendationDTO;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.entity.UserPreference;
 import com.roommate.hub.repository.UserPreferenceRepository;
+import com.roommate.hub.util.DistrictNames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,11 +30,10 @@ public class MatchingService {
         }
         UserPreference myPref = myPrefOpt.get();
 
-        // 1. LỌC CỨNG (SQL): Cùng giới tính & cùng quận
-        List<UserPreference> candidates = preferenceRepository.findCandidates(
+        // Filter district aliases after loading so legacy rows need no destructive migration.
+        List<UserPreference> candidates = preferenceRepository.findCandidatesByGender(
                 currentUser.getId(),
-                myPref.getTargetGender() == null ? currentUser.getGender() : myPref.getTargetGender(),
-                myPref.getTargetDistrict()
+                myPref.getTargetGender() == null ? currentUser.getGender() : myPref.getTargetGender()
         );
 
         // Lọc bỏ những người dùng bị chặn hoặc đã chặn người dùng hiện tại
@@ -47,6 +47,7 @@ public class MatchingService {
 
         // 2. TÍNH TOÁN % TỔNG THỂ & CHI TIẾT TỪNG TIÊU CHÍ (QĐ 1)
         return candidates.stream()
+                .filter(candidate -> DistrictNames.same(myPref.getTargetDistrict(), candidate.getTargetDistrict()))
                 .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getUser().getStatus()) && candidate.getUser().isSearchActive())
                 .filter(candidate -> candidate.getTargetGender() == null || "ANY".equals(candidate.getTargetGender()) || currentUser.getGender().equals(candidate.getTargetGender()))
                 .filter(candidate -> !"SMOKING".equals(myPref.getTopPriority()) || !Boolean.TRUE.equals(candidate.getIsSmoking()))
@@ -70,7 +71,7 @@ public class MatchingService {
                             .avatarUrl(candidate.getUser().getAvatarUrl())
                             .age(calculateAge(candidate.getUser().getBirthDate()))
                             .university(candidate.getUser().getUniversity())
-                            .targetDistrict(candidate.getTargetDistrict())
+                            .targetDistrict(DistrictNames.canonical(candidate.getTargetDistrict()))
                             .budgetAmount(candidate.getBudgetAmount())
                             .bioDescription(candidate.getBioDescription())
                             .totalScore(roundedTotal)

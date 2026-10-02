@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,6 +48,11 @@ public class ApiExceptionHandler {
         log.error("Internal server error: ", ex);
         String msg = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : "Đã xảy ra lỗi máy chủ";
         return response(HttpStatus.INTERNAL_SERVER_ERROR, msg); 
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<Map<String, Object>> unreadable(HttpMessageNotReadableException ex) {
+        return response(HttpStatus.BAD_REQUEST, "Dữ liệu JSON hoặc định dạng ngày không hợp lệ");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
