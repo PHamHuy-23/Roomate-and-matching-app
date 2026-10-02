@@ -404,8 +404,21 @@ Validation của endpoint hiện tại `PUT /api/v1/profile/preferences/{userId}
 - Ngân sách phải hữu hạn; `budgetAmount >= 500000`. `budgetMin` và `budgetMax` cùng có hoặc cùng bỏ trống (tương thích dữ liệu cũ), với `0 <= budgetMin <= budgetMax` và `budgetMax >= 500000`.
 - `sleepHabit` trong `1..3`, `cleanlinessLevel` trong `1..5`, khu vực không trống và tối đa 100 ký tự. Vi phạm trả `400`, không ghi đè tiêu chí đang lưu.
 - Flutter giữ nguyên khoảng ngân sách hợp lệ đã lưu kể cả ngoài khoảng hiển thị mặc định 1–15 triệu. Nếu tải tiêu chí thất bại hoặc khoảng lưu sai cấu trúc, hiển thị lỗi và cho thử lại; không dùng mặc định để ghi đè dữ liệu cũ.
+- Chuẩn hóa khu vực theo danh mục hiện có của ứng dụng: ví dụ `Thu Duc`, `Thủ Đức`, `TP. Thủ Đức`, `Thành phố Thủ Đức`, `Thủ Đức, TP.HCM` cùng khóa `Thu Duc`; bỏ khác biệt hoa/thường, dấu và khoảng trắng khi nhận diện tên. Tên ngoài danh mục được giữ nguyên (chỉ cắt/gộp khoảng trắng), không thay bằng Bình Thạnh. Đây là quy tắc tương thích tên cũ, không phải tra cứu địa giới/tọa độ.
+- `PUT /profile/preferences/{userId}`, tạo/sửa tin phòng lưu khóa chuẩn cho khu vực nhận diện được. Response tiêu chí, hồ sơ công khai, gợi ý và tin phòng cũng trả khóa chuẩn cho dữ liệu cũ mà không ghi lại bản ghi khi đọc. Matching vẫn lọc cứng cùng khu vực, nhưng so sánh khóa chuẩn sau khi lấy ứng viên theo giới tính để nhận diện các bản ghi cũ; không thay đổi quy tắc khóa tài khoản, ngừng tìm bạn, chặn hoặc giới tính hai chiều. Với dữ liệu lớn, cần tối ưu truy vấn bằng khóa khu vực được lập chỉ mục; hiện không thêm cột/migration.
+- Flutter dùng chung danh mục cho khảo sát, hồ sơ và bộ lọc. Gợi ý có nhiều cách viết của cùng khu vực chỉ tạo một lựa chọn; tìm kiếm nhận tên có/không dấu. Bộ lọc phòng ưu tiên trường `district`, chỉ tìm tên có ranh giới từ trong địa chỉ nếu trường này trống; Quận 1 không khớp Quận 10/11/12. Khảo sát giữ và cho lưu tên cũ ngoài danh mục. Không cần chạy SQL cho nhóm sửa khu vực này.
 - Khi tạo/cập nhật tin phòng: `maxOccupants >= 1`, `0 <= currentOccupants <= maxOccupants`. Cập nhật một phần kiểm tra cả giá trị đang lưu: không giảm sức chứa xuống thấp hơn số người hiện tại. Vi phạm trả `400` trước khi thay đổi nội dung/trạng thái tin.
 - Không có thay đổi schema SQL cho các kiểm tra này; dữ liệu cũ không được tự động sửa.
+
+Các trường bổ sung của khảo sát (nhóm 6), tại GET/PUT `/api/v1/profile/preferences/{userId}`:
+
+- `moveInDate`: ngày chuyển vào, ISO date `yyyy-MM-dd` (không có giờ/múi giờ). Ngày lưu trong quá khứ vẫn được đọc/giữ nguyên; khi chọn ngày mới, Flutter mở lịch từ ngày hiện tại, không dùng ngày cứng `01/10/2026`.
+- `roomType`: `PRIVATE` (phòng riêng), `SHARED` (ở ghép).
+- `workSchedule`: `DAY`, `NIGHT` (lịch học/làm việc).
+- `personalValue`: `PRIVACY`, `SCHEDULE`, `CLEAN` (điều trân trọng), tách biệt với trọng số ghép đôi `topPriority`.
+- Bốn trường tùy chọn: bản ghi cũ để `NULL` và UI hiển thị chưa chọn, không tự suy đoán lựa chọn. PUT bỏ trường hoặc gửi `null` giữ giá trị đã lưu; chuỗi trống/enum không hợp lệ/ngày không hợp lệ trả `400`, không ghi đè dữ liệu. Response PUT trả giá trị thực tế sau lưu, kể cả giá trị giữ lại từ client cũ. Quyền chủ tài khoản/admin giữ nguyên.
+- Flutter gửi các lựa chọn, khôi phục khi mở lại và đưa vào bước tổng kết. Lỗi đọc chặn lưu thay vì ghi đè mặc định; lỗi lưu giữ bản nháp. Chỉ báo thành công khi response xác nhận đầy đủ các trường mới đã gửi. Chưa bổ sung bốn trường vào công thức/chế độ lọc Matching, không hứa tăng độ tương thích từ những trường này.
+- Database cũ chạy migration PostgreSQL `database/migrations/20261002_survey_preferences.sql` trước khi khởi động backend mới. Không chạy lại `01_schema.sql`/`02_seed_data.sql`; không có thay đổi seed hay tự sửa dữ liệu cũ.
 
 ### 4.2. GET `/matching/recommendations`
 
@@ -560,11 +573,16 @@ Server tự tính lại `matchScore`; không tin điểm do client gửi. Respon
   "price": 1800000,
   "address": "Linh Trung, TP. Thủ Đức",
   "maxOccupants": 2,
-  "imageUrls": []
+  "imageObjectKey": null
 }
 ```
 
 Trạng thái: `PENDING`, `APPROVED`, `REJECTED`, `AVAILABLE`, `CLOSED`.
+
+- `POST /posts` yêu cầu tiêu đề, mô tả, địa chỉ, giá và sức chứa. `PUT /posts/{id}` vẫn cho cập nhật riêng từng trường: trường bỏ qua hoặc `null` giữ nguyên dữ liệu cũ, nhưng giá trị có cung cấp phải hợp lệ.
+- Giá phải hữu hạn và từ 100.000 VNĐ; tiền cọc, tổng điện nước/phí dịch vụ và diện tích phải hữu hạn, không âm. Tiêu đề/địa chỉ/mô tả không được trống khi cung cấp; giới hạn tiêu đề 200, địa chỉ 255, khu vực 100, tiện ích 500 ký tự. Khu vực có thể bỏ qua nhưng không được là chuỗi trống khi cung cấp. Sai dữ liệu trả `400` trước khi đổi nội dung hoặc chuyển tin về `PENDING`.
+- API hiện lưu/trả một ảnh phòng (`imageObjectKey` khi tải lên, `imageUrl` khi đọc), chưa hỗ trợ bộ ảnh theo phòng khách/phòng ngủ/bếp. Flutter chỉ hiển thị ảnh này, không giả lập bốn ảnh. Chưa có ảnh thì vô hiệu hóa nút xem ảnh; các đường dẫn ảnh cũ vẫn mở cùng ảnh thực tế.
+- Tiện ích, tiền cọc và tổng chi phí hiển thị từ dữ liệu thực tế; dữ liệu thiếu ghi “Chưa cập nhật”. Không tự gán nội thất, cọc một tháng, đơn giá điện/nước, nội quy hoặc mô tả phòng mẫu. Nhóm sửa này không đổi schema và không cần chạy thêm SQL.
 
 ### 5.3. Viewing Appointment
 
@@ -577,6 +595,12 @@ Trạng thái: `PENDING`, `APPROVED`, `REJECTED`, `AVAILABLE`, `CLOSED`.
 ```
 
 Trạng thái: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`. Server lấy `requesterId` từ JWT và xác định `hostId` từ bài đăng.
+
+- Endpoint đang triển khai: `POST /appointments`, `GET /appointments/my`, `PUT /appointments/{id}/status?status=CANCELLED` (hoặc `CONFIRMED`/`COMPLETED` cho chủ phòng). `/my` trả lịch mà tài khoản hiện tại là người đặt **hoặc** chủ phòng; Flutter lọc `requesterId` khi hiển thị lịch đã đặt.
+- Cá nhân → **Lịch xem phòng** mở `/viewing-appointments`, không mở màn lời mời ghép đôi. Danh sách, chi tiết và xác nhận đặt lịch dùng ID, ngày giờ, phòng, người đăng, ghi chú và trạng thái API thật; không có lịch mẫu hay số lượng lịch tự gán. Các mục Sắp tới/Lịch sử/Đã hủy được phân loại theo thời gian và trạng thái thực tế; có tải lại, lỗi và thử lại.
+- Người đặt chỉ hủy lịch `PENDING`/`CONFIRMED`; không tự xác nhận hoặc hoàn tất. Hủy chỉ cập nhật UI sau response `CANCELLED` đúng lịch/tài khoản; thất bại giữ lịch để thử lại, khóa thao tác khi đang gửi. Không có ô lý do hủy vì API hiện chưa lưu trường này, và không khẳng định gửi push notification khi chưa có hỗ trợ.
+- Thông báo lịch dùng metadata vai trò/ID thay vì đoán theo tiêu đề: người đặt mở chi tiết lịch đúng ID; chủ phòng mở yêu cầu tại đúng tin đăng. Chi tiết kiểm tra lịch thuộc người đặt; mở phòng lấy dữ liệu tin hiện tại, tin không còn hiển thị báo lỗi thay vì dựng dữ liệu giả. Nút nhắn người đăng chỉ xuất hiện với lịch đã xác nhận; backend vẫn kiểm tra quyền chat.
+- Nhóm sửa này nối giao diện vào API và schema hiện có; không cần migration SQL.
 
 ### 5.4. Report
 
@@ -608,6 +632,8 @@ Hành vi khóa tài khoản (`ACTIVE` → `LOCKED`) trên các endpoint hiện h
 - Tự khóa tài khoản đang đăng nhập trả `403` và không đổi trạng thái.
 - Tin `APPROVED`/`AVAILABLE` của tài khoản bị khóa bị ẩn khỏi danh sách công khai; xem chi tiết và lưu tin mới trả `404`. Admin vẫn xem được tin để kiểm duyệt.
 - Tạo lịch hẹn mới với chủ phòng bị khóa trả `403`. Lịch hẹn cũ không bị xóa hay tự đổi trạng thái; người đặt vẫn xem và hủy lịch hẹn theo quyền hiện hành.
+- `POST /chat/messages` trả `403` nếu người nhận không `ACTIVE`, kể cả khi đã kết nối hoặc có lịch hẹn `CONFIRMED`. Không lưu tin nhắn bị từ chối. Mở khóa cho phép gửi lại nếu quan hệ kết nối/lịch hẹn và điều kiện chặn vẫn hợp lệ; lịch sử chat, kết nối và lịch hẹn cũ được giữ nguyên.
+- `GET /admin/posts` và response kiểm duyệt tin có trường boolean `publiclyVisible`: chỉ `true` khi chủ tin `ACTIVE` và tin `APPROVED`/`AVAILABLE`, cùng điều kiện với danh sách công khai. Admin vẫn nhận tất cả tin để kiểm duyệt, nhưng dashboard chỉ đếm `publiclyVisible == true` cho “Tin đang hiển thị”; số tin chờ duyệt không bị lọc theo trạng thái chủ tin. Cần cập nhật cả backend và Flutter để dùng trường mới.
 - Mở khóa hiển thị lại tin đã duyệt/đang mở. Không tự duyệt tin `PENDING` hoặc mở lại tin `CLOSED`, và không xóa dấu lưu tin cũ. Người dùng vẫn có thể bỏ lưu tin đã bị ẩn.
 - Đây là thay đổi kiểm tra quyền/khả năng hiển thị ở backend; không cần thay đổi schema hoặc chạy thêm SQL.
 
@@ -618,6 +644,14 @@ Hành vi khóa tài khoản (`ACTIVE` → `LOCKED`) trên các endpoint hiện h
 Frontend giữ các trường này khi chuyển từ danh sách sang chi tiết admin. Thông tin liên hệ trống/chuỗi trắng hiển thị “Chưa cập nhật”, không thay bằng số điện thoại/email mẫu. Trang admin không khẳng định email đã xác minh khi API chưa cung cấp trạng thái xác minh.
 
 Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên hệ, ngày sinh hoặc ngày tạo tài khoản. `createdAt` đã có trong bảng `users`, nên nhóm sửa này không yêu cầu migration SQL.
+
+#### Chỉnh sửa hồ sơ cá nhân — giới thiệu và ngày sinh
+
+- Endpoint đang triển khai: `PUT /profile/user/{userId}`, query parameters `fullName`, `phone`, `gender`, và các trường tùy chọn `birthDate` (ISO date), `university`, `bioNote`. Chỉ chủ tài khoản hoặc admin có quyền cập nhật; response thành công là `UserResponseDTO`.
+- Không truyền `birthDate` thì giữ nguyên ngày sinh hiện có, kể cả `null`. Flutter không tự gán ngày sinh mẫu khi chỉ sửa tên/trường học/giới thiệu.
+- `bioNote` là phần giới thiệu tự do trong `user_preferences.bio_description`, không phải toàn bộ nội dung khảo sát. Không truyền thì giữ nguyên; chuỗi trống xóa riêng phần giới thiệu, giữ nguyên dòng metadata khảo sát và tất cả cột tiêu chí. Thông tin tài khoản và giới thiệu được lưu trong cùng transaction sau khi kiểm tra đầu vào.
+- Chưa có tiêu chí: vẫn sửa thông tin tài khoản được, nhưng cần hoàn thành khảo sát trước khi thêm giới thiệu; backend trả `400` nếu gửi giới thiệu không trống, không tự tạo tiêu chí giả. Lỗi tải giới thiệu chặn nút lưu và cho thử lại; lỗi lưu giữ bản nháp. Sau khi lưu, màn hồ sơ cập nhật thông tin và tải lại tiêu chí.
+- Dùng cấu trúc database hiện có, không thêm migration SQL cho nhóm sửa này.
 
 ### 5.7. Trạng thái tải kết nối và lịch sử chat
 
