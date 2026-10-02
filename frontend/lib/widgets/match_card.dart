@@ -58,9 +58,9 @@ class MatchCard extends StatelessWidget {
 
   String get _universityText {
     if (item.university?.trim().isNotEmpty == true) {
-      return '${item.university!.trim()} • ${item.targetDistrict}';
+      return '${item.university!.trim()} • ${item.districtDisplay}';
     }
-    return item.targetDistrict;
+    return item.districtDisplay;
   }
 
   @override

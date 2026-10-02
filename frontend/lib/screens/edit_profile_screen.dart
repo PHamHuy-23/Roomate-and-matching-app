@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/auth_user.dart';
+import '../models/user_preference.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../state/auth_session.dart';
@@ -23,20 +24,51 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final ApiService _api;
-  
+
   late TextEditingController _nameCtrl;
   late TextEditingController _universityCtrl;
-  late TextEditingController _bioCtrl; // Not in old Profile but in Penpot
-  
+  late TextEditingController _bioCtrl;
+
   bool _isUpdating = false;
+  bool _isLoadingBio = true;
+  bool _hasPreferences = false;
+  String? _bioLoadError;
 
   @override
   void initState() {
     super.initState();
     _api = widget.apiService ?? ApiService();
     _nameCtrl = TextEditingController(text: widget.currentUser.fullName);
-    _universityCtrl = TextEditingController(text: widget.currentUser.university ?? '');
-    _bioCtrl = TextEditingController(text: ''); // Should be loaded from currentUser if available
+    _universityCtrl = TextEditingController(
+      text: widget.currentUser.university ?? '',
+    );
+    _bioCtrl = TextEditingController();
+    _loadBio();
+  }
+
+  Future<void> _loadBio() async {
+    setState(() {
+      _isLoadingBio = true;
+      _bioLoadError = null;
+    });
+    try {
+      final data = await _api.getPreferences(widget.currentUser.userId);
+      if (!mounted) return;
+      setState(() {
+        _hasPreferences = data != null;
+        _bioCtrl.text = data == null
+            ? ''
+            : UserPreference.fromJson(data).bioNote ?? '';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _bioLoadError =
+            'Không thể tải giới thiệu. Vui lòng thử lại trước khi lưu.',
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingBio = false);
+    }
   }
 
   @override
@@ -48,37 +80,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_isUpdating || _isLoadingBio || _bioLoadError != null) return;
     final newName = _nameCtrl.text.trim();
     if (newName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập họ và tên')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng nhập họ và tên')));
       return;
     }
 
     setState(() => _isUpdating = true);
-    
-    // We update using the existing API if possible. The old profile screen used updateProfile 
-    // with phone, gender, birthDate etc. For now we use the ones we have in the UI, 
-    // keeping old values for the missing fields, since Penpot design for this screen only has Name, University, Bio.
+
+    final university = _universityCtrl.text.trim();
+    // A missing, unchanged university is omitted rather than sent as an invalid empty string.
+    final universityUpdate =
+        university.isEmpty && widget.currentUser.university == null
+        ? null
+        : university;
     try {
       final ok = await _api.updateProfile(
         widget.currentUser.userId,
         newName,
         widget.currentUser.phone ?? '',
         widget.currentUser.gender,
-        widget.currentUser.birthDate ?? DateTime(2000), // fallback if null
-        _universityCtrl.text.trim(),
+        widget.currentUser.birthDate,
+        universityUpdate,
+        bioNote: _hasPreferences ? _bioCtrl.text.trim() : null,
       );
+
+      if (!ok) throw ApiException('Không thể cập nhật hồ sơ');
 
       if (mounted && ok) {
         final updatedUser = widget.currentUser.copyWith(
           fullName: newName,
-          university: _universityCtrl.text.trim(),
+          university: universityUpdate ?? widget.currentUser.university,
         );
 
         context.read<AuthSession>().updateUser(updatedUser);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Đã lưu thay đổi'),
@@ -86,13 +125,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, updatedUser);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cập nhật thất bại'),
+            content: Text(e is ApiException ? e.message : 'Cập nhật thất bại'),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
           ),
@@ -109,6 +148,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required String label,
     required TextEditingController controller,
     int maxLines = 1,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,6 +169,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
+            key: ValueKey(label),
+            enabled: enabled && !_isUpdating,
             controller: controller,
             maxLines: maxLines,
             style: const TextStyle(
@@ -142,7 +184,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
+              ),
               isDense: true,
             ),
           ),
@@ -155,7 +200,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = widget.currentUser.avatarUrl;
-    final hasValidAvatar = avatarUrl != null &&
+    final hasValidAvatar =
+        avatarUrl != null &&
         (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'));
 
     return Scaffold(
@@ -212,18 +258,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.avatarPicker);
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.avatarPicker,
+                              );
                             },
                             child: Column(
                               children: [
                                 CircleAvatar(
                                   radius: 41,
                                   backgroundColor: Colors.grey.shade300,
-                                  backgroundImage: hasValidAvatar ? NetworkImage(avatarUrl) : null,
+                                  backgroundImage: hasValidAvatar
+                                      ? NetworkImage(avatarUrl)
+                                      : null,
                                   child: !hasValidAvatar
                                       ? Text(
                                           widget.currentUser.fullName.isNotEmpty
-                                              ? widget.currentUser.fullName[0].toUpperCase()
+                                              ? widget.currentUser.fullName[0]
+                                                    .toUpperCase()
                                               : 'U',
                                           style: const TextStyle(
                                             fontSize: 32,
@@ -252,10 +304,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 32),
 
                     // Fields
-                    _buildTextField(
-                      label: 'Họ và tên',
-                      controller: _nameCtrl,
-                    ),
+                    _buildTextField(label: 'Họ và tên', controller: _nameCtrl),
                     _buildTextField(
                       label: 'Trường học / nghề nghiệp',
                       controller: _universityCtrl,
@@ -264,10 +313,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       label: 'Giới thiệu bản thân',
                       controller: _bioCtrl,
                       maxLines: 3,
+                      enabled:
+                          !_isLoadingBio &&
+                          _bioLoadError == null &&
+                          _hasPreferences,
                     ),
+                    if (_isLoadingBio)
+                      const Text('Đang tải giới thiệu...')
+                    else if (_bioLoadError != null) ...[
+                      Text(_bioLoadError!),
+                      TextButton(
+                        onPressed: _loadBio,
+                        child: const Text('Thử lại'),
+                      ),
+                    ] else if (!_hasPreferences)
+                      const Text(
+                        'Hãy thiết lập tiêu chí ghép trọ trước khi thêm giới thiệu.',
+                      ),
 
                     const SizedBox(height: 16),
-                    
+
                     // Email Verification Status
                     Align(
                       alignment: Alignment.centerLeft,
@@ -280,7 +345,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -294,7 +359,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isUpdating ? null : _handleSave,
+                  onPressed:
+                      _isUpdating || _isLoadingBio || _bioLoadError != null
+                      ? null
+                      : _handleSave,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF087e6b),
                     foregroundColor: Colors.white,
@@ -307,7 +375,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
                           'Lưu thay đổi',

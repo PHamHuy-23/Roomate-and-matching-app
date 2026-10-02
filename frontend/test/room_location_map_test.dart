@@ -18,6 +18,39 @@ RoomPost _createPost({required String address, required String district}) =>
     );
 
 void main() {
+  testWidgets('Canonical and legacy district names keep the same area center', (
+    tester,
+  ) async {
+    for (final district in ['Thu Duc', 'Thủ Đức', 'TP. Thủ Đức, TP.HCM']) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RoomLocationMap(
+              key: ValueKey(district),
+              post: _createPost(address: 'Test address', district: district),
+              height: 300,
+            ),
+          ),
+        ),
+      );
+      final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+      expect(map.options.initialCenter.latitude, 10.8504);
+      expect(map.options.initialCenter.longitude, 106.7719);
+    }
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RoomLocationMap(
+            key: const ValueKey('Quan10'),
+            post: _createPost(address: 'Quận 10', district: 'Quan 10'),
+            height: 300,
+          ),
+        ),
+      ),
+    );
+    final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+    expect(map.options.initialCenter.latitude, isNot(10.7769));
+  });
   testWidgets(
     'RoomLocationMap hiển thị bản đồ tương tác OpenStreetMap và các nút điều khiển',
     (WidgetTester tester) async {

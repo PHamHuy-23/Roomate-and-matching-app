@@ -134,12 +134,14 @@ class NotificationsScreen extends StatefulWidget {
     this.onItemTap,
     this.loadRealData = true,
     this.currentUserId,
+    this.apiService,
   });
 
   final List<PenpotNotificationItem>? items;
   final ValueChanged<PenpotNotificationItem>? onItemTap;
   final bool loadRealData;
   final int? currentUserId;
+  final ApiService? apiService;
 
   static const _defaultItems = <PenpotNotificationItem>[
     PenpotNotificationItem(
@@ -159,6 +161,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  ApiService get _api => widget.apiService ?? ApiService();
   late List<PenpotNotificationItem> _items;
   String? _loadError;
 
@@ -166,9 +169,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     final shouldLoad =
-        widget.items == null &&
-        widget.loadRealData &&
-        ApiService().hasAuthToken;
+        widget.items == null && widget.loadRealData && _api.hasAuthToken;
     _items = shouldLoad
         ? []
         : widget.items ?? NotificationsScreen._defaultItems;
@@ -180,7 +181,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _loadRealNotifications() async {
     try {
       final realItems = <PenpotNotificationItem>[];
-      final appointments = await ApiService().getMyAppointments();
+      final appointments = await _api.getMyAppointments();
       for (final apt in appointments) {
         realItems.add(
           PenpotNotificationItem(
@@ -188,12 +189,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             description:
                 '${apt.status} · ${apt.appointmentTime.day}/${apt.appointmentTime.month}/${apt.appointmentTime.year} ${apt.appointmentTime.hour}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}',
             icon: Icons.calendar_today_outlined,
+            destination: apt.requesterId == widget.currentUserId
+                ? NotificationDestination.requesterAppointments
+                : NotificationDestination.hostAppointments,
+            appointmentId: apt.id,
+            roomPostId: apt.roomPostId,
           ),
         );
       }
       final userId = widget.currentUserId;
       if (userId != null) {
-        final received = await ApiService().getReceivedRequests(userId);
+        final received = await _api.getReceivedRequests(userId);
         for (final request in received) {
           realItems.add(
             PenpotNotificationItem(
@@ -201,6 +207,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               description:
                   '${request.status} · ${request.matchScore.round()}% phù hợp',
               icon: Icons.person_add_alt_1_outlined,
+              destination: NotificationDestination.requests,
             ),
           );
         }
@@ -316,16 +323,28 @@ class _NotificationCard extends StatelessWidget {
   }
 }
 
+enum NotificationDestination {
+  requests,
+  requesterAppointments,
+  hostAppointments,
+}
+
 class PenpotNotificationItem {
   const PenpotNotificationItem({
     required this.title,
     required this.description,
     required this.icon,
+    this.destination,
+    this.appointmentId,
+    this.roomPostId,
   });
 
   final String title;
   final String description;
   final IconData icon;
+  final NotificationDestination? destination;
+  final int? appointmentId;
+  final int? roomPostId;
 }
 
 class PenpotStateScreen extends StatelessWidget {

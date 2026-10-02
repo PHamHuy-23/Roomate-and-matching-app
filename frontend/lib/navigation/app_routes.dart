@@ -8,6 +8,7 @@ import '../screens/listing_management_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/room_flow_screen.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/penpot_state_screens.dart';
 import '../screens/blocked_users_screen.dart' as live_blocks;
@@ -55,6 +56,7 @@ class AppRoutes {
   static const editProfile = '/edit-profile';
   static const avatarPicker = '/avatar-picker';
   static const requests = '/requests';
+  static const viewingAppointments = '/viewing-appointments';
   static const survey = '/survey';
   static const createPost = '/create-post';
   static const listingManagement = '/listing-management';
@@ -178,6 +180,19 @@ class AppRoutes {
             return HomeScreen(currentUser: user, initialTab: initialTab);
           case profile:
             return ProfileScreen(currentUser: user);
+          case viewingAppointments:
+            final arguments = routeSettings.arguments;
+            final appointmentId =
+                arguments is Map && arguments['appointmentId'] is int
+                ? arguments['appointmentId'] as int
+                : null;
+            return RoomFlowScreen(
+              mode: appointmentId == null
+                  ? RoomFlowMode.viewingSchedule
+                  : RoomFlowMode.appointmentDetails,
+              currentUserId: user.userId,
+              appointmentId: appointmentId,
+            );
           case editProfile:
             return EditProfileScreen(currentUser: user);
           case avatarPicker:
@@ -307,13 +322,7 @@ class AppRoutes {
           case notifications:
             return NotificationsScreen(
               currentUserId: user.userId,
-              onItemTap: (item) {
-                if (item.title.contains('lời mời')) {
-                  Navigator.pushNamed(context, requests);
-                } else if (item.title.contains('Lịch xem phòng')) {
-                  Navigator.pushNamed(context, listingManagement);
-                }
-              },
+              onItemTap: (item) => openNotification(context, item),
             );
           case privacy:
             return const PrivacyScreen();
@@ -413,9 +422,16 @@ class AppRoutes {
           case createPost:
             return CreatePostScreen(authorId: user.userId);
           case listingManagement:
+            final arguments = routeSettings.arguments;
+            final postId = arguments is Map && arguments['roomPostId'] is int
+                ? arguments['roomPostId'] as int
+                : null;
             return ListingManagementScreen(
-              mode: ListingFlowMode.myListings,
+              mode: postId == null
+                  ? ListingFlowMode.myListings
+                  : ListingFlowMode.viewingRequest,
               authorId: user.userId,
+              initialPostId: postId,
             );
           case admin:
             if ({
@@ -434,5 +450,29 @@ class AppRoutes {
         }
       },
     );
+  }
+
+  static void openNotification(
+    BuildContext context,
+    PenpotNotificationItem item,
+  ) {
+    switch (item.destination) {
+      case NotificationDestination.requests:
+        Navigator.pushNamed(context, requests);
+      case NotificationDestination.requesterAppointments:
+        Navigator.pushNamed(
+          context,
+          viewingAppointments,
+          arguments: {'appointmentId': item.appointmentId},
+        );
+      case NotificationDestination.hostAppointments:
+        Navigator.pushNamed(
+          context,
+          listingManagement,
+          arguments: {'roomPostId': item.roomPostId},
+        );
+      case null:
+        break;
+    }
   }
 }

@@ -9,11 +9,7 @@ class ProfileScreen extends StatefulWidget {
   final AuthUser currentUser;
   final ApiService? apiService;
 
-  const ProfileScreen({
-    super.key,
-    required this.currentUser,
-    this.apiService,
-  });
+  const ProfileScreen({super.key, required this.currentUser, this.apiService});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -22,7 +18,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ApiService _api;
   late AuthUser _currentUser;
-  
+
   UserPreference? _preference;
   bool _isLoadingPreferences = true;
 
@@ -59,17 +55,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _getPreferenceSummary() {
     if (_isLoadingPreferences) return 'Đang tải...';
     if (_preference == null) return 'Chưa thiết lập tiêu chí ghép trọ';
-    
+
     // Example: "2–4 triệu · Bình Thạnh · Không hút thuốc"
     final budget = _preference!.budgetDisplay;
     final district = _preference!.districtDisplay;
     final smoke = _preference!.isSmoking ? 'Có hút thuốc' : 'Không hút thuốc';
-    
+
     return '$budget · $district · $smoke';
   }
 
-  void _navigateToEditProfile() {
-    Navigator.pushNamed(context, AppRoutes.editProfile);
+  Future<void> _navigateToEditProfile() async {
+    final updatedUser = await Navigator.pushNamed(
+      context,
+      AppRoutes.editProfile,
+    );
+    if (!mounted || updatedUser is! AuthUser) return;
+    setState(() => _currentUser = updatedUser);
+    await _loadPreferences();
   }
 
   void _navigateToCriteria() {
@@ -78,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToAppointments() {
-    Navigator.pushNamed(context, AppRoutes.requests);
+    Navigator.pushNamed(context, AppRoutes.viewingAppointments);
   }
 
   void _navigateToMyPosts() {
@@ -140,10 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey.shade400,
-                ),
+                Icon(Icons.chevron_right, color: Colors.grey.shade400),
               ],
             ),
           ),
@@ -155,7 +154,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = _currentUser.avatarUrl;
-    final hasValidAvatar = avatarUrl != null &&
+    final hasValidAvatar =
+        avatarUrl != null &&
         (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'));
 
     return Scaffold(
@@ -164,7 +164,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: RefreshIndicator(
           onRefresh: _loadPreferences,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             children: [
               // Header
               const Text(
@@ -194,7 +197,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: hasValidAvatar ? NetworkImage(avatarUrl) : null,
+                    backgroundImage: hasValidAvatar
+                        ? NetworkImage(avatarUrl)
+                        : null,
                     child: !hasValidAvatar
                         ? Text(
                             _currentUser.fullName.isNotEmpty
@@ -247,7 +252,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEAF8F5), // Surface from Penpot
                       borderRadius: BorderRadius.circular(15),
@@ -266,7 +274,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _navigateToEditProfile,
                     borderRadius: BorderRadius.circular(15),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEAF8F5),
                         borderRadius: BorderRadius.circular(15),
@@ -294,7 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               _buildMenuCard(
                 title: 'Lịch xem phòng',
-                subtitle: '1 lịch đang chờ xác nhận', // Hardcoded for now based on Penpot
+                subtitle: 'Theo dõi lịch bạn đã đặt',
                 onTap: _navigateToAppointments,
               ),
               _buildMenuCard(
@@ -312,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'Tài khoản, bảo mật và hỗ trợ',
                 onTap: _navigateToSettings,
               ),
-              
+
               const SizedBox(height: 32),
             ],
           ),

@@ -4,6 +4,7 @@ import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/match_request_item.dart';
 import '../models/room_post.dart';
+import '../models/district_names.dart';
 import '../navigation/app_routes.dart';
 import 'candidate_profile_screen.dart';
 import 'room_details_screen.dart';
@@ -105,20 +106,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _applyPostFilters() {
+    final query = DistrictNames.fold(_searchKeyword);
     _filteredPosts = _allPosts.where((p) {
       final matchAddress =
-          p.address.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
-          p.title.toLowerCase().contains(_searchKeyword.toLowerCase());
+          DistrictNames.fold(p.address).contains(query) ||
+          DistrictNames.fold(p.title).contains(query) ||
+          DistrictNames.fold(
+            DistrictNames.display(p.district),
+          ).contains(query) ||
+          DistrictNames.fold(
+            DistrictNames.canonical(p.district),
+          ).contains(query);
       final matchPrice =
           p.price >= _minPriceFilter && p.price <= _maxPriceFilter;
-      final districtKey = _roomDistrictFilter
-          .split(',')
-          .first
-          .trim()
-          .toLowerCase();
       final matchDistrict =
           _roomDistrictFilter == 'Tất cả khu vực' ||
-          '${p.address} ${p.district}'.toLowerCase().contains(districtKey);
+          DistrictNames.matchesRoom(
+            district: p.district,
+            address: p.address,
+            selected: _roomDistrictFilter,
+          );
       // Area and amenities are optional in older API payloads. An active
       // filter must not silently match a post whose value is unknown.
       final matchArea =
@@ -227,16 +234,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<MatchRecommendation> _filterMatches(List<MatchRecommendation> source) {
-    final query = _matchSearchKeyword.trim().toLowerCase();
+    final query = DistrictNames.fold(_matchSearchKeyword);
     final filtered = source.where((item) {
       final matchesSearch =
           query.isEmpty ||
-          item.fullName.toLowerCase().contains(query) ||
-          item.targetDistrict.toLowerCase().contains(query) ||
-          (item.university?.toLowerCase().contains(query) ?? false);
+          DistrictNames.fold(item.fullName).contains(query) ||
+          DistrictNames.fold(
+            DistrictNames.display(item.targetDistrict),
+          ).contains(query) ||
+          DistrictNames.fold(
+            DistrictNames.canonical(item.targetDistrict),
+          ).contains(query) ||
+          (item.university != null &&
+              DistrictNames.fold(item.university!).contains(query));
       final matchesScore = item.totalScore >= _minimumMatchScore;
       final matchesDistrict =
-          _districtFilter == 'Tất cả' || item.targetDistrict == _districtFilter;
+          _districtFilter == 'Tất cả' ||
+          DistrictNames.same(item.targetDistrict, _districtFilter);
       return matchesSearch && matchesScore && matchesDistrict;
     }).toList()..sort((a, b) => b.totalScore.compareTo(a.totalScore));
     return filtered;
@@ -264,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final allMatches = snapshot.data ?? const <MatchRecommendation>[];
         final districts =
             allMatches
-                .map((item) => item.targetDistrict)
+                .map((item) => DistrictNames.canonical(item.targetDistrict))
                 .where((district) => district.trim().isNotEmpty)
                 .toSet()
                 .toList()
@@ -1156,7 +1170,10 @@ class _DiscoveryFiltersSheetState extends State<_DiscoveryFiltersSheet> {
                   child: Text('Tất cả khu vực'),
                 ),
                 for (final district in widget.districts)
-                  DropdownMenuItem(value: district, child: Text(district)),
+                  DropdownMenuItem(
+                    value: district,
+                    child: Text(DistrictNames.display(district)),
+                  ),
               ],
               onChanged: (value) {
                 if (value != null) setState(() => _district = value);

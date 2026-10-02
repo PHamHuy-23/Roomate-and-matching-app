@@ -154,7 +154,7 @@ class _CandidateProfileScreenState extends State<CandidateProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      item.targetDistrict,
+                      item.districtDisplay,
                       style: const TextStyle(color: DiscoveryPalette.muted),
                     ),
                   ],

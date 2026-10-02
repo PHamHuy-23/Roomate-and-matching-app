@@ -57,9 +57,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               user['status']?.toString().toUpperCase() == 'LOCKED';
         }).length;
         _visiblePostCount = posts.where((post) {
-          if (post is! Map) return false;
-          final status = post['status']?.toString().toUpperCase();
-          return status == 'APPROVED' || status == 'AVAILABLE';
+          return post is Map && post['publiclyVisible'] == true;
         }).length;
         _pendingPostCount = posts.where((post) {
           if (post is! Map) return false;

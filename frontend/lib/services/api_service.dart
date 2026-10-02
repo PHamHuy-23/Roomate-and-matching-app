@@ -437,7 +437,8 @@ class ApiService {
         return null;
       }
       final data = _decodeData(response);
-      return data is Map<String, dynamic> ? data : null;
+      if (data is Map<String, dynamic>) return data;
+      throw const ApiException('Dữ liệu tiêu chí từ máy chủ không hợp lệ');
     }
     if (response.statusCode == 404) return null;
     throw _errorFrom(response, 'Không tải được tiêu chí người dùng');
@@ -449,7 +450,23 @@ class ApiService {
       '/profile/preferences/$userId',
       body: data,
     );
-    if (response.statusCode == 200) return true;
+    if (response.statusCode == 200) {
+      final stored = _decodeData(response);
+      for (final field in [
+        'moveInDate',
+        'roomType',
+        'workSchedule',
+        'personalValue',
+      ]) {
+        if (data[field] != null &&
+            (stored is! Map<String, dynamic> || stored[field] != data[field])) {
+          throw const ApiException(
+            'Máy chủ chưa xác nhận đầy đủ tiêu chí đã lưu. Vui lòng kiểm tra phiên bản backend.',
+          );
+        }
+      }
+      return true;
+    }
     throw _errorFrom(response, 'Không thể lưu tiêu chí người dùng');
   }
 
@@ -495,9 +512,10 @@ class ApiService {
     String fullName,
     String phone,
     String gender,
-    DateTime birthDate,
-    String university,
-  ) async {
+    DateTime? birthDate,
+    String? university, {
+    String? bioNote,
+  }) async {
     final response = await _request(
       'PUT',
       '/profile/user/$userId',
@@ -505,8 +523,10 @@ class ApiService {
         'fullName': fullName,
         'phone': phone,
         'gender': gender,
-        'birthDate': birthDate.toIso8601String().split('T').first,
-        'university': university,
+        if (birthDate != null)
+          'birthDate': birthDate.toIso8601String().split('T').first,
+        'university': ?university,
+        'bioNote': ?bioNote,
       },
     );
     if (response.statusCode == 200) return true;

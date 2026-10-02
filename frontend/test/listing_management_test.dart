@@ -83,6 +83,44 @@ class _MockListingApi implements ApiService {
 }
 
 void main() {
+  for (final value in ['99.999', 'NaN', 'Infinity']) {
+    testWidgets('Chỉnh sửa chặn giá không hợp lệ $value trước khi gọi API', (
+      tester,
+    ) async {
+      final api = _MockListingApi(posts: [_post()]);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ListingManagementScreen(
+            mode: ListingFlowMode.edit,
+            authorId: 4,
+            posts: api.posts,
+            apiService: api,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final price = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Giá thuê / tháng',
+      );
+      await tester.ensureVisible(price);
+      await tester.enterText(price, value);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Lưu & gửi kiểm duyệt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lưu & gửi kiểm duyệt'));
+      await tester.pumpAndSettle();
+      expect(api.updatedId, isNull);
+      expect(
+        find.textContaining(
+          value == '99.999' ? 'Giá thuê tối thiểu' : 'Chi phí phải',
+        ),
+        findsOneWidget,
+      );
+    });
+  }
   for (final occupants in [2, 3]) {
     testWidgets(
       'editing capacity 2 with $occupants occupants validates before saving',

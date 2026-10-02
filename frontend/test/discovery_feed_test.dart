@@ -78,7 +78,7 @@ void main() {
     );
 
     expect(find.text('Tuấn Minh, 22'), findsOneWidget);
-    expect(find.text('Đại học Quốc gia • Thủ Đức'), findsOneWidget);
+    expect(find.text('Đại học Quốc gia • TP. Thủ Đức'), findsOneWidget);
     expect(find.text('88% phù hợp'), findsOneWidget);
     expect(find.text('Ngân sách hợp'), findsOneWidget);
     expect(find.textContaining('Hòa đồng'), findsOneWidget);

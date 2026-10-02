@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/district_names.dart';
 
 /// Values selected on the Penpot filter screen.
 class RoomFilterSelection {
@@ -50,10 +51,15 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
   late String _district;
   late Set<String> _amenities;
 
-  static const _districts = <String>[
+  static final _districts = <String>[
     'Bình Thạnh, TP.HCM',
     'Thủ Đức, TP.HCM',
     'Quận 3, TP.HCM',
+    ...DistrictNames.labels.entries
+        .where(
+          (entry) => !{'Binh Thanh', 'Thu Duc', 'Quan 3'}.contains(entry.key),
+        )
+        .map((entry) => '${entry.value}, TP.HCM'),
     'Tất cả khu vực',
   ];
   static const _amenityOptions = <String>[

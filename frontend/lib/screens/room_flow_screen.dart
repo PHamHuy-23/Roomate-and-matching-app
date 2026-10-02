@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/district_names.dart';
 import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
+import '../models/viewing_appointment.dart';
+import '../navigation/app_routes.dart';
+import '../services/api_service.dart';
 import '../widgets/room_location_map.dart';
 import 'room_details_screen.dart';
 import 'room_viewing_screen.dart';
@@ -21,10 +25,28 @@ enum RoomFlowMode {
 }
 
 class RoomFlowScreen extends StatefulWidget {
-  const RoomFlowScreen({required this.post, required this.mode, super.key});
+  const RoomFlowScreen({
+    this.post,
+    required this.mode,
+    this.currentUserId,
+    this.appointmentId,
+    this.appointment,
+    this.apiService,
+    super.key,
+  }) : assert(
+         post != null ||
+             mode == RoomFlowMode.viewingSchedule ||
+             mode == RoomFlowMode.appointmentDetails ||
+             mode == RoomFlowMode.cancelAppointment ||
+             mode == RoomFlowMode.requestSent,
+       );
 
-  final RoomPost post;
+  final RoomPost? post;
   final RoomFlowMode mode;
+  final int? currentUserId;
+  final int? appointmentId;
+  final ViewingAppointment? appointment;
+  final ApiService? apiService;
 
   @override
   State<RoomFlowScreen> createState() => _RoomFlowScreenState();
@@ -39,15 +61,157 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
 
   late RoomFlowMode _mode;
   final List<RoomFlowMode> _history = [];
+  ApiService get _api => widget.apiService ?? ApiService();
+  List<ViewingAppointment> _appointments = [];
+  ViewingAppointment? _selectedAppointment;
+  bool _loadingAppointments = false;
+  bool _busy = false;
+  String? _appointmentError;
+  int _scheduleTab = 0;
 
   @override
   void initState() {
     super.initState();
     _mode = widget.mode;
+    final appointment = widget.appointment;
+    if (appointment != null &&
+        appointment.requesterId == widget.currentUserId) {
+      _selectedAppointment = appointment;
+    }
+    if (_isAppointmentMode(_mode) && _mode != RoomFlowMode.requestSent) {
+      _loadAppointments();
+    }
   }
 
-  RoomPost get post => widget.post;
+  RoomPost get post => widget.post!;
   RoomFlowMode get mode => _mode;
+
+  bool _isAppointmentMode(RoomFlowMode mode) => {
+    RoomFlowMode.requestSent,
+    RoomFlowMode.viewingSchedule,
+    RoomFlowMode.appointmentDetails,
+    RoomFlowMode.cancelAppointment,
+  }.contains(mode);
+
+  Future<void> _loadAppointments() async {
+    if (_loadingAppointments || _busy) return;
+    setState(() {
+      _loadingAppointments = true;
+      _appointmentError = null;
+    });
+    try {
+      final userId = widget.currentUserId;
+      if (userId == null) {
+        throw const ApiException('Không xác định được tài khoản đặt lịch.');
+      }
+      final data = await _api.getMyAppointments();
+      if (!mounted) return;
+      final owned = data.where((apt) => apt.requesterId == userId).toList();
+      final selectedId = _selectedAppointment?.id ?? widget.appointmentId;
+      setState(() {
+        _appointments = owned;
+        final selected = owned.where((apt) => apt.id == selectedId);
+        _selectedAppointment = selected.isEmpty ? null : selected.first;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _appointmentError = e is ApiException
+              ? e.message
+              : 'Không tải được lịch xem phòng.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingAppointments = false);
+    }
+  }
+
+  String _status(ViewingAppointment apt) => switch (apt.status) {
+    'PENDING' => 'Chờ xác nhận',
+    'CONFIRMED' => 'Đã xác nhận',
+    'COMPLETED' => 'Đã hoàn tất',
+    'CANCELLED' => 'Đã hủy',
+    _ => 'Trạng thái chưa xác định',
+  };
+  bool _canCancel(ViewingAppointment apt) =>
+      apt.requesterId == widget.currentUserId &&
+      {'PENDING', 'CONFIRMED'}.contains(apt.status);
+  String _time(ViewingAppointment apt) =>
+      DateFormat('dd/MM/yyyy · HH:mm').format(apt.appointmentTime);
+
+  Future<void> _cancelSelectedAppointment() async {
+    final apt = _selectedAppointment;
+    if (_busy || apt == null || !_canCancel(apt)) return;
+    setState(() => _busy = true);
+    try {
+      final updated = await _api.updateAppointmentStatus(apt.id, 'CANCELLED');
+      if (updated.id != apt.id ||
+          updated.requesterId != widget.currentUserId ||
+          updated.status != 'CANCELLED') {
+        throw const ApiException('Máy chủ chưa xác nhận hủy lịch hẹn.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _selectedAppointment = updated;
+        _appointments = _appointments
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList();
+        _mode = RoomFlowMode.appointmentDetails;
+        _history.removeWhere(
+          (item) =>
+              item == RoomFlowMode.appointmentDetails ||
+              item == RoomFlowMode.cancelAppointment,
+        );
+      });
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(const SnackBar(content: Text('Đã hủy lịch hẹn')));
+    } catch (e) {
+      if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              e is ApiException
+                  ? e.message
+                  : 'Không thể hủy lịch hẹn. Vui lòng thử lại.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openAppointmentRoom() async {
+    final apt = _selectedAppointment;
+    if (_busy || apt == null) return;
+    setState(() => _busy = true);
+    try {
+      final room = await _api.getRoomPost(apt.roomPostId);
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RoomDetailsScreen(post: room)),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is ApiException
+                  ? e.message
+                  : 'Không thể mở phòng. Tin có thể không còn hiển thị.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   bool _isPhotoMode(RoomFlowMode m) =>
       m == RoomFlowMode.roomPhotos ||
@@ -63,9 +227,11 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       _history.add(_mode);
     }
     setState(() => _mode = next);
+    if (next == RoomFlowMode.viewingSchedule) _loadAppointments();
   }
 
   void _handleBack() {
+    if (_busy) return;
     if (_history.isNotEmpty) {
       final prev = _history.removeLast();
       setState(() => _mode = prev);
@@ -81,13 +247,10 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       case RoomFlowMode.roomInfo:
         return 'Thông tin căn phòng';
       case RoomFlowMode.roomPhotos:
-        return 'Ảnh căn phòng';
       case RoomFlowMode.livingRoom:
-        return 'Phòng khách';
       case RoomFlowMode.bedroom:
-        return 'Phòng ngủ';
       case RoomFlowMode.kitchen:
-        return 'Khu bếp';
+        return 'Ảnh căn phòng';
       case RoomFlowMode.requestSent:
         return 'Đã gửi yêu cầu';
       case RoomFlowMode.viewingSchedule:
@@ -104,7 +267,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _history.isEmpty,
+      canPop: _history.isEmpty && !_busy,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _handleBack();
@@ -119,13 +282,13 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: 'Quay lại',
-            onPressed: _handleBack,
+            onPressed: _busy ? null : _handleBack,
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.close_rounded),
               tooltip: 'Đóng',
-              onPressed: () => Navigator.pop(context),
+              onPressed: _busy ? null : () => Navigator.pop(context),
             ),
           ],
         ),
@@ -154,23 +317,40 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    if (_isAppointmentMode(mode) && mode != RoomFlowMode.requestSent) {
+      if (_loadingAppointments) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_appointmentError != null) {
+        return Column(
+          children: [
+            Text(_appointmentError!),
+            TextButton(
+              onPressed: _loadAppointments,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        );
+      }
+      if (mode != RoomFlowMode.viewingSchedule &&
+          _selectedAppointment == null) {
+        return const Text('Không tìm thấy lịch hẹn của bạn.');
+      }
+    }
     switch (mode) {
       case RoomFlowMode.landing:
         return _landing(context);
       case RoomFlowMode.roomInfo:
         return _roomInfo(context);
       case RoomFlowMode.roomPhotos:
-        return _photoGallery(context, 'Ảnh căn phòng');
       case RoomFlowMode.livingRoom:
-        return _photoGallery(context, 'Không gian phòng khách');
       case RoomFlowMode.bedroom:
-        return _photoGallery(context, 'Không gian phòng ngủ');
       case RoomFlowMode.kitchen:
-        return _photoGallery(context, 'Không gian khu bếp');
+        return _photoGallery(context);
       case RoomFlowMode.requestSent:
         return _requestSent(context);
       case RoomFlowMode.viewingSchedule:
-        return _schedulePlaceholder(context);
+        return _viewingSchedule(context);
       case RoomFlowMode.appointmentDetails:
         return _appointmentDetails(context);
       case RoomFlowMode.cancelAppointment:
@@ -223,16 +403,18 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       symbol: 'đ',
       decimalDigits: 0,
     ).format(post.price);
-    final amenities = post.amenities.isEmpty
-        ? const [
-            'Điều hòa',
-            'Giường & tủ',
-            'Wi-Fi',
-            'Bếp riêng',
-            'Máy giặt',
-            'Giữ xe',
-          ]
-        : post.amenities;
+    final amenities = post.amenities
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList();
+    String cost(double? value) => value == null
+        ? 'Chưa cập nhật'
+        : NumberFormat.currency(
+            locale: 'vi_VN',
+            symbol: 'đ',
+            decimalDigits: 0,
+          ).format(value);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -257,8 +439,8 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          post.description.isEmpty
-              ? 'Phòng thoáng, cửa sổ lớn và ban công riêng.'
+          post.description.trim().isEmpty
+              ? 'Chưa cập nhật mô tả phòng.'
               : post.description,
           style: const TextStyle(color: _muted, height: 1.55),
         ),
@@ -272,11 +454,14 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: amenities.map((item) => _amenity(item)).toList(),
-        ),
+        if (amenities.isEmpty)
+          const Text('Chưa cập nhật tiện ích.', style: TextStyle(color: _muted))
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: amenities.map((item) => _amenity(item)).toList(),
+          ),
         const SizedBox(height: 22),
         const Text(
           'Chi phí minh bạch',
@@ -288,10 +473,16 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 8),
         _infoRow(Icons.payments_outlined, 'Tiền phòng', '$price / tháng'),
-        _infoRow(Icons.account_balance_wallet_outlined, 'Tiền cọc', price),
-        _infoRow(Icons.bolt_outlined, 'Điện', '3.800đ / kWh'),
-        _infoRow(Icons.water_drop_outlined, 'Nước', '100.000đ / người'),
-        _infoRow(Icons.wifi_outlined, 'Internet & giữ xe', '150.000đ / tháng'),
+        _infoRow(
+          Icons.account_balance_wallet_outlined,
+          'Tiền cọc',
+          cost(post.deposit),
+        ),
+        _infoRow(
+          Icons.bolt_outlined,
+          'Tổng điện nước / phí dịch vụ mỗi tháng',
+          cost(post.electricityWaterCost),
+        ),
         const SizedBox(height: 12),
         const Text(
           'Nội quy',
@@ -303,7 +494,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Không hút thuốc trong phòng. Giữ yên tĩnh sau 23:00. Trao đổi trước nếu có thú cưng.',
+          'Nội quy chưa được cung cấp. Vui lòng trao đổi với người đăng.',
           style: TextStyle(color: _muted, height: 1.5),
         ),
         const SizedBox(height: 22),
@@ -311,57 +502,27 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     );
   }
 
-  Widget _photoGallery(BuildContext context, String caption) {
-    final nextMode = switch (mode) {
-      RoomFlowMode.roomPhotos => RoomFlowMode.livingRoom,
-      RoomFlowMode.livingRoom => RoomFlowMode.bedroom,
-      RoomFlowMode.bedroom => RoomFlowMode.kitchen,
-      _ => RoomFlowMode.roomPhotos,
-    };
-    final meta = switch (mode) {
-      RoomFlowMode.roomPhotos => '01 / 04 • Không gian chính',
-      RoomFlowMode.livingRoom => '02 / 04 • Không gian phòng khách',
-      RoomFlowMode.bedroom => '03 / 04 • Không gian phòng ngủ',
-      RoomFlowMode.kitchen => '04 / 04 • Không gian khu bếp',
-      _ => 'Ảnh minh họa cho bản thiết kế.',
-    };
+  Widget _photoGallery(BuildContext context) {
+    final hasImage = post.imageUrl?.trim().isNotEmpty == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _photoPreview(),
         const SizedBox(height: 18),
-        Text(
-          caption,
-          style: const TextStyle(
+        const Text(
+          'Ảnh người đăng cung cấp',
+          style: TextStyle(
             color: _ink,
             fontSize: 18,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 8),
-        Text(meta, style: const TextStyle(color: _muted)),
+        Text(
+          hasImage ? '1 ảnh phòng' : 'Người đăng chưa cập nhật ảnh phòng.',
+          style: const TextStyle(color: _muted),
+        ),
         const SizedBox(height: 8),
-        const Text(
-          'Ánh sáng tự nhiên & ban công riêng',
-          style: TextStyle(color: _muted, height: 1.5),
-        ),
-        const SizedBox(height: 22),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _outlineButton(context, 'Phòng khách', RoomFlowMode.livingRoom),
-            _outlineButton(context, 'Phòng ngủ', RoomFlowMode.bedroom),
-            _outlineButton(context, 'Khu bếp', RoomFlowMode.kitchen),
-          ],
-        ),
-        const SizedBox(height: 18),
-        _outlineButton(context, 'Ảnh tiếp theo →', nextMode),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () => _changeMode(RoomFlowMode.roomPhotos),
-          child: const Text('Tất cả ảnh'),
-        ),
         const SizedBox(height: 10),
         _button(
           'Xem thông tin căn phòng',
@@ -372,6 +533,8 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _requestSent(BuildContext context) {
+    final apt = _selectedAppointment;
+    if (apt == null) return const Text('Không xác định được lịch hẹn đã gửi.');
     return Column(
       children: [
         const SizedBox(height: 30),
@@ -393,25 +556,39 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 10),
         Text(
-          'Chờ người đăng xác nhận\n'
-          '14:00 · Thứ Hai, 21/09/2026\n'
-          '${post.title}\n'
-          '${post.authorName.isEmpty ? 'Minh Anh' : post.authorName}',
+          '${_status(apt)}\n${_time(apt)}\n${apt.roomTitle}\n${apt.hostName}',
           textAlign: TextAlign.center,
           style: const TextStyle(color: _muted, height: 1.5),
         ),
         const SizedBox(height: 28),
         _button(
           'Xem lịch xem phòng',
-          () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => RoomViewingScreen(post: post)),
-          ),
+          () => _changeMode(RoomFlowMode.viewingSchedule),
         ),
       ],
     );
   }
 
-  Widget _schedulePlaceholder(BuildContext context) {
+  Widget _viewingSchedule(BuildContext context) {
+    final now = DateTime.now();
+    bool upcoming(ViewingAppointment apt) =>
+        {'PENDING', 'CONFIRMED'}.contains(apt.status) &&
+        apt.appointmentTime.isAfter(now);
+    final appointments =
+        _appointments
+            .where(
+              (apt) => switch (_scheduleTab) {
+                0 => upcoming(apt),
+                1 => apt.status != 'CANCELLED' && !upcoming(apt),
+                _ => apt.status == 'CANCELLED',
+              },
+            )
+            .toList()
+          ..sort(
+            (a, b) => _scheduleTab == 0
+                ? a.appointmentTime.compareTo(b.appointmentTime)
+                : b.appointmentTime.compareTo(a.appointmentTime),
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -420,41 +597,38 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           style: TextStyle(color: _muted, height: 1.5),
         ),
         const SizedBox(height: 18),
-        Row(
+        Wrap(
+          spacing: 8,
           children: [
-            _tabLabel('Sắp tới', true),
-            const SizedBox(width: 20),
-            _tabLabel('Đã hủy', false),
+            _scheduleChip('Sắp tới', 0),
+            _scheduleChip('Lịch sử', 1),
+            _scheduleChip('Đã hủy', 2),
           ],
         ),
         const SizedBox(height: 18),
-        _appointmentCard(
-          context,
-          '21/09 · 14:00 · Chờ xác nhận',
-          post.title,
-          false,
-        ),
-        _appointmentCard(
-          context,
-          '22/09 · 10:30 · Đã xác nhận',
-          'Phòng gần HUTECH · Bình Thạnh',
-          true,
+        if (appointments.isEmpty) const Text('Chưa có lịch hẹn trong mục này.'),
+        ...appointments.map((apt) => _appointmentCard(apt)),
+        TextButton.icon(
+          onPressed: _loadAppointments,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Tải lại lịch hẹn'),
         ),
       ],
     );
   }
 
   Widget _appointmentDetails(BuildContext context) {
+    final apt = _selectedAppointment!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Chờ xác nhận',
-          style: TextStyle(color: _primary, fontWeight: FontWeight.w800),
+        Text(
+          _status(apt),
+          style: const TextStyle(color: _primary, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 14),
         Text(
-          post.title,
+          apt.roomTitle,
           style: const TextStyle(
             color: _ink,
             fontSize: 20,
@@ -463,38 +637,58 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Thứ Hai, 21/09/2026 · 14:00\n${post.address}',
+          '${_time(apt)}\n${apt.roomAddress}',
           style: const TextStyle(color: _muted, height: 1.5),
         ),
         const SizedBox(height: 10),
         Text(
-          'Người đăng: ${post.authorName.isEmpty ? 'Minh Anh' : post.authorName}',
+          'Người đăng: ${apt.hostName}',
           style: const TextStyle(color: _muted),
         ),
         const SizedBox(height: 14),
-        _appointmentCard(
-          context,
-          'Thứ Hai, 21/09/2026 · 14:00',
-          post.title,
-          false,
-        ),
+        if (apt.note?.trim().isNotEmpty == true) Text('Lời nhắn: ${apt.note}'),
         const SizedBox(height: 18),
-        _button('Xem phòng', () => _changeMode(RoomFlowMode.roomInfo)),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: () => _changeMode(RoomFlowMode.cancelAppointment),
-          icon: const Icon(Icons.event_busy_outlined),
-          label: const Text('Hủy lịch hẹn'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.red.shade700,
-            minimumSize: const Size.fromHeight(48),
+        _button('Xem phòng', _busy ? null : _openAppointmentRoom),
+        if (apt.status == 'CONFIRMED') ...[
+          const SizedBox(height: 8),
+          _button(
+            'Nhắn người đăng',
+            _busy
+                ? null
+                : () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.chat,
+                    arguments: {
+                      'partnerId': apt.hostId,
+                      'partnerName': apt.hostName,
+                    },
+                  ),
           ),
+        ],
+        const SizedBox(height: 8),
+        if (_canCancel(apt))
+          OutlinedButton.icon(
+            onPressed: _busy
+                ? null
+                : () => _changeMode(RoomFlowMode.cancelAppointment),
+            icon: const Icon(Icons.event_busy_outlined),
+            label: const Text('Hủy lịch hẹn'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
+              minimumSize: const Size.fromHeight(48),
+            ),
+          ),
+        TextButton(
+          onPressed: _busy ? null : _loadAppointments,
+          child: const Text('Tải lại lịch hẹn'),
         ),
       ],
     );
   }
 
   Widget _cancelAppointment(BuildContext context) {
+    final apt = _selectedAppointment!;
+    if (!_canCancel(apt)) return _appointmentDetails(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -507,35 +701,20 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        const Text('21/09/2026 · 14:00', style: TextStyle(color: _muted)),
-        const SizedBox(height: 18),
-        TextField(
-          maxLines: 3,
-          decoration: InputDecoration(
-            labelText: 'Lý do hủy (không bắt buộc)',
-            hintText: 'Mình có thay đổi kế hoạch.',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-          ),
+        Text(
+          '${apt.roomTitle}\n${_time(apt)}',
+          style: const TextStyle(color: _muted),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 18),
         const Text(
-          'Người đăng sẽ nhận được thông báo hủy.\nBạn vẫn có thể đặt lịch khác sau này.',
+          'Lịch sẽ chuyển sang trạng thái đã hủy sau khi máy chủ xác nhận.\nBạn vẫn có thể đặt lịch khác sau này.',
           style: TextStyle(color: _muted, height: 1.5),
         ),
         const SizedBox(height: 22),
-        _button(
-          'Xác nhận hủy lịch',
-          () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('API hủy lịch chưa được backend hỗ trợ.'),
-            ),
-          ),
-        ),
+        _button('Xác nhận hủy lịch', _busy ? null : _cancelSelectedAppointment),
         const SizedBox(height: 8),
         OutlinedButton(
-          onPressed: _handleBack,
+          onPressed: _busy ? null : _handleBack,
           child: const Text('Giữ lịch hẹn'),
         ),
       ],
@@ -544,13 +723,14 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
 
   Widget _location(BuildContext context) {
     final districtName = post.district.isNotEmpty
-        ? post.district
+        ? DistrictNames.display(post.district)
         : 'TP. Hồ Chí Minh';
     final addressText = post.address.isNotEmpty
         ? post.address
         : 'Khu vực gần trung tâm';
 
-    final lower = '${post.address} ${post.district}'.toLowerCase();
+    final lower = '${post.address} ${DistrictNames.display(post.district)}'
+        .toLowerCase();
     String landmark1Title = 'Trường đại học lân cận';
     String landmark1Dist = 'Khoảng 700 m · 10 phút đi bộ';
     String landmark2Title = 'Chợ & cửa hàng tiện lợi';
@@ -663,21 +843,20 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     ),
   );
 
-  Widget _tabLabel(String label, bool selected) => Text(
-    label,
-    style: TextStyle(
-      color: selected ? _primary : _muted,
-      fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-    ),
+  Widget _scheduleChip(String label, int index) => ChoiceChip(
+    label: Text(label),
+    selected: _scheduleTab == index,
+    onSelected: (_) => setState(() => _scheduleTab = index),
   );
 
-  Widget _appointmentCard(
-    BuildContext context,
-    String date,
-    String room,
-    bool confirmed,
-  ) => InkWell(
-    onTap: () => _changeMode(RoomFlowMode.appointmentDetails),
+  Widget _appointmentCard(ViewingAppointment apt) => InkWell(
+    key: ValueKey('appointment-${apt.id}'),
+    onTap: _busy
+        ? null
+        : () {
+            _selectedAppointment = apt;
+            _changeMode(RoomFlowMode.appointmentDetails);
+          },
     borderRadius: BorderRadius.circular(16),
     child: Container(
       width: double.infinity,
@@ -691,16 +870,16 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            date,
+            _time(apt),
             style: const TextStyle(color: _ink, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          Text(room, style: const TextStyle(color: _muted)),
+          Text(apt.roomTitle, style: const TextStyle(color: _muted)),
           const SizedBox(height: 6),
           Text(
-            confirmed ? 'Đã xác nhận' : 'Chờ xác nhận',
+            _status(apt),
             style: TextStyle(
-              color: confirmed ? _primary : _muted,
+              color: apt.status == 'CONFIRMED' ? _primary : _muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -753,7 +932,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     ),
   );
 
-  Widget _button(String label, VoidCallback onPressed) => FilledButton(
+  Widget _button(String label, VoidCallback? onPressed) => FilledButton(
     onPressed: onPressed,
     style: FilledButton.styleFrom(
       backgroundColor: _primary,
@@ -762,31 +941,4 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     ),
     child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
   );
-
-  Widget _outlineButton(BuildContext context, String label, RoomFlowMode next) {
-    final isSelected = mode == next;
-    return isSelected
-        ? FilledButton(
-            onPressed: () => _changeMode(next),
-            style: FilledButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(label),
-          )
-        : OutlinedButton(
-            onPressed: () => _changeMode(next),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _primary,
-              side: const BorderSide(color: _primary),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(label),
-          );
-  }
 }

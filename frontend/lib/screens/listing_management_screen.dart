@@ -28,6 +28,7 @@ class ListingManagementScreen extends StatefulWidget {
     required this.authorId,
     this.posts = const [],
     this.apiService,
+    this.initialPostId,
     super.key,
   });
 
@@ -35,6 +36,7 @@ class ListingManagementScreen extends StatefulWidget {
   final int authorId;
   final List<RoomPost> posts;
   final ApiService? apiService;
+  final int? initialPostId;
 
   @override
   State<ListingManagementScreen> createState() =>
@@ -76,6 +78,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   String? _imageUrl;
   bool _busy = false;
   String? _loadError;
+  bool _loadingData = false;
   final Set<String> _amenities = {};
   RoomPost? _selectedPost;
   ViewingAppointment? _selectedAppointment;
@@ -103,7 +106,12 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   Future<void> _loadData() async {
+    if (_loadingData) return;
     if (!_api.hasAuthToken) return;
+    setState(() {
+      _loadingData = true;
+      _loadError = null;
+    });
     try {
       final postsFuture = _api.getMyPosts();
       final aptsFuture = _api.getMyAppointments();
@@ -116,10 +124,22 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
               .toList();
           _loadError = null;
           _appointments = results[1] as List<ViewingAppointment>;
+          if (_selectedPost == null && widget.initialPostId != null) {
+            final selected = _myPosts.where(
+              (post) => post.id == widget.initialPostId,
+            );
+            if (selected.isNotEmpty) {
+              _selectPost(selected.first);
+            } else {
+              _loadError = 'Không tìm thấy tin đăng của bạn cho lịch hẹn này.';
+            }
+          }
         });
       }
     } catch (e) {
       if (mounted) setState(() => _loadError = 'Không thể tải dữ liệu: $e');
+    } finally {
+      if (mounted) setState(() => _loadingData = false);
     }
   }
 
@@ -145,7 +165,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     final value = double.tryParse(
       controller.text.replaceAll('.', '').replaceAll('đ', '').trim(),
     );
-    if (value == null || value < 0) {
+    if (value == null || !value.isFinite || value < 0) {
       throw const FormatException(
         'Chi phí phải là số tiền không âm, không kèm đơn vị khác.',
       );
@@ -169,11 +189,25 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         _districtCtrl.text.trim().isEmpty ||
         _descriptionCtrl.text.trim().isEmpty ||
         _money(_priceCtrl) <= 0 ||
+        !_area.isFinite ||
         _area <= 0) {
       throw const FormatException(
         'Vui lòng nhập đủ thông tin, giá thuê và diện tích lớn hơn 0.',
       );
     }
+    if (_money(_priceCtrl) < 100000) {
+      throw const FormatException('Giá thuê tối thiểu là 100.000 VNĐ.');
+    }
+    if (_titleCtrl.text.trim().length > 200 ||
+        _addressCtrl.text.trim().length > 255 ||
+        _districtCtrl.text.trim().length > 100 ||
+        _amenities.join(',').length > 500) {
+      throw const FormatException(
+        'Tiêu đề, địa chỉ, khu vực hoặc tiện ích vượt quá độ dài cho phép.',
+      );
+    }
+    _money(_depositCtrl);
+    _money(_utilityCtrl);
   }
 
   Future<void> _pickImage() async {
@@ -870,6 +904,15 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   Widget _viewingRequest(BuildContext context) {
+    if (_loadingData) return const Center(child: CircularProgressIndicator());
+    if (_loadError != null) {
+      return Column(
+        children: [
+          Text(_loadError!),
+          TextButton(onPressed: _loadData, child: const Text('Thử lại')),
+        ],
+      );
+    }
     final appointments = _appointments
         .where(
           (apt) =>

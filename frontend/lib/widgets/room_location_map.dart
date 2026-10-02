@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/district_names.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,7 +38,8 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
 
   /// Approximate area center, not the verified coordinates of the room.
   static LatLng _resolveCoordinates(RoomPost post) {
-    final text = '${post.address} ${post.district}'.toLowerCase();
+    final text = '${post.address} ${DistrictNames.display(post.district)}'
+        .toLowerCase();
 
     if (text.contains('hutech') ||
         text.contains('nguyễn gia trí') ||
@@ -46,15 +48,27 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
       return const LatLng(10.8038, 106.7158);
     } else if (text.contains('điện biên phủ') || text.contains('bình thạnh')) {
       return const LatLng(10.8005, 106.7118);
-    } else if (text.contains('quận 1') ||
+    } else if (DistrictNames.matchesRoom(
+          district: post.district,
+          address: post.address,
+          selected: 'Quan 1',
+        ) ||
         text.contains('bến nghé') ||
         text.contains('đinh tiên hoàng')) {
       return const LatLng(10.7769, 106.7009);
-    } else if (text.contains('quận 3') ||
+    } else if (DistrictNames.matchesRoom(
+          district: post.district,
+          address: post.address,
+          selected: 'Quan 3',
+        ) ||
         text.contains('võ văn tần') ||
         text.contains('nam kỳ')) {
       return const LatLng(10.7828, 106.6872);
-    } else if (text.contains('quận 7') ||
+    } else if (DistrictNames.matchesRoom(
+          district: post.district,
+          address: post.address,
+          selected: 'Quan 7',
+        ) ||
         text.contains('rmit') ||
         text.contains('phú mỹ hưng')) {
       return const LatLng(10.7326, 106.7003);

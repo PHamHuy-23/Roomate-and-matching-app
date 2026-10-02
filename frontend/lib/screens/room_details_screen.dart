@@ -44,7 +44,11 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         ? 'Chưa có diện tích'
         : '${post.areaM2!.round()} m²';
     final hasImage = post.imageUrl?.trim().isNotEmpty == true;
-    final hasCompleteDetails = post.areaM2 != null && post.amenities.isNotEmpty;
+    final amenities = post.amenities
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList();
     return Scaffold(
       backgroundColor: _canvas,
       appBar: AppBar(
@@ -112,13 +116,14 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 _tag(
                   '${post.maxOccupants == 1 ? '1' : '1–${post.maxOccupants}'} người',
                 ),
-                _tag('Có nội thất'),
+                if (amenities.isEmpty) _tag('Chưa cập nhật tiện ích'),
+                ...amenities.map(_tag),
               ],
             ),
-            if (!hasImage || !hasCompleteDetails) ...[
+            if (!hasImage) ...[
               const SizedBox(height: 8),
               const Text(
-                'Một số thông tin đang hiển thị minh họa vì API chưa trả đủ dữ liệu.',
+                'Người đăng chưa cập nhật ảnh phòng.',
                 style: TextStyle(color: _muted, fontSize: 12),
               ),
             ],
@@ -126,15 +131,19 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             _authorCard(post),
             const SizedBox(height: 18),
             OutlinedButton.icon(
-              onPressed: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      RoomFlowScreen(post: post, mode: RoomFlowMode.roomPhotos),
-                ),
-              ),
+              onPressed: !hasImage
+                  ? null
+                  : () => Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => RoomFlowScreen(
+                          post: post,
+                          mode: RoomFlowMode.roomPhotos,
+                        ),
+                      ),
+                    ),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Xem 4 ảnh'),
+              label: Text(hasImage ? 'Xem ảnh phòng' : 'Chưa có ảnh phòng'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 minimumSize: const Size.fromHeight(48),
@@ -223,11 +232,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 2),
                   child: Text(
-                    'mỗi tháng • cọc 1 tháng',
-                    style: TextStyle(color: _muted),
+                    post.deposit == null
+                        ? 'mỗi tháng • chưa cập nhật cọc'
+                        : 'mỗi tháng',
+                    style: const TextStyle(color: _muted),
                   ),
                 ),
               ],
@@ -259,13 +270,15 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   Widget _hero(RoomPost post) {
     final url = post.imageUrl?.trim();
     return InkWell(
-      onTap: () => Navigator.push<void>(
-        context,
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              RoomFlowScreen(post: post, mode: RoomFlowMode.roomPhotos),
-        ),
-      ),
+      onTap: url == null || url.isEmpty
+          ? null
+          : () => Navigator.push<void>(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    RoomFlowScreen(post: post, mode: RoomFlowMode.roomPhotos),
+              ),
+            ),
       borderRadius: BorderRadius.circular(20),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),

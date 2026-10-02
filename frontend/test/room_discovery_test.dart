@@ -77,9 +77,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Ảnh căn phòng'), findsWidgets);
-    await tester.tap(find.text('Phòng khách'));
-    await tester.pumpAndSettle();
-    expect(find.text('Phòng khách'), findsWidgets);
+    expect(find.text('Người đăng chưa cập nhật ảnh phòng.'), findsOneWidget);
+    expect(find.text('Phòng khách'), findsNothing);
   });
 
   testWidgets('Bộ lọc và phòng đã lưu có trạng thái frontend', (

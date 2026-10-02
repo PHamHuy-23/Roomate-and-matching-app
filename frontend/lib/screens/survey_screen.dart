@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../navigation/app_routes.dart';
+import '../models/district_names.dart';
+import '../models/user_preference.dart';
 import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
@@ -30,12 +32,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
   String? _loadError;
   bool _isSaving = false;
 
-  // Các trường hiển thị trong handoff Penpot. Một số trường chưa có cột tương
-  // ứng trong API preferences nên chỉ được dùng để hoàn thiện trải nghiệm UI;
-  // dữ liệu lõi vẫn được lưu qua payload hiện có ở _save().
-  DateTime _moveInDate = DateTime(2026, 10, 1);
-  String _roomType = 'SHARED';
-  String _workSchedule = 'DAY';
+  // Optional structured fields: legacy profiles must not acquire fake defaults.
+  DateTime? _moveInDate;
+  String? _roomType;
+  String? _workSchedule;
 
   // Bước 1: Ngân sách, Khu vực & Giới tính (UC-07, FR-07 - Tiêu chí cứng)
   RangeValues _budgetRange = const RangeValues(2000000, 4000000);
@@ -62,142 +62,22 @@ class _SurveyScreenState extends State<SurveyScreen> {
       'ASAP'; // ASAP: Dọn vào ngay, TWO_WEEKS: Trong 2 tuần, NEXT_MONTH: Đầu tháng sau, FLEXIBLE: Linh hoạt
   String _topPriority =
       'CLEAN'; // BUDGET, SLEEP, CLEAN, SMOKING (FR-25 Trọng số động)
-  // Giá trị hiển thị riêng ở bước 4 theo handoff Penpot; ưu tiên ghép đôi
-  // (_topPriority) vẫn được lưu trong payload ở bước 5.
-  String _personalValue = 'PRIVACY';
+  // Distinct from the matching weight (_topPriority).
+  String? _personalValue;
   final TextEditingController _bioCtrl = TextEditingController();
 
-  static const Map<String, String> _districtMap = {
-    'Thu Duc': 'TP. Thủ Đức',
-    'Quan 1': 'Quận 1',
-    'Quan 3': 'Quận 3',
-    'Quan 4': 'Quận 4',
-    'Quan 5': 'Quận 5',
-    'Quan 6': 'Quận 6',
-    'Quan 7': 'Quận 7',
-    'Quan 8': 'Quận 8',
-    'Quan 10': 'Quận 10',
-    'Quan 11': 'Quận 11',
-    'Quan 12': 'Quận 12',
-    'Binh Thanh': 'Bình Thạnh',
-    'Go Vap': 'Gò Vấp',
-    'Phu Nhuan': 'Phú Nhuận',
-    'Tan Binh': 'Tân Bình',
-    'Tan Phu': 'Tân Phú',
-    'Binh Tan': 'Bình Tân',
-    'Binh Chanh': 'Huyện Bình Chánh',
-    'Hoc Mon': 'Huyện Hóc Môn',
-    'Nha Be': 'Huyện Nhà Bè',
+  Map<String, String> get _districtMap => {
+    ...DistrictNames.labels,
+    if (_district.isNotEmpty && !DistrictNames.labels.containsKey(_district))
+      _district: _district,
   };
 
-  /// API data can come from older screens that stored the display label
-  /// (for example, `Thủ Đức`) instead of the canonical key (`Thu Duc`).
-  /// DropdownButton requires its value to match exactly one item, so normalize
-  /// every value loaded from the API before rendering the form.
   String _canonicalDistrictKey(String? value) {
-    final candidate = value?.trim();
-    if (candidate == null || candidate.isEmpty) return 'Binh Thanh';
-    if (_districtMap.containsKey(candidate)) return candidate;
-
-    final normalizedCandidate = _districtComparable(candidate);
-    for (final entry in _districtMap.entries) {
-      final key = _districtComparable(entry.key);
-      final label = _districtComparable(entry.value);
-      if (normalizedCandidate == key || normalizedCandidate == label) {
-        return entry.key;
-      }
-    }
-
-    // Keep the dropdown valid even when an old/invalid value is returned.
-    return 'Binh Thanh';
+    final canonical = DistrictNames.canonical(value);
+    return canonical.isEmpty ? 'Binh Thanh' : canonical;
   }
 
-  String _districtComparable(String value) {
-    var normalized = value.trim().toLowerCase();
-    const replacements = {
-      'à': 'a',
-      'á': 'a',
-      'ạ': 'a',
-      'ả': 'a',
-      'ã': 'a',
-      'â': 'a',
-      'ầ': 'a',
-      'ấ': 'a',
-      'ậ': 'a',
-      'ẩ': 'a',
-      'ẫ': 'a',
-      'ă': 'a',
-      'ằ': 'a',
-      'ắ': 'a',
-      'ặ': 'a',
-      'ẳ': 'a',
-      'ẵ': 'a',
-      'è': 'e',
-      'é': 'e',
-      'ẹ': 'e',
-      'ẻ': 'e',
-      'ẽ': 'e',
-      'ê': 'e',
-      'ề': 'e',
-      'ế': 'e',
-      'ệ': 'e',
-      'ể': 'e',
-      'ễ': 'e',
-      'ì': 'i',
-      'í': 'i',
-      'ị': 'i',
-      'ỉ': 'i',
-      'ĩ': 'i',
-      'ò': 'o',
-      'ó': 'o',
-      'ọ': 'o',
-      'ỏ': 'o',
-      'õ': 'o',
-      'ô': 'o',
-      'ồ': 'o',
-      'ố': 'o',
-      'ộ': 'o',
-      'ổ': 'o',
-      'ỗ': 'o',
-      'ơ': 'o',
-      'ờ': 'o',
-      'ớ': 'o',
-      'ợ': 'o',
-      'ở': 'o',
-      'ỡ': 'o',
-      'ù': 'u',
-      'ú': 'u',
-      'ụ': 'u',
-      'ủ': 'u',
-      'ũ': 'u',
-      'ư': 'u',
-      'ừ': 'u',
-      'ứ': 'u',
-      'ự': 'u',
-      'ử': 'u',
-      'ữ': 'u',
-      'ỳ': 'y',
-      'ý': 'y',
-      'ỵ': 'y',
-      'ỷ': 'y',
-      'ỹ': 'y',
-      'đ': 'd',
-    };
-    for (final entry in replacements.entries) {
-      normalized = normalized.replaceAll(entry.key, entry.value);
-    }
-
-    normalized = normalized
-        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
-        .replaceFirst(RegExp(r'^(tp|thanh pho)\s+'), '')
-        .replaceFirst(RegExp(r'\s+(tp|thanh pho)\s*hcm$'), '')
-        .trim();
-    return normalized;
-  }
-
-  String get _safeDistrictValue => _districtMap.containsKey(_district)
-      ? _district
-      : _canonicalDistrictKey(_district);
+  String get _safeDistrictValue => _canonicalDistrictKey(_district);
 
   static const List<Map<String, dynamic>> _interestOptions = [
     {'name': 'Thể thao', 'icon': Icons.sports_soccer},
@@ -339,6 +219,19 @@ class _SurveyScreenState extends State<SurveyScreen> {
       final data = await _api.getPreferences(widget.userId);
       if (data != null) {
         if (!mounted) return;
+        final moveInDate = UserPreference.parseMoveInDate(data['moveInDate']);
+        final roomType = UserPreference.parseSurveyChoice(
+          data['roomType'],
+          UserPreference.roomTypeValues,
+        );
+        final workSchedule = UserPreference.parseSurveyChoice(
+          data['workSchedule'],
+          UserPreference.workScheduleValues,
+        );
+        final personalValue = UserPreference.parseSurveyChoice(
+          data['personalValue'],
+          UserPreference.personalValueValues,
+        );
         final minBudget = data['budgetMin'];
         final maxBudget = data['budgetMax'];
         if (minBudget != null || maxBudget != null) {
@@ -355,6 +248,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
           }
         }
         setState(() {
+          _moveInDate = moveInDate;
+          _roomType = roomType;
+          _workSchedule = workSchedule;
+          _personalValue = personalValue;
           final targetDist = data['targetDistrict'] as String?;
           if (targetDist != null && targetDist.isNotEmpty) {
             _district = _canonicalDistrictKey(targetDist);
@@ -685,6 +582,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
         'isSmoking': _isSmoking,
         'allowPets': _allowPets,
         'bioDescription': _buildBioDescription(),
+        if (_moveInDate != null)
+          'moveInDate': DateFormat('yyyy-MM-dd').format(_moveInDate!),
+        if (_roomType != null) 'roomType': _roomType,
+        if (_workSchedule != null) 'workSchedule': _workSchedule,
+        if (_personalValue != null) 'personalValue': _personalValue,
       };
 
       final ok = await _api.savePreferences(widget.userId, payload);
@@ -781,26 +683,32 @@ class _SurveyScreenState extends State<SurveyScreen> {
         ),
       );
     }
-    return Scaffold(
-      backgroundColor: _penpotCanvas,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(
-              children: [
-                _buildPenpotHeader(),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: SingleChildScrollView(
-                      key: ValueKey(_currentStep),
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-                      child: _buildPenpotStep(_currentStep),
+    return PopScope(
+      canPop: !_isSaving,
+      child: AbsorbPointer(
+        absorbing: _isSaving,
+        child: Scaffold(
+          backgroundColor: _penpotCanvas,
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  children: [
+                    _buildPenpotHeader(),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: SingleChildScrollView(
+                          key: ValueKey(_currentStep),
+                          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                          child: _buildPenpotStep(_currentStep),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -991,7 +899,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: onPressed ?? _onStepContinue,
+          onPressed: _isSaving ? null : onPressed ?? _onStepContinue,
           style: ElevatedButton.styleFrom(
             backgroundColor: _penpotPrimary,
             foregroundColor: Colors.white,
@@ -1109,12 +1017,22 @@ class _SurveyScreenState extends State<SurveyScreen> {
               ),
               const SizedBox(height: 8),
               InkWell(
+                key: const ValueKey('survey-move-in-date'),
                 onTap: () async {
+                  final today = DateUtils.dateOnly(DateTime.now());
+                  final savedDate = _moveInDate;
+                  final initialDate =
+                      savedDate != null && !savedDate.isBefore(today)
+                      ? savedDate
+                      : today;
+                  final defaultLastDate = DateTime(today.year + 10, 12, 31);
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: _moveInDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2035),
+                    initialDate: initialDate,
+                    firstDate: today,
+                    lastDate: initialDate.isAfter(defaultLastDate)
+                        ? initialDate
+                        : defaultLastDate,
                   );
                   if (picked != null && mounted) {
                     setState(() => _moveInDate = picked);
@@ -1132,7 +1050,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    DateFormat('dd/MM/yyyy').format(_moveInDate),
+                    _moveInDate == null
+                        ? 'Chưa chọn ngày (không bắt buộc)'
+                        : DateFormat('dd/MM/yyyy').format(_moveInDate!),
                     style: const TextStyle(
                       color: _penpotInk,
                       fontWeight: FontWeight.w700,
@@ -1520,6 +1440,35 @@ class _SurveyScreenState extends State<SurveyScreen> {
           'Tính cách & sở thích',
           '${_personality == 'AMBIVERT' ? 'Linh hoạt' : _personalityLabel(_personality)} · ${_selectedInterests.take(3).join(' · ')}',
           Icons.interests_outlined,
+        ),
+        _summaryCard(
+          'Kế hoạch ở trọ',
+          '${_moveInDate == null ? 'Chưa chọn ngày' : DateFormat('dd/MM/yyyy').format(_moveInDate!)} · ${_roomType == 'PRIVATE'
+              ? 'Phòng riêng'
+              : _roomType == 'SHARED'
+              ? 'Ở ghép'
+              : 'Chưa chọn loại phòng'}',
+          Icons.home_outlined,
+        ),
+        _summaryCard(
+          'Lịch học / làm việc',
+          _workSchedule == 'DAY'
+              ? 'Ban ngày'
+              : _workSchedule == 'NIGHT'
+              ? 'Ban đêm'
+              : 'Chưa chọn',
+          Icons.work_outline,
+        ),
+        _summaryCard(
+          'Điều bạn trân trọng',
+          _personalValue == 'PRIVACY'
+              ? 'Tôn trọng không gian riêng'
+              : _personalValue == 'SCHEDULE'
+              ? 'Giờ giấc tương đồng'
+              : _personalValue == 'CLEAN'
+              ? 'Ưu tiên vệ sinh'
+              : 'Chưa chọn',
+          Icons.favorite_border,
         ),
         _summaryCard(
           'Ưu tiên',

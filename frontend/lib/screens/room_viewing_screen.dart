@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 
 import '../models/room_post.dart';
 import '../services/api_service.dart';
+import 'room_flow_screen.dart';
 
 class RoomViewingScreen extends StatefulWidget {
-  const RoomViewingScreen({required this.post, super.key});
+  const RoomViewingScreen({required this.post, this.apiService, super.key});
 
   final RoomPost post;
+  final ApiService? apiService;
 
   @override
   State<RoomViewingScreen> createState() => _RoomViewingScreenState();
@@ -19,7 +21,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
   static const _ink = Color(0xFF142523);
   static const _muted = Color(0xFF52625F);
 
-  final ApiService _api = ApiService();
+  ApiService get _api => widget.apiService ?? ApiService();
 
   late DateTime _selectedDate;
   String? _selectedTime;
@@ -30,7 +32,11 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _selectedDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    _selectedDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(const Duration(days: 1));
     _messageController = TextEditingController(
       text: 'Mình muốn xem phòng cùng một người bạn.',
     );
@@ -42,16 +48,14 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
     super.dispose();
   }
 
-  List<DateTime> get _dates => List.generate(
-        7,
-        (index) {
-          final now = DateTime.now();
-          final base = DateTime(now.year, now.month, now.day);
-          return base.add(Duration(days: index + 1));
-        },
-      );
+  List<DateTime> get _dates => List.generate(7, (index) {
+    final now = DateTime.now();
+    final base = DateTime(now.year, now.month, now.day);
+    return base.add(Duration(days: index + 1));
+  });
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
     if (_selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng chọn khung giờ xem phòng.')),
@@ -74,7 +78,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await _api.createAppointment(
+      final appointment = await _api.createAppointment(
         roomPostId: widget.post.id,
         appointmentTime: appointmentDateTime,
         note: _messageController.text.trim(),
@@ -89,17 +93,24 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
           ),
         ),
       );
-      Navigator.pop(context, true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RoomFlowScreen(
+            post: widget.post,
+            mode: RoomFlowMode.requestSent,
+            currentUserId: appointment.requesterId,
+            appointment: appointment,
+            apiService: widget.apiService,
+          ),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Không thể đặt lịch: $e')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Không thể đặt lịch: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -113,7 +124,8 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
       decimalDigits: 0,
     ).format(widget.post.price);
 
-    final monthYearTitle = 'Tháng ${_selectedDate.month}, ${_selectedDate.year}';
+    final monthYearTitle =
+        'Tháng ${_selectedDate.month}, ${_selectedDate.year}';
 
     return Scaffold(
       backgroundColor: _canvas,
@@ -164,7 +176,9 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
                 final date = _dates[index];
                 final selected = DateUtils.isSameDay(date, _selectedDate);
                 return InkWell(
-                  onTap: () => setState(() => _selectedDate = date),
+                  onTap: _isSubmitting
+                      ? null
+                      : () => setState(() => _selectedDate = date),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     width: 58,
@@ -230,7 +244,9 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
                 side: BorderSide(
                   color: selected ? _primary : const Color(0xFFDCE6E3),
                 ),
-                onSelected: (_) => setState(() => _selectedTime = time),
+                onSelected: _isSubmitting
+                    ? null
+                    : (_) => setState(() => _selectedTime = time),
               );
             }).toList(),
           ),
@@ -245,6 +261,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
           ),
           const SizedBox(height: 10),
           TextField(
+            enabled: !_isSubmitting,
             controller: _messageController,
             maxLines: 3,
             decoration: InputDecoration(
@@ -262,7 +279,7 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
           ),
           const SizedBox(height: 14),
           const Text(
-            'Lịch chỉ được xác nhận khi người đăng đồng ý.\nBạn có thể quản lý lịch hẹn trong mục Kết nối.',
+            'Lịch chỉ được xác nhận khi người đăng đồng ý.\nBạn có thể quản lý lịch hẹn trong mục Cá nhân → Lịch xem phòng.',
             style: TextStyle(color: _muted, height: 1.5),
           ),
         ],
