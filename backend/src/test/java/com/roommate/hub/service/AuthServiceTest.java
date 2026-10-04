@@ -156,7 +156,8 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("quochuy@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT))
                 .hasMessageContaining("Email đã được đăng ký!");
 
         verify(userRepository, never()).save(any());
@@ -280,6 +281,33 @@ class AuthServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED))
                 .hasMessageContaining("mật khẩu đã được thay đổi");
+    }
+
+    @Test
+    @DisplayName("changePassword() trả lỗi 404 khi tài khoản không tồn tại, không thu hồi phiên")
+    void changePassword_WhenUserMissing_ShouldThrowNotFoundWithoutMutation() {
+        when(userRepository.findByEmail("missing@example.test")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.changePassword("missing@example.test", "test-old", "test-new"))
+                .isInstanceOf(com.roommate.hub.exception.ResourceNotFoundException.class);
+
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(passwordEncoder, tokenRevocationService);
+    }
+
+    @Test
+    @DisplayName("changePassword() trả lỗi 400 khi mật khẩu hiện tại sai, giữ dữ liệu và phiên")
+    void changePassword_WhenOldPasswordWrong_ShouldThrowBadRequestWithoutMutation() {
+        when(userRepository.findByEmail(sampleUser.getEmail())).thenReturn(Optional.of(sampleUser));
+
+        assertThatThrownBy(() -> authService.changePassword(sampleUser.getEmail(), "wrong-test-password", "test-new"))
+                .isExactlyInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Mật khẩu hiện tại không chính xác!");
+
+        assertThat(sampleUser.getPasswordHash()).isEqualTo("encoded_secret_pass");
+        assertThat(sampleUser.getPasswordChangedAt()).isNull();
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(tokenRevocationService);
     }
 
     @Test

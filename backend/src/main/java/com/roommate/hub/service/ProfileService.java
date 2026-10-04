@@ -5,11 +5,17 @@ import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.PublicProfileResponseDTO;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.entity.UserPreference;
+import com.roommate.hub.exception.ForbiddenException;
+import com.roommate.hub.exception.ResourceNotFoundException;
+import com.roommate.hub.repository.BlockedUserRepository;
 import com.roommate.hub.repository.UserPreferenceRepository;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.util.DistrictNames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +30,7 @@ public class ProfileService {
 
     private final UserPreferenceRepository preferenceRepository;
     private final UserRepository userRepository;
+    private final BlockedUserRepository blockedUserRepository;
 
     @Transactional
     public UserResponseDTO updateUserInfo(Long userId, String fullName, String phone,
@@ -72,9 +79,14 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public PublicProfileResponseDTO getPublicProfile(Long userId) {
+        User viewer = currentViewer();
         User user = userRepository.findById(userId)
                 .filter(candidate -> "ACTIVE".equalsIgnoreCase(candidate.getStatus()) && candidate.isSearchActive())
                 .orElseThrow(() -> new com.roommate.hub.exception.ResourceNotFoundException("Hồ sơ không còn công khai"));
+        if (blockedUserRepository.existsByUserIdAndBlockedUserId(viewer.getId(), userId)
+                || blockedUserRepository.existsByUserIdAndBlockedUserId(userId, viewer.getId())) {
+            throw new ForbiddenException("Không thể xem hồ sơ vì hai người đã chặn nhau!");
+        }
         UserPreference pref = preferenceRepository.findByUserId(userId).orElse(null);
         return PublicProfileResponseDTO.builder()
                 .userId(user.getId()).fullName(user.getFullName()).avatarUrl(user.getAvatarUrl()).university(user.getUniversity())
@@ -83,6 +95,16 @@ public class ProfileService {
                 .sleepHabit(pref == null ? null : pref.getSleepHabit()).cleanlinessLevel(pref == null ? null : pref.getCleanlinessLevel())
                 .isSmoking(pref == null ? null : pref.getIsSmoking()).allowPets(pref == null ? null : pref.getAllowPets())
                 .bioDescription(pref == null ? null : pref.getBioDescription()).build();
+    }
+
+    private User currentViewer() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để xem hồ sơ!");
+        }
+        return userRepository.findByEmail(auth.getName())
+                .filter(user -> "ACTIVE".equalsIgnoreCase(user.getStatus()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ!"));
     }
 
     public UserPreferenceDTO getPreferences(Long userId) {
@@ -120,7 +142,7 @@ public class ProfileService {
             throw new IllegalArgumentException("Khoảng ngân sách không hợp lệ");
         }
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
 
         UserPreference pref = preferenceRepository.findByUserId(userId)
                 .orElse(UserPreference.builder().user(user).build());

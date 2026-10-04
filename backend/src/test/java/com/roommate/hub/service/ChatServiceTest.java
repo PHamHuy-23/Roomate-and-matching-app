@@ -12,6 +12,7 @@ import com.roommate.hub.repository.ViewingAppointmentRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,13 +34,16 @@ class ChatServiceTest {
     private final BlockedUserRepository blockedUserRepository = mock(BlockedUserRepository.class);
     private final MatchRequestRepository matchRequestRepository = mock(MatchRequestRepository.class);
     private final ViewingAppointmentRepository viewingAppointmentRepository = mock(ViewingAppointmentRepository.class);
+    @SuppressWarnings("unchecked")
+    private final ObjectProvider<R2StorageService> storageProvider = mock(ObjectProvider.class);
 
     private final ChatService chatService = new ChatService(
             chatMessageRepository,
             userRepository,
             blockedUserRepository,
             matchRequestRepository,
-            viewingAppointmentRepository
+            viewingAppointmentRepository,
+            storageProvider
     );
 
     private final User sender = User.builder().id(1L).email("sender@example.com").build();
@@ -130,27 +134,18 @@ class ChatServiceTest {
     }
 
     @Test
-    void acceptsTrustedDomainImageUrlInChat() {
+    void rejectsLegacyTrustedDomainImageUrlInChat() {
         SendMessageDTO dto = SendMessageDTO.builder()
                 .receiverId(2L)
                 .content("Check this room")
                 .imageUrl("https://images.roommatehub.com/uploads/photo.jpg")
                 .build();
 
-        when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> {
-            ChatMessage msg = invocation.getArgument(0);
-            return ChatMessage.builder()
-                    .id(100L)
-                    .sender(msg.getSender())
-                    .receiver(msg.getReceiver())
-                    .content(msg.getContent())
-                    .imageUrl(msg.getImageUrl())
-                    .build();
-        });
-
-        var result = chatService.sendMessage(dto);
-        assertThat(result).isNotNull();
-        assertThat(result.getImageUrl()).isEqualTo("https://images.roommatehub.com/uploads/photo.jpg");
+        assertThatThrownBy(() -> chatService.sendMessage(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
+        verifyNoInteractions(chatMessageRepository, storageProvider);
     }
 
     @Test
@@ -190,28 +185,18 @@ class ChatServiceTest {
     }
 
     @Test
-    void acceptsConfiguredAppR2BucketImageUrlInChat() {
-        chatService.setR2Config("roommate-prod-bucket", null);
+    void rejectsLegacyAppR2BucketImageUrlInChat() {
         SendMessageDTO dto = SendMessageDTO.builder()
                 .receiverId(2L)
                 .content("Hello")
                 .imageUrl("https://roommate-prod-bucket.r2.cloudflarestorage.com/uploads/photo.png")
                 .build();
 
-        when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> {
-            ChatMessage msg = invocation.getArgument(0);
-            return ChatMessage.builder()
-                    .id(101L)
-                    .sender(msg.getSender())
-                    .receiver(msg.getReceiver())
-                    .content(msg.getContent())
-                    .imageUrl(msg.getImageUrl())
-                    .build();
-        });
-
-        var result = chatService.sendMessage(dto);
-        assertThat(result).isNotNull();
-        assertThat(result.getImageUrl()).isEqualTo("https://roommate-prod-bucket.r2.cloudflarestorage.com/uploads/photo.png");
+        assertThatThrownBy(() -> chatService.sendMessage(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
+        verifyNoInteractions(chatMessageRepository, storageProvider);
     }
 
     @Test

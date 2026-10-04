@@ -1,6 +1,7 @@
 package com.roommate.hub.controller;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,7 +34,8 @@ public class UploadController {
     public ResponseEntity<UploadUrlResponse> createUpload(
             @Valid @RequestBody CreateUploadRequest request) {
         User currentUser = currentUser();
-        return ResponseEntity.ok(storageService.createUpload(currentUser.getId(), request));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(storageService.createUpload(currentUser.getId(), request));
     }
 
     @PutMapping("/avatar")

@@ -26,6 +26,9 @@ public class R2Config {
         requireConfigured(properties.getBucket(), "R2_BUCKET_NAME");
         requireConfigured(properties.getPublicUrl(), "R2_PUBLIC_URL");
 
+        // A missing private bucket must fail closed only for private operations,
+        // without taking public avatar/room-post uploads offline.
+
         return S3Presigner.builder()
                 .endpointOverride(URI.create(properties.getEndpoint()))
                 .region(Region.of("auto"))

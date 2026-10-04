@@ -36,7 +36,8 @@ public class ChatMessageDTO {
                 .receiverName(message.getReceiver().getFullName())
                 .receiverAvatar(message.getReceiver().getAvatarUrl())
                 .content(message.getContent())
-                .imageUrl(message.getImageUrl())
+                // Storage references are private. Only the authorized service may mint a read URL.
+                .imageUrl(null)
                 .isRead(message.getIsRead())
                 .createdAt(message.getCreatedAt())
                 .fromMe(message.getSender().getId().equals(currentUserId))

@@ -35,15 +35,14 @@ public class AppointmentResponseDTO {
     private LocalDateTime createdAt;
 
     public static AppointmentResponseDTO from(ViewingAppointment appointment) {
+        // Contact fields stay hidden until the service verifies current Double Opt-in permission.
         return AppointmentResponseDTO.builder()
                 .id(appointment.getId())
                 .requesterId(appointment.getRequester().getId())
                 .requesterName(appointment.getRequester().getFullName())
-                .requesterPhone(appointment.getRequester().getPhone())
                 .requesterAvatar(appointment.getRequester().getAvatarUrl())
                 .hostId(appointment.getHost().getId())
                 .hostName(appointment.getHost().getFullName())
-                .hostPhone(appointment.getHost().getPhone())
                 .hostAvatar(appointment.getHost().getAvatarUrl())
                 .roomPostId(appointment.getRoomPost().getId())
                 .roomTitle(appointment.getRoomPost().getTitle())

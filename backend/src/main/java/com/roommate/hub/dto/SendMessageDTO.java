@@ -19,4 +19,6 @@ public class SendMessageDTO {
     private String content;
 
     private String imageUrl;
+
+    private String imageObjectKey;
 }

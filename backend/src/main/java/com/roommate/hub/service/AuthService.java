@@ -7,6 +7,7 @@ import com.roommate.hub.dto.RegisterRequest;
 import com.roommate.hub.entity.AuthOtp;
 import com.roommate.hub.entity.RefreshToken;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.AuthOtpRepository;
 import com.roommate.hub.repository.RefreshTokenRepository;
 import com.roommate.hub.repository.UserRepository;
@@ -56,7 +57,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest req) {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new RuntimeException("Email đã được đăng ký!");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã được đăng ký!");
         }
 
         User user = User.builder()
@@ -132,10 +133,10 @@ public class AuthService {
     @Transactional
     public void changePassword(String email, String oldPassword, String newPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
 
         if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
-            throw new RuntimeException("Mật khẩu hiện tại không chính xác!");
+            throw new IllegalArgumentException("Mật khẩu hiện tại không chính xác!");
         }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));

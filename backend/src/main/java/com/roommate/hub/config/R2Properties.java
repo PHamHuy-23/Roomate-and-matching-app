@@ -11,7 +11,9 @@ public class R2Properties {
     private String accessKeyId;
     private String secretAccessKey;
     private String bucket;
+    private String privateBucket;
     private String publicUrl;
     private long presignDurationMinutes = 10;
+    private long privateReadDurationMinutes = 2;
     private long maxUploadBytes = 5 * 1024 * 1024;
 }

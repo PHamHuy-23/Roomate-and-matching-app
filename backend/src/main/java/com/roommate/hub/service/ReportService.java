@@ -43,8 +43,9 @@ public class ReportService {
         String evidenceUrl = null;
         if (dto.getEvidenceObjectKey() != null && !dto.getEvidenceObjectKey().isBlank()) {
             R2StorageService storage = storageServiceProvider.getIfAvailable();
-            if (storage == null) throw new IllegalStateException("Cloudflare R2 chưa được cấu hình");
-            evidenceUrl = storage.requireOwnedObject(reporter.getId(), "report", dto.getEvidenceObjectKey());
+            if (storage == null) throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "Kho ảnh riêng tư chưa được cấu hình");
+            evidenceUrl = storage.requireOwnedPrivateObject(reporter.getId(), "report", dto.getEvidenceObjectKey());
         }
         Report report = Report.builder()
                 .reporter(reporter)

@@ -3,6 +3,7 @@ package com.roommate.hub.controller;
 import com.roommate.hub.dto.MatchRecommendationDTO;
 import com.roommate.hub.dto.MatchRequestResponseDTO;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.service.MatchRequestService;
 import com.roommate.hub.service.MatchingService;
@@ -28,7 +29,7 @@ public class MatchController {
     public ResponseEntity<List<MatchRecommendationDTO>> getRecommendations(@PathVariable Long userId) {
         assertCurrentUser(userId);
         User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại!"));
         return ResponseEntity.ok(matchingService.getRecommendations(currentUser));
     }
 

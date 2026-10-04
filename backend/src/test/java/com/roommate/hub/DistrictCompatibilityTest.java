@@ -5,10 +5,13 @@ import com.roommate.hub.repository.*;
 import com.roommate.hub.service.*;
 import com.roommate.hub.util.DistrictNames;
 import com.roommate.hub.config.JwtUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,10 @@ class DistrictCompatibilityTest {
     @Autowired WebApplicationContext context;
     @Autowired FilterChainProxy security;
 
+    @AfterEach void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test void aliasesShareAKeyWithoutChangingUnknownDistricts() {
         for (String value : List.of("Thu Duc", "THỦ ĐỨC", " TP. Thủ Đức ",
                 "Thành phố Thủ Đức", "Thủ Đức, TP.HCM", "Thu  Duc, Ho Chi Minh", "Thu\u0309 Đu\u031b\u0301c")) {
@@ -55,6 +62,8 @@ class DistrictCompatibilityTest {
 
     @Test void databaseMatchingRecognizesLegacyRowsAndPreservesEligibilityRules() {
         User me = user("MALE");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(me.getEmail(), null, List.of()));
         var mine = preference(me, "Thu Duc");
         mine.setTargetGender("MALE"); preferences.flush();
         User same = user("MALE");

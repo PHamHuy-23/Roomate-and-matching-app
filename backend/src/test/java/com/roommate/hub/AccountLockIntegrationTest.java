@@ -60,21 +60,26 @@ class AccountLockIntegrationTest {
         String authorization = bearer(admin);
         for (String suffix : new String[]{"status", "toggle-status"}) {
             String route = "/api/v1/admin/users/" + admin.getId() + "/" + suffix;
-            mvc.perform(put(route).header("Authorization", authorization)).andExpect(status().isForbidden());
-            mvc.perform(patch(route).header("Authorization", authorization)).andExpect(status().isForbidden());
+            mvc.perform(put(route).header("Authorization", authorization)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"LOCKED\"}"))
+                    .andExpect(status().isForbidden());
+            mvc.perform(patch(route).header("Authorization", authorization)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"LOCKED\"}"))
+                    .andExpect(status().isForbidden());
             assertThat(users.findById(admin.getId()).orElseThrow().getStatus()).isEqualTo("ACTIVE");
         }
     }
 
-    @Test void onlyAdminCanToggleAnotherAccountAndLockedAccessIsRejected() throws Exception {
+    @Test void onlyAdminCanSetAnotherAccountStatusAndLockedAccessIsRejected() throws Exception {
         User admin = user("Admin", User.Role.ROLE_ADMIN), host = user("Host", User.Role.ROLE_USER);
         String hostToken = bearer(host);
         mvc.perform(patch("/api/v1/admin/users/{id}/status", admin.getId())
-                .header("Authorization", hostToken)).andExpect(status().isForbidden());
-        toggle(admin, host, "LOCKED");
+                .header("Authorization", hostToken).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"LOCKED\"}")).andExpect(status().isForbidden());
+        setStatus(admin, host, "LOCKED");
         mvc.perform(get("/api/v1/appointments/my").header("Authorization", hostToken))
                 .andExpect(status().isUnauthorized());
-        toggle(admin, host, "ACTIVE");
+        setStatus(admin, host, "ACTIVE");
         mvc.perform(get("/api/v1/appointments/my").header("Authorization", bearer(host)))
                 .andExpect(status().isOk());
     }
@@ -95,7 +100,7 @@ class AccountLockIntegrationTest {
         assertAdminVisibility(admin, closed, false);
         assertAdminVisibility(admin, rejected, false);
 
-        toggle(admin, host, "LOCKED");
+        setStatus(admin, host, "LOCKED");
         assertPublicVisibility(approved, false);
         assertPublicVisibility(available, false);
         assertPublicVisibility(other, true);
@@ -109,7 +114,7 @@ class AccountLockIntegrationTest {
         assertThat(posts.findById(approved.getId()).orElseThrow().getStatus()).isEqualTo(RoomPost.PostStatus.APPROVED);
         assertThat(posts.findById(available.getId()).orElseThrow().getStatus()).isEqualTo(RoomPost.PostStatus.AVAILABLE);
 
-        toggle(admin, host, "ACTIVE");
+        setStatus(admin, host, "ACTIVE");
         assertPublicVisibility(approved, true);
         assertPublicVisibility(available, true);
         assertPublicVisibility(pending, false);
@@ -157,14 +162,14 @@ class AccountLockIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
         assertThat(messages.count()).isEqualTo(before + 1);
 
-        toggle(admin, receiver, "LOCKED");
+        setStatus(admin, receiver, "LOCKED");
         mvc.perform(post("/api/v1/chat/messages").header("Authorization", authorization)
                 .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isForbidden());
         assertThat(messages.count()).isEqualTo(before + 1);
         mvc.perform(get("/api/v1/chat/messages/{id}", receiver.getId()).header("Authorization", authorization))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
 
-        toggle(admin, receiver, "ACTIVE");
+        setStatus(admin, receiver, "ACTIVE");
         mvc.perform(post("/api/v1/chat/messages").header("Authorization", authorization)
                 .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
         assertThat(messages.count()).isEqualTo(before + 2);
@@ -181,12 +186,12 @@ class AccountLockIntegrationTest {
         User viewer = user("Viewer", User.Role.ROLE_USER);
         RoomPost post = room(host, RoomPost.PostStatus.APPROVED);
         long countBefore = appointments.count();
-        toggle(admin, host, "LOCKED");
+        setStatus(admin, host, "LOCKED");
         mvc.perform(post("/api/v1/appointments").header("Authorization", bearer(viewer))
                 .contentType(MediaType.APPLICATION_JSON).content(appointmentBody(post)))
                 .andExpect(status().isForbidden());
         assertThat(appointments.count()).isEqualTo(countBefore);
-        toggle(admin, host, "ACTIVE");
+        setStatus(admin, host, "ACTIVE");
         mvc.perform(post("/api/v1/appointments").header("Authorization", bearer(viewer))
                 .contentType(MediaType.APPLICATION_JSON).content(appointmentBody(post)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PENDING"));
@@ -200,7 +205,7 @@ class AccountLockIntegrationTest {
         ViewingAppointment existing = appointments.saveAndFlush(ViewingAppointment.builder()
                 .requester(viewer).host(host).roomPost(post).appointmentTime(OffsetDateTime.now().plusDays(2))
                 .status(ViewingAppointment.AppointmentStatus.CONFIRMED).build());
-        toggle(admin, host, "LOCKED");
+        setStatus(admin, host, "LOCKED");
         assertThat(appointments.findById(existing.getId()).orElseThrow().getStatus())
                 .isEqualTo(ViewingAppointment.AppointmentStatus.CONFIRMED);
         mvc.perform(get("/api/v1/appointments/my").header("Authorization", bearer(viewer)))
@@ -217,7 +222,7 @@ class AccountLockIntegrationTest {
         String route = "/api/v1/profile/saved-posts/" + post.getId();
         mvc.perform(put(route).header("Authorization", bearer(viewer)).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"saved\":true}")).andExpect(status().isOk());
-        toggle(admin, host, "LOCKED");
+        setStatus(admin, host, "LOCKED");
         mvc.perform(put(route).header("Authorization", bearer(viewer)).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"saved\":true}")).andExpect(status().isNotFound());
         assertThat(users.findById(viewer.getId()).orElseThrow().getSavedPostIds()).contains(post.getId());
@@ -234,8 +239,9 @@ class AccountLockIntegrationTest {
                 .andExpect(visible ? status().isOk() : status().isNotFound());
     }
 
-    private void toggle(User admin, User target, String expected) throws Exception {
-        mvc.perform(patch("/api/v1/admin/users/{id}/status", target.getId()).header("Authorization", bearer(admin)))
+    private void setStatus(User admin, User target, String expected) throws Exception {
+        mvc.perform(patch("/api/v1/admin/users/{id}/status", target.getId()).header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"" + expected + "\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(expected));
         users.flush();
     }

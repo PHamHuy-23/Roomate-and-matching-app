@@ -36,7 +36,8 @@ public class AdminReportResponseDTO {
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .actionNote(report.getActionNote())
-                .evidenceUrl(report.getEvidenceUrl())
+                // Never expose a stored key or legacy public evidence URL from the generic mapper.
+                .evidenceUrl(null)
                 .createdAt(report.getCreatedAt())
                 .build();
     }

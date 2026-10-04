@@ -5,8 +5,11 @@ import com.roommate.hub.entity.User;
 import com.roommate.hub.dto.AdminReportResponseDTO;
 import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
+import com.roommate.hub.dto.UpdateUserStatusDTO;
 import com.roommate.hub.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,13 +47,15 @@ public class AdminController {
     }
 
     @RequestMapping(value = {"/users/{userId}/toggle-status", "/users/{userId}/status"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<Map<String, Object>> toggleUserStatus(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminService.toggleUserStatus(userId));
+    public ResponseEntity<Map<String, Object>> setUserStatus(
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateUserStatusDTO body) {
+        return ResponseEntity.ok(adminService.setUserStatus(userId, body.getStatus()));
     }
 
     @GetMapping("/reports")
     public ResponseEntity<List<AdminReportResponseDTO>> getAllReports() {
-        return ResponseEntity.ok(adminService.getAllReports());
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(adminService.getAllReports());
     }
 
     @RequestMapping(value = {"/reports/{reportId}/moderate", "/reports/{reportId}/resolve"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
@@ -58,6 +63,7 @@ public class AdminController {
             @PathVariable Long reportId,
             @RequestParam(defaultValue = "RESOLVED") String status,
             @RequestParam(required = false) String note) {
-        return ResponseEntity.ok(adminService.moderateReport(reportId, status, note));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(adminService.moderateReport(reportId, status, note));
     }
 }

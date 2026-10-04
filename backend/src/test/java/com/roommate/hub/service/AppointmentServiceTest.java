@@ -5,6 +5,8 @@ import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.entity.ViewingAppointment;
 import com.roommate.hub.entity.ViewingAppointment.AppointmentStatus;
+import com.roommate.hub.repository.BlockedUserRepository;
+import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.repository.ViewingAppointmentRepository;
@@ -41,6 +43,12 @@ class AppointmentServiceTest {
     @Mock
     private RoomPostRepository roomPostRepository;
 
+    @Mock
+    private MatchRequestRepository matchRequestRepository;
+
+    @Mock
+    private BlockedUserRepository blockedUserRepository;
+
     @InjectMocks
     private AppointmentService appointmentService;
 
@@ -53,7 +61,8 @@ class AppointmentServiceTest {
     void setUp() {
         hostUser = User.builder().id(1L).email("host@example.com").fullName("Chủ nhà").build();
         requesterUser = User.builder().id(2L).email("requester@example.com").fullName("Người thuê").build();
-        samplePost = RoomPost.builder().id(10L).title("Phòng trọ").author(hostUser).build();
+        samplePost = RoomPost.builder().id(10L).title("Phòng trọ").author(hostUser)
+                .status(RoomPost.PostStatus.APPROVED).build();
 
         appointment = ViewingAppointment.builder()
                 .id(100L)
@@ -74,6 +83,21 @@ class AppointmentServiceTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("DTO mặc định không tự tiết lộ điện thoại dù entity có dữ liệu")
+    void defaultResponseMapper_ShouldHideBothPhones() {
+        requesterUser.setPhone("0000000001");
+        hostUser.setPhone("0000000002");
+
+        AppointmentResponseDTO response = AppointmentResponseDTO.from(appointment);
+
+        assertThat(response.getRequesterPhone()).isNull();
+        assertThat(response.getHostPhone()).isNull();
+        assertThat(response.getRequesterId()).isEqualTo(requesterUser.getId());
+        assertThat(response.getHostId()).isEqualTo(hostUser.getId());
+        assertThat(response.getRoomPostId()).isEqualTo(samplePost.getId());
     }
 
     @Test

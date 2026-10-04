@@ -8,6 +8,7 @@ import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.ChatMessageRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,10 @@ import com.roommate.hub.entity.ViewingAppointment;
 import com.roommate.hub.repository.BlockedUserRepository;
 import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.ViewingAppointmentRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,17 +34,7 @@ public class ChatService {
     private final BlockedUserRepository blockedUserRepository;
     private final MatchRequestRepository matchRequestRepository;
     private final ViewingAppointmentRepository viewingAppointmentRepository;
-
-    @Value("${storage.r2.bucket:}")
-    private String r2Bucket;
-
-    @Value("${storage.r2.public-url:}")
-    private String r2PublicUrl;
-
-    void setR2Config(String r2Bucket, String r2PublicUrl) {
-        this.r2Bucket = r2Bucket;
-        this.r2PublicUrl = r2PublicUrl;
-    }
+    private final ObjectProvider<R2StorageService> storageServiceProvider;
 
     @Transactional
     public ChatMessageDTO sendMessage(SendMessageDTO dto) {
@@ -54,7 +43,7 @@ public class ChatService {
                 .orElseThrow(() -> new ResourceNotFoundException("Người nhận không tồn tại!"));
 
         if (sender.getId().equals(receiver.getId())) {
-            throw new RuntimeException("Bạn không thể tự gửi tin nhắn cho chính mình!");
+            throw new IllegalArgumentException("Bạn không thể tự gửi tin nhắn cho chính mình!");
         }
 
         // Existing matches or appointments must not bypass an admin account lock.
@@ -85,13 +74,14 @@ public class ChatService {
         }
 
         String rawContent = dto.getContent() != null ? dto.getContent().trim() : "";
-        String imageUrl = dto.getImageUrl() != null && !dto.getImageUrl().isBlank() ? dto.getImageUrl().trim() : null;
-
-        if (imageUrl != null) {
-            validateImageUrl(imageUrl);
+        if (dto.getImageUrl() != null && !dto.getImageUrl().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "URL ảnh chat không an toàn; hãy tải ảnh riêng tư và gửi imageObjectKey!");
         }
+        String imageKey = dto.getImageObjectKey();
+        if (imageKey != null) imageKey = storage().requireOwnedPrivateObject(sender.getId(), "chat", imageKey);
 
-        if (rawContent.isEmpty() && imageUrl == null) {
+        if (rawContent.isEmpty() && imageKey == null) {
             throw new IllegalArgumentException("Nội dung tin nhắn hoặc hình ảnh không được để trống!");
         }
 
@@ -101,93 +91,56 @@ public class ChatService {
                 .sender(sender)
                 .receiver(receiver)
                 .content(finalContent)
-                .imageUrl(imageUrl)
+                .imageUrl(imageKey)
                 .isRead(false)
                 .build();
 
-        return ChatMessageDTO.from(chatMessageRepository.save(message), sender.getId());
+        return response(chatMessageRepository.save(message), sender.getId());
     }
-
-    private void validateImageUrl(String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return;
-        }
-        String trimmed = imageUrl.trim();
-
-        // Cho phép đường dẫn tương đối nội bộ hoặc storage object key sạch
-        if (trimmed.startsWith("/") || (!trimmed.contains("://") && !trimmed.contains(" "))) {
-            if (trimmed.startsWith("//") || trimmed.contains("..")) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đường dẫn hình ảnh không hợp lệ!");
-            }
-            return;
-        }
-
-        try {
-            java.net.URI uri = java.net.URI.create(trimmed);
-            String scheme = uri.getScheme();
-            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Giao thức hình ảnh không được hỗ trợ!");
-            }
-
-            String host = uri.getHost();
-            if (host == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Máy chủ lưu trữ hình ảnh không hợp lệ!");
-            }
-
-            if (!isTrustedHost(host)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL hình ảnh không an toàn hoặc không thuộc hệ thống lưu trữ được tin cậy!");
-            }
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL hình ảnh không đúng định dạng!");
-        }
-    }
-
-    private boolean isTrustedHost(String host) {
-        if (host == null) {
-            return false;
-        }
-        String lower = host.toLowerCase(Locale.ROOT);
-        if (lower.equals("localhost") || lower.equals("127.0.0.1")) {
-            return true;
-        }
-        // Strict domain and subdomain matching (prevents evilroommatehub.com)
-        if (lower.equals("roommatehub.com") || lower.endsWith(".roommatehub.com")) {
-            return true;
-        }
-        if (lower.equals("roommatehub.vn") || lower.endsWith(".roommatehub.vn")) {
-            return true;
-        }
-        // Specific configured app bucket/public URL, preventing arbitrary R2 attacker buckets
-        if (r2PublicUrl != null && !r2PublicUrl.isBlank()) {
-            try {
-                java.net.URI pubUri = java.net.URI.create(r2PublicUrl);
-                if (pubUri.getHost() != null && lower.equalsIgnoreCase(pubUri.getHost())) {
-                    return true;
-                }
-            } catch (Exception ignored) {}
-        }
-        if (r2Bucket != null && !r2Bucket.isBlank()) {
-            String appR2Host = (r2Bucket + ".r2.cloudflarestorage.com").toLowerCase(Locale.ROOT);
-            if (lower.equals(appR2Host)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getConversation(Long partnerId) {
         User current = currentUser();
         return chatMessageRepository.findConversation(current.getId(), partnerId)
                 .stream()
-                .map(m -> ChatMessageDTO.from(m, current.getId()))
+                .map(m -> response(m, current.getId()))
                 .collect(Collectors.toList());
+    }
+
+    private ChatMessageDTO response(ChatMessage message, Long viewerId) {
+        ChatMessageDTO result = ChatMessageDTO.from(message, viewerId);
+        User sender = message.getSender(), receiver = message.getReceiver();
+        boolean participant = viewerId.equals(sender.getId()) || viewerId.equals(receiver.getId());
+        if (participant && "ACTIVE".equalsIgnoreCase(sender.getStatus()) && "ACTIVE".equalsIgnoreCase(receiver.getStatus())
+                && !blockedUserRepository.existsByUserIdAndBlockedUserId(sender.getId(), receiver.getId())
+                && !blockedUserRepository.existsByUserIdAndBlockedUserId(receiver.getId(), sender.getId())
+                && R2StorageService.isOwnedPrivateObject(sender.getId(), "chat", message.getImageUrl())) {
+            R2StorageService storage = storageServiceProvider.getIfAvailable();
+            if (storage != null) {
+                try {
+                    result.setImageUrl(storage.privateReadUrl(sender.getId(), "chat", message.getImageUrl()));
+                } catch (ResponseStatusException error) {
+                    if (error.getStatusCode().value() != 503) throw error;
+                    // Text history remains available, without a public URL fallback.
+                }
+            }
+        }
+        return result;
+    }
+
+    private R2StorageService storage() {
+        R2StorageService storage = storageServiceProvider.getIfAvailable();
+        if (storage == null) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kho ảnh riêng tư chưa được cấu hình");
+        return storage;
     }
 
     private User currentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập");
+        }
         return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
+                .filter(user -> "ACTIVE".equalsIgnoreCase(user.getStatus()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ"));
     }
 }

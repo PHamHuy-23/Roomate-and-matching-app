@@ -144,6 +144,7 @@ class WorkflowRegressionIntegrationTest {
     }
 
     @Test void publicProfileOnlyReturnsActiveSearchableUsers() {
+        authenticate(user("Viewer"));
         User candidate = user("Candidate");
         UserPreference pref = preference(candidate);
         pref.setBioDescription("Public bio");

@@ -11,10 +11,12 @@ import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,12 +48,7 @@ public class RoomPostService {
 
         String imageUrl = null;
         if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
-            R2StorageService storageService = storageServiceProvider.getIfAvailable();
-            if (storageService == null) {
-                throw new IllegalStateException("Cloudflare R2 chưa được cấu hình");
-            }
-            imageUrl = storageService.requireOwnedObject(
-                    author.getId(), "room-post", dto.getImageObjectKey());
+            imageUrl = requireImageUrl(author.getId(), dto.getImageObjectKey());
         }
 
         RoomPost post = RoomPost.builder()
@@ -145,6 +142,12 @@ public class RoomPostService {
         validateOccupancy(dto.getMaxOccupants() == null ? post.getMaxOccupants() : dto.getMaxOccupants(),
                 dto.getCurrentOccupants() == null ? post.getCurrentOccupants() : dto.getCurrentOccupants());
 
+        // Resolve a requested replacement before changing the post; never silently ignore an unavailable upload.
+        String imageUrl = null;
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            imageUrl = requireImageUrl(post.getAuthor().getId(), dto.getImageObjectKey());
+        }
+
         // Khi người dùng chỉnh sửa nội dung tin, chuyển về trạng thái PENDING để kiểm duyệt lại
         if (!admin) {
             post.setStatus(RoomPost.PostStatus.PENDING);
@@ -162,16 +165,19 @@ public class RoomPostService {
         if (dto.getCurrentOccupants() != null) post.setCurrentOccupants(dto.getCurrentOccupants());
         if (dto.getAmenities() != null) post.setAmenities(dto.getAmenities());
 
-        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
-            R2StorageService storageService = storageServiceProvider.getIfAvailable();
-            if (storageService != null) {
-                String imageUrl = storageService.requireOwnedObject(
-                        post.getAuthor().getId(), "room-post", dto.getImageObjectKey());
-                post.setImageUrl(imageUrl);
-            }
+        if (imageUrl != null) {
+            post.setImageUrl(imageUrl);
         }
 
         return convertToDTO(roomPostRepository.save(post));
+    }
+
+    private String requireImageUrl(Long authorId, String imageObjectKey) {
+        R2StorageService storageService = storageServiceProvider.getIfAvailable();
+        if (storageService == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Cloudflare R2 chưa được cấu hình");
+        }
+        return storageService.requireOwnedObject(authorId, "room-post", imageObjectKey);
     }
 
     private void validateFiniteNumbers(CreateRoomPostDTO dto) {

@@ -33,7 +33,7 @@ public class MatchRequestService {
     @Transactional
     public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
         if (senderId.equals(receiverId)) {
-            throw new RuntimeException("Không thể tự ghép đôi với chính mình!");
+            throw new IllegalArgumentException("Không thể tự ghép đôi với chính mình!");
         }
 
         Long firstId = Math.min(senderId, receiverId);
