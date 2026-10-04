@@ -35,5 +35,30 @@
 | **FR-27** | Từ chối ghép đôi | **TC-MATCH-03**: Bên nhận nhấn "Từ chối" lời mời. | Lời mời bị hủy, thông tin liên lạc được giữ kín tuyệt đối. |
 | **FR-40** | Đặt lịch hẹn xem phòng | **TC-APPT-01**: Đặt lịch hẹn với chủ phòng hợp lệ. | Sinh ra 1 lịch hẹn ở trạng thái `PENDING`. |
 
+## 5. Bộ kiểm thử hồi quy cho sáu nhóm sửa lỗi
+
+Các test bên dưới chạy trên database H2 tạm hoặc API giả lập có kiểm soát, không dùng dữ liệu Supabase/R2 thật. Không đánh dấu task hoàn thành/nghiệm thu chỉ dựa trên test tự động.
+
+| Nhóm | Bằng chứng tự động chính | Điều kiện cần giữ |
+|---|---|---|
+| 1 — Quyền xem liên hệ | `AppointmentContactPrivacyIntegrationTest`, `appointment_contact_privacy_test.dart` | Không lộ điện thoại khi chưa đủ quyền; chặn/khóa/hủy kết nối thu hồi quyền ở lần đọc tiếp theo. |
+| 2 — Chặn và lịch hẹn | `AppointmentEligibilityIntegrationTest`, `PublicProfileBlockIntegrationTest` | Chặn hai chiều, trạng thái tài khoản/tin phòng và quyền chủ phòng; vẫn giữ lịch sử và quyền hủy phù hợp. |
+| 3 — Khóa/mở khóa rõ ràng | `AdminUserStatusIntegrationTest`, `admin_user_status_api_test.dart`, `admin_user_status_widget_test.dart` | Lệnh idempotent, không tự khóa, không báo thành công sai ID/trạng thái. |
+| 4 — Ảnh riêng tư R2 | `PrivateMediaIntegrationTest`, `R2StorageServiceTest`, `private_upload_api_test.dart`, `admin_report_private_evidence_test.dart`, `chat_loading_test.dart` | Bucket private, key/purpose/owner hợp lệ, URL ngắn hạn đúng người xem; giữ draft khi gửi lỗi. |
+| 5 — Bộ lọc và hồ sơ | `room_filter_reset_test.dart`, `home_room_filter_reset_test.dart`, `profile_preferences_refresh_test.dart` | Reset không có trần giá ẩn; hủy không áp dụng; lưu khảo sát thành công tải lại tiêu chí, request cũ không ghi đè. |
+| 6 — Lỗi API | `ApiBusinessErrorIntegrationTest`, `ApiExceptionHandlerTest`, `Group6ServiceErrorsTest`, `AuthServiceTest`, `api_business_errors_test.dart` | Đúng mã HTTP và không ghi dữ liệu khi từ chối; lỗi thật vẫn 500 nhưng không lộ chi tiết; lỗi nghiệp vụ không làm client mất phiên/giả thành công. |
+
+Lệnh kiểm tra:
+
+```powershell
+# Từ thư mục backend
+.\mvnw.cmd test
+# Từ thư mục frontend
+flutter analyze --no-pub
+flutter test --no-pub
+```
+
+Kiểm thử nghiệm thu trên môi trường thật còn cần: thao tác chạm slider trên điện thoại nhỏ, luồng lưu khảo sát–tải hồ sơ với API thật, upload/read URL private R2 và luồng SMTP/Supabase. Kiểm tra riêng việc thoát khảo sát trong lúc request lưu đang chờ; đây chưa được xử lý trong nhóm 5/6. Không chạy lại schema/seed hoặc sửa dữ liệu thật để thực hiện bộ hồi quy tự động này.
+
 ---
 *Tài liệu được soạn thảo phục vụ Giai đoạn 5 (Tích hợp E2E & Thi công QA).*

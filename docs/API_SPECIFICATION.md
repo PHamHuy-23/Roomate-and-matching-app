@@ -60,15 +60,10 @@ Khi không có dữ liệu trả về, `data` là `null`. Response danh sách c�
   "status": 400,
   "message": "Dữ liệu không hợp lệ",
   "data": null,
-  "errors": [
-    {
-      "field": "email",
-      "code": "INVALID_EMAIL",
-      "message": "Email không đúng định dạng"
-    }
-  ],
-  "timestamp": "2026-09-12T10:30:00Z",
-  "path": "/api/v1/auth/register"
+  "fields": {
+    "email": "Email không đúng định dạng"
+  },
+  "timestamp": "2026-09-12T10:30:00Z"
 }
 ```
 
@@ -84,6 +79,8 @@ Khi không có dữ liệu trả về, `data` là `null`. Response danh sách c�
 | `409 Conflict` | Xung đột/trùng lặp nghiệp vụ | Email đã tồn tại, đã gửi lời mời |
 | `422 Unprocessable Entity` | Dữ liệu hợp lệ về cú pháp nhưng không thể xử lý nghiệp vụ | Chưa hoàn thành khảo sát để Matching |
 | `500 Internal Server Error` | Lỗi ngoài dự kiến phía server | Không để lộ stack trace cho client |
+
+Đây là dạng lỗi từ MVC/advice hiện tại: `fields` chỉ có khi Bean Validation thất bại; chưa trả mã nghiệp vụ `code`, danh sách `errors` hay `path`. Lỗi do Spring Security chặn trước controller vẫn dùng `401/403` từ filter, không bảo đảm cùng JSON body; Flutter sử dụng mã HTTP và thông báo dự phòng khi không có `message`.
 
 ### 1.4. Quy ước dữ liệu
 
@@ -597,6 +594,10 @@ Trạng thái: `PENDING`, `APPROVED`, `REJECTED`, `AVAILABLE`, `CLOSED`.
 Trạng thái: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`. Server lấy `requesterId` từ JWT và xác định `hostId` từ bài đăng.
 
 - Endpoint đang triển khai: `POST /appointments`, `GET /appointments/my`, `PUT /appointments/{id}/status?status=CANCELLED` (hoặc `CONFIRMED`/`COMPLETED` cho chủ phòng). `/my` trả lịch mà tài khoản hiện tại là người đặt **hoặc** chủ phòng; Flutter lọc `requesterId` khi hiển thị lịch đã đặt.
+- `requesterPhone` và `hostPhone` là các trường nullable. Chỉ trả số điện thoại khi chính người đặt và chủ phòng có kết nối `ACCEPTED` (Double Opt-in), cả hai tài khoản `ACTIVE` và không chặn nhau ở bất kỳ chiều nào. Trạng thái lịch hẹn, kể cả `CONFIRMED`, không tự cấp quyền xem liên hệ; lịch đã hủy/hoàn tất cũng không tự thu hồi một kết nối `ACCEPTED` còn hợp lệ.
+- Kiểm tra quyền liên hệ hiện tại ở mọi response tạo lịch, danh sách và cập nhật trạng thái, kể cả gửi lại trạng thái không đổi. Hủy kết nối, chặn nhau hoặc khóa một tài khoản sẽ ẩn cả hai số điện thoại trong response tiếp theo, không xóa lịch sử lịch hẹn. Thay đổi này không cần migration SQL.
+- Tạo lịch, xác nhận (`CONFIRMED`) và hoàn tất (`COMPLETED`) đều kiểm tra hai tài khoản `ACTIVE`, không chặn nhau hai chiều và tin phòng còn `APPROVED`/`AVAILABLE`. Tài khoản không hoạt động hoặc chặn nhau trả `403`; tin chưa duyệt/bị từ chối/đã đóng trả `400`, không lưu lịch mới hoặc đổi trạng thái. Token của chính tài khoản bị khóa vẫn bị lớp xác thực từ chối bằng `401`.
+- Chỉ chủ phòng được gửi lệnh xác nhận/hoàn tất, kể cả gửi lại `CONFIRMED` khi lịch đã xác nhận; lệnh lặp lại cũng không bỏ qua kiểm tra điều kiện hiện tại. Lịch sử không bị xóa hay tự đổi trạng thái khi chặn/khóa/đóng tin; người tham gia còn đăng nhập hợp lệ vẫn xem và hủy lịch `PENDING`/`CONFIRMED` được. Lịch `CANCELLED`/`COMPLETED` vẫn là trạng thái cuối, không cho thay đổi.
 - Cá nhân → **Lịch xem phòng** mở `/viewing-appointments`, không mở màn lời mời ghép đôi. Danh sách, chi tiết và xác nhận đặt lịch dùng ID, ngày giờ, phòng, người đăng, ghi chú và trạng thái API thật; không có lịch mẫu hay số lượng lịch tự gán. Các mục Sắp tới/Lịch sử/Đã hủy được phân loại theo thời gian và trạng thái thực tế; có tải lại, lỗi và thử lại.
 - Người đặt chỉ hủy lịch `PENDING`/`CONFIRMED`; không tự xác nhận hoặc hoàn tất. Hủy chỉ cập nhật UI sau response `CANCELLED` đúng lịch/tài khoản; thất bại giữ lịch để thử lại, khóa thao tác khi đang gửi. Không có ô lý do hủy vì API hiện chưa lưu trường này, và không khẳng định gửi push notification khi chưa có hỗ trợ.
 - Thông báo lịch dùng metadata vai trò/ID thay vì đoán theo tiêu đề: người đặt mở chi tiết lịch đúng ID; chủ phòng mở yêu cầu tại đúng tin đăng. Chi tiết kiểm tra lịch thuộc người đặt; mở phòng lấy dữ liệu tin hiện tại, tin không còn hiển thị báo lỗi thay vì dựng dữ liệu giả. Nút nhắn người đăng chỉ xuất hiện với lịch đã xác nhận; backend vẫn kiểm tra quyền chat.
@@ -616,7 +617,15 @@ Trạng thái: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`. Server lấy `r
 
 ### 5.5. Admin status update
 
-Endpoint hiện hành: `PUT`/`PATCH /admin/users/{userId}/status` hoặc `/toggle-status`, không nhận body và đảo trạng thái khóa/mở khóa. Ví dụ response:
+Endpoint hiện hành: `PUT`/`PATCH /admin/users/{userId}/status`, nhận JSON với trạng thái đích bắt buộc. Khóa tài khoản gửi `LOCKED`; mở khóa gửi `ACTIVE`:
+
+```json
+{
+  "status": "LOCKED"
+}
+```
+
+Chỉ chấp nhận hai giá trị viết hoa `ACTIVE` và `LOCKED`. Thiếu body/trường, `null`, chuỗi trống hoặc trạng thái khác trả `400`, không đổi tài khoản. Đây là thao tác đặt trạng thái, không đảo trạng thái: gửi lại cùng lệnh hoặc gửi từ màn hình đã cũ vẫn giữ đúng trạng thái đích. Response thành công:
 
 ```json
 {
@@ -625,7 +634,11 @@ Endpoint hiện hành: `PUT`/`PATCH /admin/users/{userId}/status` hoặc `/toggl
 }
 ```
 
-Admin không được khóa chính tài khoản đang đăng nhập.
+Chỉ admin đang hoạt động được thay đổi trạng thái; user thường nhận `403`, thiếu/không hợp lệ token hoặc admin bị khóa nhận `401`. Tài khoản đích không tồn tại trả `404`. Admin không được cập nhật trạng thái chính tài khoản đang đăng nhập (`403`) với cả lệnh khóa và mở khóa.
+
+Alias cũ `PUT`/`PATCH /admin/users/{userId}/toggle-status` vẫn được định tuyến nhưng cũng yêu cầu cùng JSON trạng thái đích, không còn hành vi toggle hoặc fallback khi thiếu body. Cần cập nhật backend và Flutter cùng nhau: client cũ gửi yêu cầu không body sẽ nhận `400`.
+
+Flutter gửi trạng thái đích qua `/status`, khóa thao tác khi đang chờ và chỉ cập nhật UI/callback khi response xác nhận đúng `userId` và trạng thái đã yêu cầu. Lỗi HTTP hoặc response thiếu/sai thông tin không được coi là thành công; giữ trạng thái hiển thị để thử lại. Cập nhật backend dùng khóa ghi trên dòng tài khoản hiện có, không thay đổi schema.
 
 Hành vi khóa tài khoản (`ACTIVE` → `LOCKED`) trên các endpoint hiện hành:
 
@@ -645,6 +658,9 @@ Frontend giữ các trường này khi chuyển từ danh sách sang chi tiết 
 
 Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên hệ, ngày sinh hoặc ngày tạo tài khoản. `createdAt` đã có trong bảng `users`, nên nhóm sửa này không yêu cầu migration SQL.
 
+- `GET /profile/public/{userId}` yêu cầu người xem đăng nhập bằng tài khoản `ACTIVE`. Nếu người xem và đối tượng chặn nhau ở bất kỳ chiều nào, trả `403` không kèm dữ liệu hồ sơ, kể cả đã kết nối `ACCEPTED`. Admin không vượt điều kiện chặn trên endpoint công khai; API chi tiết admin vẫn giữ quyền quản trị hiện có.
+- Hồ sơ không tồn tại, tài khoản đích bị khóa hoặc đã tắt tìm bạn vẫn trả `404`. Bỏ chặn chỉ khôi phục truy cập khi không còn chặn ở cả hai chiều và hồ sơ vẫn công khai; chặn một người khác không ảnh hưởng quyền xem hồ sơ này. Thay đổi dùng bảng chặn hiện có, không cần SQL mới.
+
 #### Chỉnh sửa hồ sơ cá nhân — giới thiệu và ngày sinh
 
 - Endpoint đang triển khai: `PUT /profile/user/{userId}`, query parameters `fullName`, `phone`, `gender`, và các trường tùy chọn `birthDate` (ISO date), `university`, `bioNote`. Chỉ chủ tài khoản hoặc admin có quyền cập nhật; response thành công là `UserResponseDTO`.
@@ -659,6 +675,37 @@ Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên 
 - Chat dùng các endpoint hiện hành `GET /chat/messages/{partnerId}` và `POST /chat/messages`. Lỗi tải lần đầu hiển thị lỗi thay vì lời chào cho cuộc trò chuyện trống. Nếu cập nhật định kỳ thất bại, giữ lịch sử đã tải và hiển thị cảnh báo; cập nhật thành công xóa cảnh báo. Không chạy các lượt tải lịch sử chồng nhau.
 - Chỉ xóa nội dung/ảnh đang soạn khi API xác nhận gửi thành công; gửi thất bại giữ bản nháp để thử lại. Giao diện không tự khẳng định người nhận “trực tuyến” khi chưa có dữ liệu trạng thái online từ backend.
 - Nhóm sửa này chỉ đổi trạng thái và xử lý lỗi ở Flutter, không thêm bảng/cột hay yêu cầu migration SQL.
+
+### 5.8. Ảnh riêng tư trên R2 — chat và minh chứng báo cáo
+
+- `POST /uploads/presign` nhận purpose `avatar`, `room-post`, `chat` hoặc `report`. Avatar/ảnh phòng dùng `R2_BUCKET_NAME` công khai và có `publicUrl`. Chat/báo cáo dùng bucket **khác** `R2_PRIVATE_BUCKET_NAME`, trả `publicUrl: null`; không được bật `r2.dev` hoặc custom domain công khai cho bucket private. Secret chỉ ở backend; quyền object của token được giới hạn trên hai bucket này.
+- Flutter upload bằng `uploadUrl` (PUT), kèm `Content-Type`, `Content-Length` và riêng chat/report có `Cache-Control: private, no-store` đã ký để lưu metadata chống cache trên object. CORS bucket phải cho phép các header này. Sau đó chat gửi `imageObjectKey` qua `POST /chat/messages`; báo cáo tiếp tục gửi `evidenceObjectKey`. Key phải đúng người upload, đúng purpose và đúng dạng `<directory>/<userId>/<UUID>.<jpg|png|webp>`. Key sai trả `403`, purpose không hợp lệ trả `400`; request bị từ chối không tạo tin nhắn/báo cáo. Mọi `imageUrl` cũ không trống trong request chat đều trả `400`, kể cả URL từng được coi là tin cậy; không còn tính năng dán URL ảnh chat.
+- Database dùng cột `chat_messages.image_url` và `reports.evidence_url` hiện có để lưu **key**, không lưu signed URL. Không thêm bảng/cột và không có migration SQL trong nhóm sửa này.
+- Response chat vẫn có `imageUrl`, nhưng chỉ là signed GET URL: cấp cho đúng hai người trong cuộc trò chuyện, cả hai `ACTIVE` và không chặn nhau ở bất kỳ chiều nào. Admin/người ngoài không có quyền xem ảnh chat người khác. Hủy kết nối không xóa lịch sử; quyền gửi tin vẫn cần kết nối `ACCEPTED` hoặc lịch hẹn `CONFIRMED`. Chặn/khóa giữ lịch sử chữ nhưng ngừng cấp URL ảnh mới; bỏ chặn/mở khóa chỉ khôi phục nếu mọi điều kiện còn hợp lệ.
+- `GET /admin/reports` và response xử lý báo cáo đều trả `evidenceUrl` dạng signed GET chỉ cho admin `ACTIVE`. Người thường nhận `403`, token thiếu/không hợp lệ hoặc admin bị khóa nhận `401`. Reporter bị khóa không làm mất quyền xem minh chứng của admin.
+- Signed GET mặc định 2 phút, cấu hình `R2_PRIVATE_READ_DURATION_MINUTES` bị giới hạn 1–5 phút. Presign/chat/báo cáo admin dùng HTTP `Cache-Control: no-store`, object GET có `private, no-store`. Signed URL là bearer URL: ai đã có link vẫn có thể dùng đến hết hạn; chặn/khóa không thu hồi ngay link đã cấp và không thu hồi bản đã tải. URL hết hạn cần tải lại dữ liệu để được kiểm tra quyền và cấp link mới. Xem [Cloudflare presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
+- Thiếu/bucket private không hợp lệ hoặc trùng public trả `503` cho upload/ghi ảnh private; không fallback sang public. Nếu `R2_ENABLED=false`, endpoint upload không được đăng ký; gửi key ảnh chat/báo cáo trả `503`. Chat chữ/báo cáo không ảnh vẫn hoạt động. Khi private storage chưa cấu hình, lịch sử chat/dữ liệu báo cáo vẫn trả được nhưng trường ảnh là `null`.
+- Legacy URL public hoặc key sai cấu trúc trong lịch sử trả ảnh `null`, không lộ URL/key qua mapper DTO. **Object đã upload public trước đây không tự trở thành riêng tư**: cần xử lý/migrate/gỡ bản public cũ trên R2 riêng và cập nhật tham chiếu; bản cập nhật không tự sửa DB hay dữ liệu R2 cũ. Bucket public thật sự phải được kiểm tra trên Cloudflare; backend không thể xác minh quyền public của bucket chỉ bằng presigning offline.
+- Cập nhật backend và Flutter cùng nhau, thêm cấu hình bucket private rồi khởi động/build lại. Flutter giữ ảnh preview/nội dung/key sau lỗi gửi để thử lại không upload trùng; lỗi upload giữ bản nháp và không chuyển sang dán URL công khai.
+- Màn báo cáo admin làm mới dữ liệu khi chọn/chọn lại báo cáo; có nút làm mới/thử lại ảnh khi hết hạn hoặc lỗi. Trong lúc làm mới hoặc khi lỗi, không dùng URL cũ; giữ lựa chọn theo ID và bản nháp ghi chú, bỏ response đến trễ. Không dùng `imageUrl` legacy thay cho `evidenceUrl` bị thiếu, và không hiển thị URL public/không hợp lệ như minh chứng private.
+- Chat polling giữ cùng signed URL cho cùng message/người gửi/người nhận/host/path khi còn hơn 30 giây và thời hạn ký nằm trong 60–300 giây, để tránh tải lại cùng ảnh mỗi 3 giây. Các trường nội dung/trạng thái vẫn lấy response mới. Server trả ảnh `null` thì xóa URL ngay; ảnh thay đổi hoặc link gần hết hạn dùng URL mới, không tái dùng link public/legacy để giữ ảnh.
+
+### 5.9. Bộ lọc phòng và tải lại tiêu chí trên hồ sơ
+
+- Bộ lọc phòng mặc định và “Xóa bộ lọc” dùng giá tối thiểu 0, không giới hạn giá tối đa, tất cả khu vực/diện tích và không chọn tiện ích. Không khôi phục bộ lọc demo; phòng dưới 1 triệu hoặc trên 15 triệu vẫn xuất hiện khi không có điều kiện lọc khác.
+- Mở rồi áp dụng bộ lọc không tự nâng giá tối thiểu hay hạ giá tối đa đã chọn. Giá không giới hạn được biểu diễn riêng trong trạng thái Flutter, không gửi `Infinity` qua API; thanh trượt dùng giá trị hữu hạn và hiển thị rõ lựa chọn không giới hạn. Hủy màn bộ lọc không áp dụng bản nháp. Tắt lọc nhanh giá hoặc “Xem tất cả phòng” cũng bỏ trần giá mặc định.
+- Sau khi khảo sát lưu thành công và trả `true`, màn hồ sơ tải lại `GET /profile/preferences/{userId}` để hiển thị tiêu chí mới. Quay lại/hủy hoặc lưu thất bại không báo cập nhật thành công. Khi tải hoặc lỗi, hiển thị trạng thái tương ứng và cho thử lại; chỉ response thành công không có tiêu chí mới được coi là chưa thiết lập. Response cũ đến trễ không ghi đè lượt tải mới.
+- Nhóm sửa này chỉ thay đổi Flutter và kiểm thử, không đổi endpoint/backend/schema và không cần chạy SQL trên Supabase.
+
+### 5.10. Chuẩn hóa lỗi nghiệp vụ và hồi quy
+
+- Không tìm thấy tài nguyên trả `404`, gồm duyệt tin không tồn tại, tài khoản/báo cáo/lịch không tồn tại hoặc người dùng không tồn tại khi lưu tiêu chí. Chưa thiết lập tiêu chí vẫn có thể trả kết quả rỗng theo luồng hiện có. Sai ID/số/boolean/ngày, thiếu tham số, JSON sai hoặc validation thất bại trả `400`; không đi vào thao tác ghi.
+- Tự đặt lịch phòng của mình, thời gian hẹn null/quá khứ, tự gửi tin hoặc tự gửi lời mời trả `400`. Vi phạm quyền/chặn/khóa tiếp tục trả `403`; thiếu/hết hiệu lực xác thực giữ `401`, không hạ thành lỗi validation. Không thay đổi quy tắc liên hệ, lịch hẹn hay ảnh private của các nhóm trước.
+- Đăng ký email đã tồn tại trả `409`; đổi mật khẩu với mật khẩu hiện tại sai trả `400`, không thay đổi mật khẩu hoặc thu hồi phiên. Lỗi lưu/đọc do dịch vụ chưa sẵn sàng giữ mã `503` đã chỉ định, không đổi thành `400`.
+- Tạo/sửa tin với `imageObjectKey` không trống nhưng R2 chưa cấu hình trả `503`. Sửa tin kiểm tra ảnh trước khi đổi nội dung/trạng thái; không bỏ qua ảnh rồi báo thành công. Tin không yêu cầu ảnh vẫn dùng luồng hiện có.
+- MVC giữ `404` cho route không tồn tại, `405` cùng header `Allow` cho method không hỗ trợ, `415` cho Content-Type không phù hợp. `RuntimeException`/exception ngoài dự kiến vẫn trả `500` với thông báo chung “Đã xảy ra lỗi máy chủ”; chi tiết chỉ ghi log server, không trả exception, SQL hay thông tin cấu hình nội bộ cho client.
+- Flutter giữ mã HTTP/thông báo lỗi; các lỗi `400/403/404/409/500/503` không tự làm mất phiên, không cập nhật trạng thái hoặc mở màn thành công khi request thất bại. `401` vẫn xử lý refresh token/hết phiên theo cơ chế hiện có.
+- Không thêm bảng/cột, migration, dependency hoặc cấu hình Supabase trong nhóm này. Cần khởi động lại backend để áp dụng; kiểm thử tự động dùng H2/mock, không thay thế kiểm thử thiết bị và dịch vụ thật.
 
 ## 6. Sự kiện tự động và quyền riêng tư
 
@@ -682,7 +729,7 @@ Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên 
 | `EMAIL_ALREADY_EXISTS` | 409 | Email đã được đăng ký |
 | `PREFERENCES_INCOMPLETE` | 422 | Chưa đủ tiêu chí để Matching |
 | `MATCH_REQUEST_ALREADY_EXISTS` | 409 | Yêu cầu giữa hai người đã tồn tại |
-| `SELF_MATCH_NOT_ALLOWED` | 422 | Gửi yêu cầu cho chính mình |
+| `SELF_MATCH_NOT_ALLOWED` | 400 | Gửi yêu cầu cho chính mình |
 | `MATCH_REQUEST_NOT_PENDING` | 409 | Yêu cầu không còn ở trạng thái chờ |
 | `CONTACT_NOT_UNLOCKED` | 403 | Chưa hoàn tất Double Opt-in |
 | `RESOURCE_NOT_FOUND` | 404 | Không tìm thấy tài nguyên |

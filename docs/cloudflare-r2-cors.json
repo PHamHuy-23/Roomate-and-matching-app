@@ -11,7 +11,8 @@
     ],
     "AllowedHeaders": [
       "Content-Type",
-      "Content-Length"
+      "Content-Length",
+      "Cache-Control"
     ],
     "ExposeHeaders": [
       "ETag"

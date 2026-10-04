@@ -64,13 +64,24 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt các c�
 
 ### Bước 2: Cấu hình Cloudflare R2
 
-1. Tạo bucket, ví dụ `roommate-hub`.
-2. Tạo R2 API token chỉ có quyền đọc/ghi bucket này.
-3. Bật public bucket hoặc gắn custom domain để lấy `R2_PUBLIC_URL`.
-4. Áp dụng CORS mẫu tại `docs/cloudflare-r2-cors.json` nếu chạy Flutter Web.
-5. Điền `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` và `R2_PUBLIC_URL` trong `backend/.env`.
+1. Tạo **hai bucket khác nhau**: `roommate-hub` cho avatar/ảnh phòng công khai, và `roommate-hub-private` cho ảnh chat/minh chứng báo cáo.
+2. Tạo R2 API token có quyền đọc/ghi object, chỉ giới hạn trên hai bucket này. Token cũ chỉ cấp quyền bucket public cần được thay/cập nhật quyền phù hợp.
+3. Chỉ bật Public Development URL hoặc gắn custom domain cho bucket public để lấy `R2_PUBLIC_URL`. Bucket private phải **tắt cả Public Development URL (`r2.dev`) và mọi custom domain công khai**.
+4. Áp dụng CORS mẫu tại `docs/cloudflare-r2-cors.json` cho cả hai bucket nếu chạy Flutter Web; thay origin mẫu bằng origin web thực tế.
+5. Điền `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` và `R2_PUBLIC_URL` trong `backend/.env`, đồng thời thêm:
 
-R2 secret chỉ nằm ở backend. Flutter xin presigned PUT URL ngắn hạn từ backend rồi upload trực tiếp lên R2.
+   ```properties
+   R2_PRIVATE_BUCKET_NAME=roommate-hub-private
+   R2_PRIVATE_READ_DURATION_MINUTES=2
+   ```
+
+6. Khởi động lại backend và chạy/build lại Flutter để dùng cùng API mới. Không cần migration SQL cho thay đổi R2 này.
+
+R2 secret chỉ nằm ở backend. Flutter xin presigned PUT URL rồi upload trực tiếp lên R2. Với chat/báo cáo, ticket không có URL public: Flutter gửi object key, backend lưu key trong cột ảnh hiện có và chỉ cấp GET URL ngắn hạn sau khi kiểm tra quyền. Chat: đúng hai người tham gia, tài khoản còn hoạt động và không chặn nhau; minh chứng báo cáo: admin đang hoạt động. GET mặc định 2 phút, giới hạn 1–5 phút; hết hạn thì tải lại chat/danh sách báo cáo để lấy URL mới.
+
+Thiếu hoặc dùng trùng bucket private/public thì thao tác ảnh private trả `503`, không chuyển ảnh sang bucket public. Avatar/ảnh phòng vẫn hoạt động nếu cấu hình public hợp lệ. Backend không tự kiểm tra được trạng thái public thực tế của bucket; cần kiểm tra Settings trên Cloudflare trước khi sử dụng.
+
+**Ảnh cũ:** URL public cũ của chat/báo cáo không còn được trả bởi API, nhưng object cũ trên bucket public vẫn có thể truy cập bằng URL đã biết. Cần chuyển/re-upload sang private và cập nhật tham chiếu đúng object key, hoặc gỡ object công khai cũ theo kế hoạch riêng; bản cập nhật không tự di chuyển/xóa dữ liệu R2. URL đã cấp là bearer URL, vẫn dùng được đến hết hạn kể cả sau khi chặn/khóa; không thu hồi được bản ảnh đã tải xuống. Xem [Cloudflare: public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/) và [presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
 
 #### 🔑 Tài khoản mẫu thử nghiệm (Test Accounts)
 Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**

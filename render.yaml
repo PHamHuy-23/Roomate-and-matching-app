@@ -39,5 +39,9 @@ services:
         sync: false
       - key: R2_BUCKET_NAME
         sync: false
+      - key: R2_PRIVATE_BUCKET_NAME
+        sync: false
       - key: R2_PUBLIC_URL
         sync: false
+      - key: R2_PRIVATE_READ_DURATION_MINUTES
+        value: 2
