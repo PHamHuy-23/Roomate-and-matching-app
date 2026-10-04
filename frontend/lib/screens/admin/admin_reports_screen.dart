@@ -40,6 +40,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   ApiService get _api => widget.apiService ?? ApiService();
   bool _isLoading = false;
   bool _isResolving = false;
+  bool _isRefreshingEvidence = false;
+  int _loadVersion = 0;
+  String? _selectedEvidenceUrl;
+  String? _evidenceError;
   final _noteController = TextEditingController();
 
   @override
@@ -59,14 +63,32 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
     _loadReports();
   }
 
-  Future<void> _loadReports() async {
+  Future<void> _loadReports({int? selectedReportId}) async {
+    final loadVersion = ++_loadVersion;
+    final refresh = _reports.isNotEmpty;
+    final requestedId =
+        selectedReportId ??
+        (_selectedReport.rawId > 0 ? _selectedReport.rawId : null);
     if (!_api.hasAuthToken) {
+      setState(() {
+        _selectedEvidenceUrl = null;
+        _evidenceError = 'Cần đăng nhập lại để tải báo cáo.';
+        _loadError = _evidenceError;
+        _isLoading = false;
+        _isRefreshingEvidence = false;
+      });
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = !refresh;
+      _isRefreshingEvidence = refresh;
+      // Do not keep using a cached bearer URL while its replacement is loading.
+      _selectedEvidenceUrl = null;
+      _evidenceError = null;
+    });
     try {
       final list = await _api.getAdminReports();
-      if (!mounted) return;
+      if (!mounted || loadVersion != _loadVersion) return;
       final loaded = list.map((item) {
         final map = item as Map<String, dynamic>;
         final rawId = map['id'] is int
@@ -90,8 +112,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             : status == 'DISMISSED'
             ? 'Đã bác bỏ'
             : 'Đang chờ';
-        final evidenceUrl =
-            map['evidenceUrl']?.toString() ?? map['imageUrl']?.toString();
+        final evidenceUrl = map['evidenceUrl']?.toString();
         return _AdminReport(
           rawId: rawId,
           id: 'BC-${rawId.toString().padLeft(3, '0')}',
@@ -108,22 +129,41 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       setState(() {
         _reports = loaded;
         _loadError = null;
-        if (_selectedIndex >= _reports.length) _selectedIndex = 0;
+        _selectedIndex = requestedId == null
+            ? (loaded.isEmpty ? -1 : 0)
+            : loaded.indexWhere((report) => report.rawId == requestedId);
+        if (_selectedIndex >= 0) {
+          final url = loaded[_selectedIndex].evidenceUrl;
+          _evidenceError = _evidenceUrlError(url);
+          _selectedEvidenceUrl = _evidenceError == null ? url : null;
+        } else if (requestedId != null) {
+          _evidenceError = 'Báo cáo đã chọn không còn trong danh sách.';
+          _loadError = _evidenceError;
+        }
         _isLoading = false;
+        _isRefreshingEvidence = false;
       });
     } catch (e) {
-      if (mounted) {
+      if (mounted && loadVersion == _loadVersion) {
         setState(() {
-          _reports = [];
-          _loadError = 'Không tải được báo cáo: $e';
+          _selectedEvidenceUrl = null;
+          if (refresh) {
+            _evidenceError = 'Không làm mới được bằng chứng: $e';
+          } else {
+            _reports = [];
+            _loadError = 'Không tải được báo cáo: $e';
+          }
           _isLoading = false;
+          _isRefreshingEvidence = false;
         });
       }
     }
   }
 
   _AdminReport get _selectedReport =>
-      _reports.isNotEmpty && _selectedIndex < _reports.length
+      _reports.isNotEmpty &&
+          _selectedIndex >= 0 &&
+          _selectedIndex < _reports.length
       ? _reports[_selectedIndex]
       : _AdminReport(
           rawId: 0,
@@ -175,9 +215,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       color: Colors.transparent,
       child: InkWell(
         key: Key('admin_report_${report.id}'),
-        onTap: () => setState(() {
-          _selectedIndex = _reports.indexOf(report);
-        }),
+        onTap: () {
+          setState(() => _selectedIndex = _reports.indexOf(report));
+          _loadReports(selectedReportId: report.rawId);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           width: double.infinity,
@@ -214,6 +255,124 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildEvidence() {
+    if (_isLoading || _isRefreshingEvidence) {
+      return const Center(
+        child: CircularProgressIndicator(key: Key('admin_evidence_loading')),
+      );
+    }
+    final evidenceError =
+        _evidenceError ?? _evidenceUrlError(_selectedEvidenceUrl);
+    if (evidenceError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            evidenceError,
+            key: const Key('admin_evidence_error'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+      );
+    }
+    final url = _selectedEvidenceUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        key: ValueKey('admin_evidence_$url'),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.broken_image, size: 32, color: Colors.grey),
+              const Text(
+                'Ảnh lỗi hoặc liên kết đã hết hạn.',
+                style: TextStyle(fontSize: 12),
+              ),
+              TextButton(
+                key: const Key('admin_evidence_retry'),
+                onPressed: () =>
+                    _loadReports(selectedReportId: _selectedReport.rawId),
+                child: const Text('Tải lại ảnh'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            size: 36,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Không có ảnh đính kèm',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _evidenceUrlError(String? value) {
+    if (value == null || value.isEmpty) return null;
+    const invalid = 'Liên kết ảnh không hợp lệ. Hãy làm mới ảnh.';
+    final uri = Uri.tryParse(value);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.fragment.isNotEmpty ||
+        uri.path.isEmpty) {
+      return invalid;
+    }
+    final query = uri.queryParametersAll;
+    if ([
+      'X-Amz-Signature',
+      'X-Amz-Date',
+      'X-Amz-Expires',
+    ].any((key) => query[key]?.length != 1)) {
+      return invalid;
+    }
+    final signature = query['X-Amz-Signature']!.single;
+    final timestamp = query['X-Amz-Date']!.single;
+    final expires = int.tryParse(query['X-Amz-Expires']!.single);
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(signature) ||
+        !RegExp(r'^\d{8}T\d{6}Z$').hasMatch(timestamp) ||
+        expires == null ||
+        expires < 60 ||
+        expires > 300) {
+      return invalid;
+    }
+    final signedAt = DateTime.tryParse(
+      '${timestamp.substring(0, 4)}-${timestamp.substring(4, 6)}-'
+      '${timestamp.substring(6, 8)}T${timestamp.substring(9, 11)}:'
+      '${timestamp.substring(11, 13)}:${timestamp.substring(13, 15)}Z',
+    );
+    if (signedAt == null ||
+        signedAt.year != int.parse(timestamp.substring(0, 4)) ||
+        signedAt.month != int.parse(timestamp.substring(4, 6)) ||
+        signedAt.day != int.parse(timestamp.substring(6, 8)) ||
+        signedAt.hour != int.parse(timestamp.substring(9, 11)) ||
+        signedAt.minute != int.parse(timestamp.substring(11, 13)) ||
+        signedAt.second != int.parse(timestamp.substring(13, 15))) {
+      return invalid;
+    }
+    if (!signedAt
+        .add(Duration(seconds: expires))
+        .isAfter(DateTime.now().toUtc())) {
+      return 'Liên kết ảnh đã hết hạn. Hãy làm mới ảnh.';
+    }
+    return null;
   }
 
   @override
@@ -453,57 +612,41 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                     width: 224,
                                     height: 147,
                                     color: Colors.grey.shade300,
-                                    child:
-                                        _selectedReport.evidenceUrl != null &&
-                                            _selectedReport
-                                                .evidenceUrl!
-                                                .isNotEmpty
-                                        ? Image.network(
-                                            _selectedReport.evidenceUrl!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stack) =>
-                                                    const Center(
-                                                      child: Icon(
-                                                        Icons.broken_image,
-                                                        size: 48,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                          )
-                                        : const Center(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  Icons
-                                                      .image_not_supported_outlined,
-                                                  size: 36,
-                                                  color: Colors.grey,
-                                                ),
-                                                SizedBox(height: 4),
-                                                Text(
-                                                  'Không có ảnh đính kèm',
-                                                  style: TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                                    child: _buildEvidence(),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                const Text(
-                                  'Bằng chứng đính kèm',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: 'SourceSansPro',
-                                    color: Color(0xFF65746F),
-                                  ),
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Bằng chứng đính kèm',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'SourceSansPro',
+                                          color: Color(0xFF65746F),
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      key: const Key('admin_evidence_refresh'),
+                                      style: TextButton.styleFrom(
+                                        minimumSize: Size.zero,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed:
+                                          _isLoading || _isRefreshingEvidence
+                                          ? null
+                                          : () => _loadReports(),
+                                      child: const Text('Làm mới ảnh'),
+                                    ),
+                                  ],
                                 ),
                                 const Spacer(),
                                 const Text(
@@ -610,7 +753,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                                   note: note,
                                                 );
                                               }
-                                              if (!mounted || !context.mounted) {
+                                              if (!mounted ||
+                                                  !context.mounted) {
                                                 return;
                                               }
                                               Navigator.pushReplacementNamed(
@@ -618,7 +762,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                                 AppRoutes.adminReportResolved,
                                               );
                                             } catch (e) {
-                                              if (!mounted || !context.mounted) {
+                                              if (!mounted ||
+                                                  !context.mounted) {
                                                 return;
                                               }
                                               ScaffoldMessenger.of(

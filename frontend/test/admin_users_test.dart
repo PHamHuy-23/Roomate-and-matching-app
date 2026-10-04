@@ -164,7 +164,11 @@ void main() {
             'role': 'Thành viên',
             'status': 'Đã khóa',
           },
-          onToggleStatus: (_) async {},
+          onSetStatus: (userId, status) async {
+            expect(userId, 28);
+            expect(status, 'ACTIVE');
+            return 'ACTIVE';
+          },
         ),
       ),
     );

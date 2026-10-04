@@ -12,12 +12,14 @@ class ChatScreen extends StatefulWidget {
   final int? partnerId;
   final String? partnerName;
   final ApiService? apiService;
+  final ImagePicker? imagePicker;
 
   const ChatScreen({
     super.key,
     this.partnerId,
     this.partnerName,
     this.apiService,
+    this.imagePicker,
   });
 
   @override
@@ -40,10 +42,10 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isUploadingImage = false;
   Timer? _pollingTimer;
 
-  final ImagePicker _picker = ImagePicker();
+  late final ImagePicker _picker = widget.imagePicker ?? ImagePicker();
   XFile? _stagedImageFile;
   Uint8List? _stagedImageBytes;
-  String? _stagedImageUrl;
+  String? _stagedImageObjectKey;
 
   @override
   void initState() {
@@ -84,8 +86,9 @@ class _ChatScreenState extends State<ChatScreen> {
       // A response started before a successful send must not erase that message.
       if (revision != _messageRevision) return;
       final previousCount = _messages.length;
+      final refreshed = _reuseValidPrivateImages(list);
       setState(() {
-        _messages = list;
+        _messages = refreshed;
         _isLoading = false;
         _hasLoadedMessages = true;
         _loadError = null;
@@ -102,6 +105,102 @@ class _ChatScreenState extends State<ChatScreen> {
     } finally {
       _isFetching = false;
     }
+  }
+
+  List<ChatMessage> _reuseValidPrivateImages(List<ChatMessage> incoming) {
+    final previous = {for (final message in _messages) message.id: message};
+    final now = DateTime.now().toUtc();
+    return incoming.map((message) {
+      final old = previous[message.id];
+      // An absent URL is a permission revocation, not a renewal request.
+      if (old == null ||
+          message.imageUrl == null ||
+          old.senderId != message.senderId ||
+          old.receiverId != message.receiverId) {
+        return message;
+      }
+      final oldUri = _signedChatImageUri(
+        old,
+        now,
+        minimumRemaining: const Duration(seconds: 30),
+      );
+      final newUri = _signedChatImageUri(message, now);
+      if (oldUri == null ||
+          newUri == null ||
+          oldUri.host != newUri.host ||
+          oldUri.port != newUri.port ||
+          oldUri.path != newUri.path) {
+        return message;
+      }
+      // Keep the same Image.network cache key until renewal is necessary;
+      // all text/read-state metadata still comes from the newest response.
+      return ChatMessage(
+        id: message.id,
+        senderId: message.senderId,
+        senderName: message.senderName,
+        senderAvatar: message.senderAvatar,
+        receiverId: message.receiverId,
+        receiverName: message.receiverName,
+        receiverAvatar: message.receiverAvatar,
+        content: message.content,
+        imageUrl: old.imageUrl,
+        isRead: message.isRead,
+        createdAt: message.createdAt,
+        fromMe: message.fromMe,
+      );
+    }).toList();
+  }
+
+  Uri? _signedChatImageUri(
+    ChatMessage message,
+    DateTime now, {
+    Duration minimumRemaining = Duration.zero,
+  }) {
+    final url = message.imageUrl;
+    if (url == null) return null;
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasFragment ||
+        !RegExp(
+          '/chat/${message.senderId}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|png|webp)\$',
+        ).hasMatch(uri.path)) {
+      return null;
+    }
+    final query = uri.queryParametersAll;
+    for (final field in [
+      'X-Amz-Algorithm',
+      'X-Amz-Date',
+      'X-Amz-Expires',
+      'X-Amz-Signature',
+    ]) {
+      if (query[field]?.length != 1) return null;
+    }
+    if (query['X-Amz-Algorithm']!.single != 'AWS4-HMAC-SHA256' ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(query['X-Amz-Signature']!.single)) {
+      return null;
+    }
+    final date = query['X-Amz-Date']!.single;
+    if (!RegExp(r'^[0-9]{8}T[0-9]{6}Z$').hasMatch(date)) return null;
+    final signedAt = DateTime.tryParse(
+      '${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}'
+      'T${date.substring(9, 11)}:${date.substring(11, 13)}:${date.substring(13, 15)}Z',
+    );
+    final expires = int.tryParse(query['X-Amz-Expires']!.single);
+    if (signedAt == null ||
+        DateFormat("yyyyMMdd'T'HHmmss'Z'").format(signedAt) != date ||
+        expires == null ||
+        expires < 60 ||
+        expires > 300 ||
+        signedAt.isAfter(now.add(const Duration(seconds: 30))) ||
+        !signedAt
+            .add(Duration(seconds: expires))
+            .isAfter(now.add(minimumRemaining))) {
+      return null;
+    }
+    return uri;
   }
 
   void _showLoadError(String message) {
@@ -154,7 +253,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _stagedImageFile = null;
       _stagedImageBytes = null;
-      _stagedImageUrl = null;
+      _stagedImageObjectKey = null;
     });
   }
 
@@ -177,65 +276,13 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _stagedImageFile = file;
         _stagedImageBytes = bytes;
-        _stagedImageUrl = null;
+        _stagedImageObjectKey = null;
       });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Không thể chọn ảnh: $e')));
-    }
-  }
-
-  Future<void> _promptImageUrl() async {
-    final urlCtrl = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Nhập link hình ảnh',
-          style: TextStyle(
-            fontFamily: 'SourceSansPro',
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: TextField(
-          controller: urlCtrl,
-          decoration: const InputDecoration(
-            hintText: 'https://example.com/image.jpg',
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-          keyboardType: TextInputType.url,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF087E6B),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              final link = urlCtrl.text.trim();
-              if (link.isNotEmpty) {
-                Navigator.pop(ctx, link);
-              }
-            },
-            child: const Text('Xác nhận'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _stagedImageUrl = result;
-        _stagedImageFile = null;
-        _stagedImageBytes = null;
-      });
     }
   }
 
@@ -325,27 +372,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   _pickImage(ImageSource.camera);
                 },
               ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFEAF8F5),
-                  child: Icon(Icons.link_rounded, color: Color(0xFF087E6B)),
-                ),
-                title: const Text(
-                  'Dán link ảnh (URL)',
-                  style: TextStyle(
-                    fontFamily: 'SourceSansPro',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text(
-                  'Nhập liên kết hình ảnh trực tiếp',
-                  style: TextStyle(fontFamily: 'SourceSansPro', fontSize: 12),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _promptImageUrl();
-                },
-              ),
             ],
           ),
         ),
@@ -356,18 +382,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     final partnerId = widget.partnerId;
-    final hasImage =
-        _stagedImageBytes != null ||
-        (_stagedImageUrl != null && _stagedImageUrl!.isNotEmpty);
+    final hasImage = _stagedImageBytes != null;
 
     if ((text.isEmpty && !hasImage) || !_hasPartner || _isSending) return;
 
     setState(() => _isSending = true);
 
-    String? finalImageUrl = _stagedImageUrl;
-
-    // Upload local file if staged
-    if (_stagedImageBytes != null && _stagedImageFile != null) {
+    // Retain the uploaded key and local preview until sending succeeds. A
+    // failed send can retry the same private object without uploading again.
+    if (_stagedImageBytes != null &&
+        _stagedImageFile != null &&
+        _stagedImageObjectKey == null) {
       setState(() => _isUploadingImage = true);
       try {
         final ticket = await _api.uploadImage(
@@ -376,12 +401,8 @@ class _ChatScreenState extends State<ChatScreen> {
           contentType: _contentType(_stagedImageFile!.name),
           purpose: 'chat',
         );
-        finalImageUrl = ticket.publicUrl;
         if (!mounted) return;
-        setState(() {
-          _stagedImageUrl = finalImageUrl;
-          _stagedImageFile = null;
-        });
+        setState(() => _stagedImageObjectKey = ticket.objectKey);
       } catch (uploadError) {
         if (!mounted) return;
         setState(() {
@@ -391,7 +412,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Không thể tải ảnh lên máy chủ: $uploadError. Bạn có thể chọn cách dán link ảnh.',
+              'Không thể tải ảnh lên máy chủ: $uploadError. Ảnh và nội dung được giữ lại để thử lại.',
             ),
           ),
         );
@@ -405,7 +426,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final sent = await _api.sendChatMessage(
         receiverId: partnerId!,
         content: text.isNotEmpty ? text : '[Hình ảnh]',
-        imageUrl: finalImageUrl,
+        imageObjectKey: _stagedImageObjectKey,
       );
       if (!mounted) return;
       _messageController.clear();
@@ -691,8 +712,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildStagedImagePreview() {
-    if (_stagedImageBytes == null &&
-        (_stagedImageUrl == null || _stagedImageUrl!.isEmpty)) {
+    if (_stagedImageBytes == null) {
       return const SizedBox.shrink();
     }
 
@@ -707,14 +727,7 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 56,
               height: 56,
               color: Colors.grey.shade200,
-              child: _stagedImageBytes != null
-                  ? Image.memory(_stagedImageBytes!, fit: BoxFit.cover)
-                  : Image.network(
-                      _stagedImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.broken_image, color: Colors.grey),
-                    ),
+              child: Image.memory(_stagedImageBytes!, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),
@@ -724,9 +737,7 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _stagedImageFile != null
-                      ? _stagedImageFile!.name
-                      : 'Ảnh từ liên kết web',
+                  _stagedImageFile!.name,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -898,10 +909,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
-                          hintText:
-                              _stagedImageBytes != null ||
-                                  (_stagedImageUrl != null &&
-                                      _stagedImageUrl!.isNotEmpty)
+                          hintText: _stagedImageBytes != null
                               ? 'Thêm chú thích ảnh…'
                               : 'Nhập tin nhắn…',
                           hintStyle: const TextStyle(

@@ -87,9 +87,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: RoomFiltersScreen()));
     expect(find.text('Bộ lọc phòng trọ'), findsOneWidget);
     expect(find.text('Tìm căn phòng phù hợp với bạn'), findsOneWidget);
-    expect(find.text('Bình Thạnh, TP.HCM'), findsOneWidget);
-    expect(find.text('2.000.000đ — 4.000.000đ'), findsOneWidget);
-    expect(find.text('Từ 20 m²'), findsOneWidget);
+    expect(find.text('Tất cả khu vực'), findsOneWidget);
+    expect(find.text('Không giới hạn giá'), findsOneWidget);
+    expect(find.text('Tất cả diện tích'), findsOneWidget);
     expect(find.text('Xem phòng phù hợp'), findsOneWidget);
     await tester.tap(find.text('Máy lạnh'));
     await tester.scrollUntilVisible(

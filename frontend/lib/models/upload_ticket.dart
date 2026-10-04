@@ -8,7 +8,8 @@ class UploadTicket {
   });
 
   final String uploadUrl;
-  final String publicUrl;
+  // Private attachments never have a public URL; use their object key to send.
+  final String? publicUrl;
   final String objectKey;
   final String contentType;
   final int expiresInSeconds;
@@ -16,7 +17,7 @@ class UploadTicket {
   factory UploadTicket.fromJson(Map<String, dynamic> json) {
     return UploadTicket(
       uploadUrl: json['uploadUrl'] as String? ?? '',
-      publicUrl: json['publicUrl'] as String? ?? '',
+      publicUrl: json['publicUrl'] as String?,
       objectKey: json['objectKey'] as String? ?? '',
       contentType: json['contentType'] as String? ?? '',
       expiresInSeconds: json['expiresInSeconds'] as int? ?? 0,

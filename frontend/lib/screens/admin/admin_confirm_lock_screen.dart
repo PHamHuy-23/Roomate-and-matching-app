@@ -5,10 +5,16 @@ import '../../services/api_service.dart';
 import '../../widgets/admin_profile_avatar.dart';
 
 class AdminConfirmLockScreen extends StatefulWidget {
-  const AdminConfirmLockScreen({super.key, this.user, this.onStatusChanged});
+  const AdminConfirmLockScreen({
+    super.key,
+    this.user,
+    this.onStatusChanged,
+    this.onSetStatus,
+  });
 
   final Map<String, String>? user;
   final ValueChanged<String>? onStatusChanged;
+  final Future<String> Function(int userId, String status)? onSetStatus;
 
   @override
   State<AdminConfirmLockScreen> createState() => _AdminConfirmLockScreenState();
@@ -29,6 +35,7 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
   }
 
   Future<void> _confirmLock() async {
+    if (_isSubmitting) return;
     final userId = _userId;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -41,9 +48,16 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await _api.toggleUserStatus(userId);
+      const requestedStatus = 'LOCKED';
+      final status = await (widget.onSetStatus ?? _api.setUserStatus)(
+        userId,
+        requestedStatus,
+      );
+      if (status != requestedStatus) {
+        throw const ApiException('Máy chủ chưa xác nhận khóa tài khoản');
+      }
       if (!mounted) return;
-      widget.onStatusChanged?.call('Đã khóa');
+      widget.onStatusChanged?.call(status);
       Navigator.pop(context, true);
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -292,9 +306,11 @@ class _AdminConfirmLockScreenState extends State<AdminConfirmLockScreen> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      Navigator.pop(context);
+                                    },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFEAF8F5),
                                 foregroundColor: const Color(0xFF087E6B),

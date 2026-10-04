@@ -21,6 +21,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   UserPreference? _preference;
   bool _isLoadingPreferences = true;
+  String? _preferencesError;
+  int _preferencesRequestId = 0;
 
   @override
   void initState() {
@@ -31,29 +33,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadPreferences() async {
+    if (!mounted) return;
+    final requestId = ++_preferencesRequestId;
     setState(() {
       _isLoadingPreferences = true;
+      _preferencesError = null;
     });
 
     try {
       final data = await _api.getPreferences(_currentUser.userId);
-      if (mounted) {
-        setState(() {
-          _preference = data != null ? UserPreference.fromJson(data) : null;
-          _isLoadingPreferences = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingPreferences = false;
-        });
-      }
+      if (!mounted || requestId != _preferencesRequestId) return;
+      final preference = data != null ? UserPreference.fromJson(data) : null;
+      setState(() {
+        _preference = preference;
+        _isLoadingPreferences = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _preferencesRequestId) return;
+      setState(() {
+        _isLoadingPreferences = false;
+        _preferencesError = 'Không tải được tiêu chí. Vui lòng thử lại.';
+      });
     }
   }
 
   String _getPreferenceSummary() {
     if (_isLoadingPreferences) return 'Đang tải...';
+    if (_preferencesError != null) return _preferencesError!;
     if (_preference == null) return 'Chưa thiết lập tiêu chí ghép trọ';
 
     // Example: "2–4 triệu · Bình Thạnh · Không hút thuốc"
@@ -74,9 +80,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _loadPreferences();
   }
 
-  void _navigateToCriteria() {
-    // Navigate to SurveyScreen to edit criteria
-    Navigator.pushNamed(context, AppRoutes.survey);
+  Future<void> _navigateToCriteria() async {
+    final saved = await Navigator.pushNamed(context, AppRoutes.survey);
+    // Survey returns true only after the server confirms a successful save.
+    if (!mounted || saved != true) return;
+    await _loadPreferences();
   }
 
   void _navigateToAppointments() {
@@ -164,6 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: RefreshIndicator(
           onRefresh: _loadPreferences,
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
               horizontal: 24.0,
               vertical: 24.0,
@@ -303,6 +312,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: _getPreferenceSummary(),
                 onTap: _navigateToCriteria,
               ),
+              if (_preferencesError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _loadPreferences,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Thử lại'),
+                    ),
+                  ),
+                ),
               _buildMenuCard(
                 title: 'Lịch xem phòng',
                 subtitle: 'Theo dõi lịch bạn đã đặt',

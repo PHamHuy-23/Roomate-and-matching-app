@@ -221,7 +221,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tiêu chí của tôi'), findsOneWidget);
-      expect(find.text('Chưa thiết lập tiêu chí ghép trọ'), findsOneWidget);
+      expect(
+        find.text('Không tải được tiêu chí. Vui lòng thử lại.'),
+        findsOneWidget,
+      );
+      expect(find.text('Chưa thiết lập tiêu chí ghép trọ'), findsNothing);
     });
 
     testWidgets('nút chỉnh sửa mở EditProfileScreen và lưu thông tin', (

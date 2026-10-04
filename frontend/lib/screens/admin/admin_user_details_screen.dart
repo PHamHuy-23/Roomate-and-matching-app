@@ -9,12 +9,12 @@ class AdminUserDetailsScreen extends StatefulWidget {
     super.key,
     this.user,
     this.onStatusChanged,
-    this.onToggleStatus,
+    this.onSetStatus,
   });
 
   final Map<String, String>? user;
   final ValueChanged<String>? onStatusChanged;
-  final Future<void> Function(int userId)? onToggleStatus;
+  final Future<String> Function(int userId, String status)? onSetStatus;
 
   @override
   State<AdminUserDetailsScreen> createState() => _AdminUserDetailsScreenState();
@@ -53,8 +53,9 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
 
   void _handleStatusChanged(String status) {
     if (!mounted) return;
-    setState(() => _status = status);
-    widget.onStatusChanged?.call(status);
+    final label = status == 'LOCKED' ? 'Đã khóa' : 'Hoạt động';
+    setState(() => _status = label);
+    widget.onStatusChanged?.call(label);
   }
 
   int? get _numericUserId {
@@ -65,6 +66,7 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
   }
 
   Future<void> _unlockAccount() async {
+    if (_isUpdatingStatus) return;
     final userId = _numericUserId;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,9 +79,16 @@ class _AdminUserDetailsScreenState extends State<AdminUserDetailsScreen> {
 
     setState(() => _isUpdatingStatus = true);
     try {
-      await (widget.onToggleStatus ?? _api.toggleUserStatus)(userId);
+      const requestedStatus = 'ACTIVE';
+      final status = await (widget.onSetStatus ?? _api.setUserStatus)(
+        userId,
+        requestedStatus,
+      );
+      if (status != requestedStatus) {
+        throw const ApiException('Máy chủ chưa xác nhận mở khóa tài khoản');
+      }
       if (!mounted) return;
-      _handleStatusChanged('Hoạt động');
+      _handleStatusChanged(status);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Đã mở khóa tài khoản.')));

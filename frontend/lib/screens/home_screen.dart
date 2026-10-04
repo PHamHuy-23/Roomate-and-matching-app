@@ -48,10 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingPosts = true;
   bool _postsLoadError = false;
   String _searchKeyword = '';
+  final TextEditingController _roomSearchController = TextEditingController();
   // Quick filters are opt-in. Keep the initial room list unfiltered so the
   // chips below accurately reflect the current state.
   double _minPriceFilter = 0;
-  double _maxPriceFilter = 15000000;
+  double _maxPriceFilter = double.infinity;
   double _minAreaFilter = 0;
   String _roomDistrictFilter = 'Tất cả khu vực';
   final Set<String> _roomAmenitiesFilter = <String>{};
@@ -73,6 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _currentUserId = widget.currentUser.userId;
     _selectedHomeTab = widget.initialTab.clamp(0, 1).toInt();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _roomSearchController.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -425,6 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextField(
+                      controller: _roomSearchController,
                       decoration: InputDecoration(
                         hintText: 'Tìm khu vực, trường học…',
                         prefixIcon: const Icon(Icons.search),
@@ -432,6 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? IconButton(
                                 icon: const Icon(Icons.clear),
                                 onPressed: () => setState(() {
+                                  _roomSearchController.clear();
                                   _searchKeyword = '';
                                   _applyPostFilters();
                                 }),
@@ -473,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _maxPriceFilter = 4000000;
                               } else {
                                 _minPriceFilter = 0;
-                                _maxPriceFilter = 15000000;
+                                _maxPriceFilter = double.infinity;
                               }
                               _applyPostFilters();
                             }),
@@ -547,9 +556,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   onAction: _openRoomFilters,
                   secondaryActionLabel: 'Xem tất cả phòng',
                   onSecondaryAction: () => setState(() {
+                    _roomSearchController.clear();
                     _searchKeyword = '';
                     _minPriceFilter = 0;
-                    _maxPriceFilter = 15000000;
+                    _maxPriceFilter = double.infinity;
                     _minAreaFilter = 0;
                     _roomDistrictFilter = 'Tất cả khu vực';
                     _quickPriceActive = false;

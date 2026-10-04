@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/district_names.dart';
 
-/// Values selected on the Penpot filter screen.
+/// Draft values applied only when the user confirms the filter screen.
 class RoomFilterSelection {
   const RoomFilterSelection({
     required this.minPrice,
@@ -21,10 +21,10 @@ class RoomFilterSelection {
 class RoomFiltersScreen extends StatefulWidget {
   const RoomFiltersScreen({
     super.key,
-    this.initialMinPrice = 2000000,
-    this.initialMaxPrice = 4000000,
-    this.initialDistrict = 'Bình Thạnh, TP.HCM',
-    this.initialMinArea = 20,
+    this.initialMinPrice = 0,
+    this.initialMaxPrice = double.infinity,
+    this.initialDistrict = 'Tất cả khu vực',
+    this.initialMinArea = 0,
     this.initialAmenities = const <String>{},
   });
 
@@ -72,9 +72,11 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
   @override
   void initState() {
     super.initState();
-    _minPrice = widget.initialMinPrice.clamp(1000000, 15000000).toDouble();
-    _maxPrice = widget.initialMaxPrice.clamp(_minPrice, 15000000).toDouble();
-    _minArea = widget.initialMinArea.clamp(0, 100).toDouble();
+    _minPrice = widget.initialMinPrice.clamp(0, double.infinity).toDouble();
+    _maxPrice = widget.initialMaxPrice
+        .clamp(_minPrice, double.infinity)
+        .toDouble();
+    _minArea = widget.initialMinArea.clamp(0, double.infinity).toDouble();
     _district = widget.initialDistrict;
     _amenities = Set<String>.of(widget.initialAmenities);
   }
@@ -109,7 +111,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
           const SizedBox(height: 10),
           _FilterField(
             icon: Icons.payments_outlined,
-            value: '${_money(_minPrice)} — ${_money(_maxPrice)}',
+            value: _budgetLabel(_minPrice, _maxPrice),
             onTap: _pickBudget,
           ),
           const SizedBox(height: 24),
@@ -117,7 +119,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
           const SizedBox(height: 10),
           _FilterField(
             icon: Icons.square_foot_outlined,
-            value: 'Từ ${_minArea.round()} m²',
+            value: _areaLabel(_minArea),
             onTap: _pickArea,
           ),
           const SizedBox(height: 24),
@@ -199,12 +201,24 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
     return '$formattedđ';
   }
 
+  String _budgetLabel(double min, double max) {
+    if (max.isInfinite) {
+      return min == 0
+          ? 'Không giới hạn giá'
+          : 'Từ ${_money(min)} — Không giới hạn';
+    }
+    return '${_money(min)} — ${_money(max)}';
+  }
+
+  String _areaLabel(double area) =>
+      area == 0 ? 'Tất cả diện tích' : 'Từ ${area.round()} m²';
+
   void _reset() {
     setState(() {
-      _minPrice = 2000000;
-      _maxPrice = 4000000;
-      _district = 'Bình Thạnh, TP.HCM';
-      _minArea = 20;
+      _minPrice = 0;
+      _maxPrice = double.infinity;
+      _district = 'Tất cả khu vực';
+      _minArea = 0;
       _amenities = <String>{};
     });
   }
@@ -237,6 +251,13 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
   Future<void> _pickBudget() async {
     var min = _minPrice;
     var max = _maxPrice;
+    // The rightmost handle means no upper bound; 15m is only a scale hint.
+    // Expand the scale for existing higher custom bounds without truncating
+    // their values when this sheet is opened and confirmed unchanged.
+    final largestBound = max.isFinite ? max : min;
+    final sliderMax = largestBound >= 15000000
+        ? ((largestBound / 500000).floor() + 1) * 500000.0
+        : 15000000.0;
     final selected = await showModalBottomSheet<RangeValues>(
       context: context,
       backgroundColor: _canvas,
@@ -258,23 +279,34 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${_money(min)} — ${_money(max)}',
+                  _budgetLabel(min, max),
                   style: const TextStyle(
                     color: _primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 RangeSlider(
-                  values: RangeValues(min, max),
-                  min: 1000000,
-                  max: 15000000,
-                  divisions: 28,
+                  values: RangeValues(min, max.isInfinite ? sliderMax : max),
+                  min: 0,
+                  max: sliderMax,
+                  divisions: (sliderMax / 500000).round(),
+                  labels: RangeLabels(
+                    _money(min),
+                    max.isInfinite ? 'Không giới hạn' : _money(max),
+                  ),
                   activeColor: _primary,
                   onChanged: (values) => setSheetState(() {
                     min = values.start;
-                    max = values.end;
+                    max = values.end == sliderMax
+                        ? double.infinity
+                        : values.end;
                   }),
                 ),
+                const Text(
+                  'Kéo mốc giá tối đa sang phải để bỏ giới hạn.',
+                  style: TextStyle(color: _muted),
+                ),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -307,9 +339,9 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
           shrinkWrap: true,
           padding: const EdgeInsets.symmetric(vertical: 12),
           children: [
-            for (final area in [15.0, 20.0, 25.0, 30.0, 40.0])
+            for (final area in [0.0, 15.0, 20.0, 25.0, 30.0, 40.0])
               ListTile(
-                title: Text('Từ ${area.round()} m²'),
+                title: Text(_areaLabel(area)),
                 trailing: area == _minArea
                     ? const Icon(Icons.check, color: _primary)
                     : null,

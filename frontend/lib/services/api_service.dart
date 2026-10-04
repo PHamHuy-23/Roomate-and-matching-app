@@ -545,6 +545,17 @@ class ApiService {
     required int fileSize,
     required String purpose,
   }) async {
+    const directories = {
+      'avatar': 'avatars',
+      'room-post': 'room-posts',
+      'chat': 'chat',
+      'report': 'reports',
+    };
+    final normalizedPurpose = purpose.trim().toLowerCase();
+    final directory = directories[normalizedPurpose];
+    if (directory == null) {
+      throw const ApiException('Mục đích upload không hợp lệ');
+    }
     final response = await _request(
       'POST',
       '/uploads/presign',
@@ -552,18 +563,56 @@ class ApiService {
         'fileName': fileName,
         'contentType': contentType,
         'fileSize': fileSize,
-        'purpose': purpose,
+        'purpose': normalizedPurpose,
       },
     );
     if (response.statusCode != 200) {
       throw _errorFrom(response, 'Không thể chuẩn bị tải ảnh lên');
     }
     final data = _decodeData(response);
-    if (data is! Map<String, dynamic>) {
+    if (data is! Map<String, dynamic> ||
+        data['uploadUrl'] is! String ||
+        data['objectKey'] is! String ||
+        data['contentType'] is! String ||
+        data['expiresInSeconds'] is! int ||
+        (data['publicUrl'] != null && data['publicUrl'] is! String)) {
       throw const ApiException('Thông tin upload từ máy chủ không hợp lệ');
     }
-    return UploadTicket.fromJson(data);
+    final ticket = UploadTicket.fromJson(data);
+    final private =
+        normalizedPurpose == 'chat' || normalizedPurpose == 'report';
+    final publicUrl = ticket.publicUrl;
+    if (!_isHttpsUrl(ticket.uploadUrl) ||
+        !_isUploadObjectKey(ticket.objectKey, directory) ||
+        ticket.contentType != contentType.trim().toLowerCase() ||
+        !const {
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+        }.contains(ticket.contentType) ||
+        ticket.expiresInSeconds <= 0 ||
+        (private
+            ? publicUrl != null
+            : publicUrl == null ||
+                  !_isHttpsUrl(publicUrl) ||
+                  !publicUrl.endsWith('/${ticket.objectKey}'))) {
+      throw const ApiException('Thông tin upload từ máy chủ không hợp lệ');
+    }
+    return ticket;
   }
+
+  bool _isHttpsUrl(String value) {
+    final uri = Uri.tryParse(value);
+    return uri != null &&
+        uri.scheme == 'https' &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isEmpty &&
+        !uri.hasFragment;
+  }
+
+  bool _isUploadObjectKey(String value, String directory) => RegExp(
+    '^$directory/[1-9][0-9]*/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(jpg|png|webp)\$',
+  ).hasMatch(value);
 
   Future<UploadTicket> uploadImage({
     required Uint8List bytes,
@@ -583,6 +632,9 @@ class ApiService {
           headers: {
             'Content-Type': ticket.contentType,
             'Content-Length': '${bytes.length}',
+            if (purpose.trim().toLowerCase() == 'chat' ||
+                purpose.trim().toLowerCase() == 'report')
+              'Cache-Control': 'private, no-store',
           },
           body: bytes,
         )
@@ -638,13 +690,33 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách người dùng');
   }
 
-  Future<bool> toggleUserStatus(int userId) async {
+  Future<String> setUserStatus(int userId, String status) async {
+    if (userId <= 0 || (status != 'ACTIVE' && status != 'LOCKED')) {
+      throw const ApiException('Trạng thái tài khoản yêu cầu không hợp lệ');
+    }
     final response = await _request(
       'PUT',
-      '/admin/users/$userId/toggle-status',
+      '/admin/users/$userId/status',
+      body: {'status': status},
     );
-    if (response.statusCode == 200) return true;
-    throw _errorFrom(response, 'Không thể thay đổi trạng thái người dùng');
+    if (response.statusCode != 200) {
+      throw _errorFrom(response, 'Không thể thay đổi trạng thái người dùng');
+    }
+    dynamic data;
+    try {
+      data = _decodeData(response);
+    } on FormatException {
+      throw const ApiException('Dữ liệu trạng thái từ máy chủ không hợp lệ');
+    }
+    if (data is! Map<String, dynamic> ||
+        data['userId'] is! int ||
+        data['userId'] != userId ||
+        data['status'] != status) {
+      throw const ApiException(
+        'Máy chủ chưa xác nhận đúng tài khoản và trạng thái yêu cầu',
+      );
+    }
+    return data['status'] as String;
   }
 
   static String _formatIsoWithOffset(DateTime dateTime) {
@@ -715,15 +787,18 @@ class ApiService {
   Future<ChatMessage> sendChatMessage({
     required int receiverId,
     required String content,
-    String? imageUrl,
+    String? imageObjectKey,
   }) async {
+    if (imageObjectKey != null && !_isUploadObjectKey(imageObjectKey, 'chat')) {
+      throw const ApiException('Ảnh trò chuyện không hợp lệ');
+    }
     final response = await _request(
       'POST',
       '/chat/messages',
       body: {
         'receiverId': receiverId,
         'content': content,
-        'imageUrl': imageUrl,
+        'imageObjectKey': ?imageObjectKey,
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
