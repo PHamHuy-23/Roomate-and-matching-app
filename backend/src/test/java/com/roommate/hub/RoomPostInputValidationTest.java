@@ -59,6 +59,23 @@ class RoomPostInputValidationTest {
     }
     @AfterEach void tearDown() { SecurityContextHolder.clearContext(); }
 
+    @Test void legacyPostWithoutAreaCanBeUpdatedWithActualFractionalArea() throws Exception {
+        target.setArea(null);
+        target.setAmenities("Chỗ để xe,Wi-Fi");
+        posts.saveAndFlush(target);
+        mvc.perform(put("/api/v1/posts/{id}", target.getId()).header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Updated legacy post\",\"area\":25.5}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("area").value(25.5))
+                .andExpect(jsonPath("status").value("PENDING"));
+        assertThat(target.getArea()).isEqualTo(25.5);
+        assertThat(target.getTitle()).isEqualTo("Updated legacy post");
+        assertThat(target.getAmenities()).isEqualTo("Chỗ để xe,Wi-Fi");
+        assertThat(target.getPrice()).isEqualTo(2000000.0);
+        assertThat(target.getCurrentOccupants()).isEqualTo(1);
+        assertThat(target.getDeposit()).isEqualTo(1000000.0);
+    }
+
     @Test void partialEditRejectsBlankAndOversizedTextWithoutChangingThePost() throws Exception {
         for (String field : new String[]{"title", "description", "address", "district"}) {
             for (String value : new String[]{"", "   "}) {

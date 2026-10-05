@@ -43,7 +43,8 @@ public class ProfileService {
         if (normalizedName.isEmpty() || normalizedName.length() > 100) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ và tên không hợp lệ");
         }
-        if (phone.length() > 20 || !(normalizedGender.equals("MALE") || normalizedGender.equals("FEMALE"))) {
+        if (phone.length() > 20 || !(normalizedGender.equals("MALE") || normalizedGender.equals("FEMALE")
+                || normalizedGender.equals("OTHER"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thông tin hồ sơ không hợp lệ");
         }
         if (birthDate != null && birthDate.isAfter(LocalDate.now().minusYears(18))) {

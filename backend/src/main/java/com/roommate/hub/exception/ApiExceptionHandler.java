@@ -22,6 +22,13 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    @ExceptionHandler({org.springframework.dao.OptimisticLockingFailureException.class,
+            jakarta.persistence.OptimisticLockException.class})
+    ResponseEntity<Map<String, Object>> concurrentUpdate(Exception ex) {
+        return response(HttpStatus.CONFLICT,
+                "Dữ liệu đã thay đổi trong lúc xử lý. Vui lòng tải lại, kiểm tra trạng thái mới rồi thử lại.");
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<Map<String, Object>> notFound(ResourceNotFoundException ex) { 
         return response(HttpStatus.NOT_FOUND, ex.getMessage()); 
@@ -63,6 +70,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body,
             HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        if (ex instanceof MethodArgumentNotValidException && body instanceof Map<?, ?> fieldsBody
+                && fieldsBody.containsKey("fields")) {
+            return super.handleExceptionInternal(ex, body, headers, status, request);
+        }
         String message;
         if (status.value() == 500) {
             log.error("Internal server error: ", ex);

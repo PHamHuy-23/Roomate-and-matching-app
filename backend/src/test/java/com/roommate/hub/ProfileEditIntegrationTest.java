@@ -128,6 +128,16 @@ class ProfileEditIntegrationTest {
         assertThat(preferences.findByUserId(owner.getId())).isEmpty();
     }
 
+    @Test void supportedOtherGenderCanEditProfileWithoutChangingPreferences() throws Exception {
+        UserPreference pref = createPreference(HEADER + "\nOriginal note");
+        mvc.perform(put("/api/v1/profile/user/{id}", owner.getId()).header("Authorization", authorization)
+                        .param("fullName", "Updated name").param("phone", "").param("gender", "other"))
+                .andExpect(status().isOk()).andExpect(jsonPath("gender").value("OTHER"));
+        assertThat(owner.getGender()).isEqualTo("OTHER");
+        assertThat(pref.getBioDescription()).isEqualTo(HEADER + "\nOriginal note");
+        assertCriteriaUnchanged(pref);
+    }
+
     @Test void anotherUserCannotUpdateProfileOrBiography() throws Exception {
         User other = users.saveAndFlush(User.builder().email(UUID.randomUUID() + "@test.invalid")
                 .fullName("Other user").passwordHash("test-only-placeholder").gender("MALE")

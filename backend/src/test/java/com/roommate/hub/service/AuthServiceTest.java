@@ -17,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -59,6 +62,9 @@ class AuthServiceTest {
 
     @Mock
     private TokenRevocationService tokenRevocationService;
+
+    @Spy
+    private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @InjectMocks
     private AuthService authService;
@@ -123,10 +129,12 @@ class AuthServiceTest {
     void register_ShouldReturnExactPhoneProvided() {
         RegisterRequest req = new RegisterRequest();
         req.setEmail("newuser@example.com");
-        req.setPassword("pass123");
+        req.setPassword("pass1234");
         req.setFullName("Nguyễn Văn A");
         req.setGender("MALE");
         req.setPhone("0987654321");
+        req.setBirthDate(java.time.LocalDate.now().minusYears(20));
+        req.setUniversity("Test university");
 
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
         when(jwtUtils.generateToken(eq("newuser@example.com"), any(), eq(100L))).thenReturn("jwt-registered-token");
@@ -154,6 +162,12 @@ class AuthServiceTest {
         req.setEmail("quochuy@example.com");
 
         when(userRepository.existsByEmail("quochuy@example.com")).thenReturn(true);
+
+        req.setPassword("pass1234");
+        req.setFullName("Test user");
+        req.setGender("MALE");
+        req.setBirthDate(java.time.LocalDate.now().minusYears(20));
+        req.setUniversity("Test university");
 
         assertThatThrownBy(() -> authService.register(req))
                 .isInstanceOf(ResponseStatusException.class)

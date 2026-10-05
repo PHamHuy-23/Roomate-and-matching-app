@@ -104,7 +104,7 @@ class AppointmentServiceTest {
     @DisplayName("updateStatus() ném ngoại lệ khi chuyển ngược trạng thái CANCELLED")
     void updateStatus_WhenAlreadyCancelled_ShouldThrowBadRequest() {
         appointment.setStatus(AppointmentStatus.CANCELLED);
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, "PENDING"))
                 .isInstanceOf(ResponseStatusException.class)
@@ -115,7 +115,7 @@ class AppointmentServiceTest {
     @DisplayName("updateStatus() ném ngoại lệ khi chuyển ngược trạng thái COMPLETED")
     void updateStatus_WhenAlreadyCompleted_ShouldThrowBadRequest() {
         appointment.setStatus(AppointmentStatus.COMPLETED);
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, "CONFIRMED"))
                 .isInstanceOf(ResponseStatusException.class)
@@ -126,7 +126,7 @@ class AppointmentServiceTest {
     @DisplayName("updateStatus() ném ngoại lệ khi chuyển trạng thái về PENDING")
     void updateStatus_WhenTargetIsPending_ShouldThrowBadRequest() {
         appointment.setStatus(AppointmentStatus.CONFIRMED);
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, "PENDING"))
                 .isInstanceOf(ResponseStatusException.class)
@@ -137,7 +137,7 @@ class AppointmentServiceTest {
     @DisplayName("updateStatus() ném ngoại lệ khi chuyển từ PENDING thẳng sang COMPLETED")
     void updateStatus_WhenPendingToCompleted_ShouldThrowBadRequest() {
         appointment.setStatus(AppointmentStatus.PENDING);
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, "COMPLETED"))
                 .isInstanceOf(ResponseStatusException.class)
@@ -148,7 +148,7 @@ class AppointmentServiceTest {
     @DisplayName("updateStatus() chuyển thành công từ PENDING sang CONFIRMED bởi chủ nhà")
     void updateStatus_WhenPendingToConfirmed_ShouldSucceed() {
         appointment.setStatus(AppointmentStatus.PENDING);
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
         when(appointmentRepository.save(any(ViewingAppointment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AppointmentResponseDTO response = appointmentService.updateStatus(100L, "CONFIRMED");
@@ -160,7 +160,7 @@ class AppointmentServiceTest {
     @Test
     @DisplayName("updateStatus() ném BAD_REQUEST khi statusStr rỗng hoặc null")
     void updateStatus_WhenStatusBlankOrNull_ShouldThrowBadRequest() {
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, null))
                 .isInstanceOf(ResponseStatusException.class)
@@ -176,7 +176,7 @@ class AppointmentServiceTest {
     @Test
     @DisplayName("updateStatus() ném BAD_REQUEST khi statusStr không hợp lệ")
     void updateStatus_WhenStatusInvalid_ShouldThrowBadRequest() {
-        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findByIdForStatusUpdate(100L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.updateStatus(100L, "UNKNOWN_STATUS"))
                 .isInstanceOf(ResponseStatusException.class)

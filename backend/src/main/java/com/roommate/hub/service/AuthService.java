@@ -11,6 +11,8 @@ import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.AuthOtpRepository;
 import com.roommate.hub.repository.RefreshTokenRepository;
 import com.roommate.hub.repository.UserRepository;
+import com.roommate.hub.validation.PasswordPolicy;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,6 +45,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final OtpAttemptService otpAttemptService;
     private final TokenRevocationService tokenRevocationService;
+    private final Validator validator;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
@@ -55,7 +59,10 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        String normalizedEmail = req.getEmail().trim().toLowerCase();
+        // Keep non-HTTP callers subject to the same constraints before any DB write.
+        validator.validate(req).stream().sorted(java.util.Comparator.comparing(v -> v.getPropertyPath().toString()))
+                .findFirst().ifPresent(v -> { throw new IllegalArgumentException(v.getMessage()); });
+        String normalizedEmail = req.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã được đăng ký!");
         }
@@ -64,7 +71,7 @@ public class AuthService {
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .fullName(req.getFullName())
-                .gender(req.getGender().toUpperCase())
+                .gender(req.getGender().toUpperCase(Locale.ROOT))
                 .phone(req.getPhone())
                 .birthDate(req.getBirthDate())
                 .university(req.getUniversity())
@@ -97,7 +104,7 @@ public class AuthService {
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!"));
 
-        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+        if (!matchesExistingPassword(req.getPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!");
         }
 
@@ -132,10 +139,11 @@ public class AuthService {
 
     @Transactional
     public void changePassword(String email, String oldPassword, String newPassword) {
+        PasswordPolicy.requireValid(newPassword);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
 
-        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+        if (!matchesExistingPassword(oldPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Mật khẩu hiện tại không chính xác!");
         }
 
@@ -144,6 +152,13 @@ public class AuthService {
         userRepository.save(user);
 
         tokenRevocationService.revokeAllUserTokens(user);
+    }
+
+    private boolean matchesExistingPassword(String password, String hash) {
+        // Do not apply the new minimum to legacy accounts, but never pass oversized input to BCrypt.
+        return password != null
+                && password.getBytes(StandardCharsets.UTF_8).length <= PasswordPolicy.MAX_UTF8_BYTES
+                && passwordEncoder.matches(password, hash);
     }
 
     @Transactional
@@ -391,10 +406,12 @@ public class AuthService {
 
     @Transactional(noRollbackFor = {ResponseStatusException.class})
     public void resetPassword(String email, String code, String newPassword) {
-        if (email == null || email.isBlank() || newPassword == null || newPassword.length() < 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu phải có tối thiểu 8 ký tự!");
+        // Reject invalid passwords BEFORE consuming an OTP or changing credentials/tokens.
+        PasswordPolicy.requireValid(newPassword);
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không được để trống!");
         }
-        if (code == null || code.trim().length() < 6) {
+        if (code == null || !code.matches("[0-9]{6}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã xác nhận gồm 6 chữ số không hợp lệ!");
         }
         String normalizedEmail = email.trim().toLowerCase();

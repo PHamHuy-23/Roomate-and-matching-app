@@ -4,6 +4,7 @@ import com.roommate.hub.dto.AuthResponse;
 import com.roommate.hub.dto.ChangePasswordRequest;
 import com.roommate.hub.dto.LoginRequest;
 import com.roommate.hub.dto.RegisterRequest;
+import com.roommate.hub.dto.ResetPasswordRequest;
 import com.roommate.hub.service.AuthService;
 import com.roommate.hub.service.IpRateLimitService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -97,11 +98,8 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
-        String email = body != null ? body.get("email") : null;
-        String code = body != null ? body.get("code") : null;
-        String newPassword = body != null ? body.get("newPassword") : null;
-        authService.resetPassword(email, code, newPassword);
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
         return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công!"));
     }
 

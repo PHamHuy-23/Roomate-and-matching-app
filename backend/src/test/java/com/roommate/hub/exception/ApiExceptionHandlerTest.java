@@ -72,6 +72,13 @@ class ApiExceptionHandlerTest {
 
     @RestController
     static class FaultController {
+        @GetMapping("/fault/optimistic") String optimistic() {
+            throw new org.springframework.dao.OptimisticLockingFailureException("synthetic-secret: SQL update details");
+        }
+
+        @GetMapping("/fault/jpa-optimistic") String jpaOptimistic() {
+            throw new jakarta.persistence.OptimisticLockException("synthetic-secret: SQL update details");
+        }
         @GetMapping("/fault/runtime") String runtime() {
             throw new NullPointerException("synthetic-secret: select password_hash from users");
         }
@@ -99,6 +106,15 @@ class ApiExceptionHandlerTest {
 
         @GetMapping("/fault/bad-request") String validation() {
             throw new IllegalArgumentException("Trạng thái kiểm duyệt không hợp lệ");
+        }
+    }
+
+    @Test void concurrentUpdateIs409WithoutLeakingTechnicalDetails() throws Exception {
+        for (String path : new String[]{"/fault/optimistic", "/fault/jpa-optimistic"}) {
+            String body = mvc.perform(get(path)).andExpect(status().isConflict())
+                    .andExpect(jsonPath("status").value(409)).andExpect(jsonPath("message").isNotEmpty())
+                    .andReturn().getResponse().getContentAsString();
+            assertThat(body).doesNotContain("synthetic-secret", "SQL", "Exception");
         }
     }
 }

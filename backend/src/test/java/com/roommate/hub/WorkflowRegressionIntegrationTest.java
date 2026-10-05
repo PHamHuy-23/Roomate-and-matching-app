@@ -106,11 +106,11 @@ class WorkflowRegressionIntegrationTest {
         assertThat(profile.getSavedPosts()).containsExactly(p.getId());
         authenticate(a);
         assertThat(profile.getSavedPosts()).isEmpty();
-        admin.moderatePost(p.getId(), "REJECTED", "Please correct the price");
+        admin.moderatePost(p.getId(), "REJECTED", "Please correct the price", p.getVersion());
         var dto = roomService.getMyPosts().getFirst();
         assertThat(dto.getStatus()).isEqualTo("REJECTED");
         assertThat(dto.getModerationReason()).isEqualTo("Please correct the price");
-        assertThatThrownBy(() -> admin.moderatePost(p.getId(), "INVALID", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> admin.moderatePost(p.getId(), "INVALID", null, p.getVersion())).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test void reportingRejectsInvalidOrMissingTargets() {

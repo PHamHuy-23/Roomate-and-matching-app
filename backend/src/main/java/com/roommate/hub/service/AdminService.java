@@ -33,27 +33,32 @@ public class AdminService {
     private final ObjectProvider<R2StorageService> storageServiceProvider;
 
     // Lấy toàn bộ bài đăng kèm trạng thái để kiểm duyệt
+    @Transactional(readOnly = true)
     public List<AdminPostResponseDTO> getAllPostsForModeration() {
         return roomPostRepository.findAll().stream().map(AdminPostResponseDTO::from).toList();
     }
 
     // Duyệt hoặc từ chối bài đăng
     @Transactional
-    public RoomPost moderatePost(Long postId, String status) {
-        return moderatePost(postId, status, null);
-    }
-
-    @Transactional
-    public RoomPost moderatePost(Long postId, String status, String reason) {
-        RoomPost post = roomPostRepository.findById(postId)
+    public RoomPost moderatePost(Long postId, String status, String reason, Long expectedVersion) {
+        RoomPost post = roomPostRepository.findByIdForModeration(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!"));
 
         if (status == null || !List.of("APPROVED", "REJECTED", "CLOSED").contains(status.toUpperCase())) {
             throw new IllegalArgumentException("Trạng thái kiểm duyệt không hợp lệ");
         }
+        if (expectedVersion == null || expectedVersion < 0) {
+            throw new IllegalArgumentException("Cần gửi phiên bản tin đăng đã xem để kiểm duyệt");
+        }
+        if (!expectedVersion.equals(post.getVersion())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Tin đăng đã thay đổi. Vui lòng tải lại và xem nội dung mới trước khi kiểm duyệt.");
+        }
         post.setStatus(RoomPost.PostStatus.valueOf(status.toUpperCase()));
         post.setModerationReason(reason == null || reason.isBlank() ? null : reason.trim());
-        return roomPostRepository.save(post);
+        // Reject changes committed after the version check; return the new version.
+        return roomPostRepository.saveAndFlush(post);
     }
 
     // Lấy danh sách toàn bộ người dùng

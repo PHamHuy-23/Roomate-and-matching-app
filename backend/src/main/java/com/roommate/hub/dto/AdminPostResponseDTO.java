@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Value @Builder
 public class AdminPostResponseDTO {
-    Long id; Long authorId; String authorName; String title; String description; Double price;
+    Long id; Long version; Long authorId; String authorName; String title; String description; Double price;
     String address; Integer maxOccupants; String imageUrl; String status; LocalDateTime createdAt;
     boolean publiclyVisible;
 
@@ -17,7 +17,7 @@ public class AdminPostResponseDTO {
                 && (p.getStatus() == RoomPost.PostStatus.APPROVED
                 || p.getStatus() == RoomPost.PostStatus.AVAILABLE);
         return AdminPostResponseDTO.builder()
-                .id(p.getId()).authorId(p.getAuthor().getId()).authorName(p.getAuthor().getFullName())
+                .id(p.getId()).version(p.getVersion()).authorId(p.getAuthor().getId()).authorName(p.getAuthor().getFullName())
                 .title(p.getTitle()).description(p.getDescription()).price(p.getPrice())
                 .address(p.getAddress()).maxOccupants(p.getMaxOccupants()).imageUrl(p.getImageUrl())
                 .status(p.getStatus().name()).createdAt(p.getCreatedAt()).publiclyVisible(visible).build();

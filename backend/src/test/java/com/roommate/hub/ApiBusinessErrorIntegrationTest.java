@@ -69,7 +69,7 @@ class ApiBusinessErrorIntegrationTest {
         long count = posts.count();
 
         mvc.perform(put("/api/v1/admin/posts/{id}/moderate", Long.MAX_VALUE)
-                        .header("Authorization", bearer(admin)).param("status", "APPROVED"))
+                        .header("Authorization", bearer(admin)).param("status", "APPROVED").param("expectedVersion", "0"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("status").value(404))
                 .andExpect(jsonPath("message").value("Bài đăng không tồn tại!"));
@@ -159,7 +159,8 @@ class ApiBusinessErrorIntegrationTest {
 
         for (String invalid : new String[]{"UNKNOWN", "PENDING", " "}) {
             mvc.perform(put("/api/v1/admin/posts/{id}/moderate", existing.getId())
-                            .header("Authorization", auth).param("status", invalid).param("reason", "Must not persist"))
+                            .header("Authorization", auth).param("status", invalid).param("reason", "Must not persist")
+                            .param("expectedVersion", existing.getVersion().toString()))
                     .andExpect(status().isBadRequest()).andExpect(jsonPath("status").value(400));
             assertPending(existing);
         }
@@ -248,7 +249,8 @@ class ApiBusinessErrorIntegrationTest {
         RoomPost existing = room(user("Host", User.Role.ROLE_USER));
         String auth = bearer(user("Admin", User.Role.ROLE_ADMIN));
         mvc.perform(put("/api/v1/admin/posts/{id}/moderate", existing.getId())
-                        .header("Authorization", auth).param("status", "APPROVED").param("reason", "Reviewed"))
+                        .header("Authorization", auth).param("status", "APPROVED").param("reason", "Reviewed")
+                        .param("expectedVersion", existing.getVersion().toString()))
                 .andExpect(status().isOk()).andExpect(jsonPath("status").value("APPROVED"));
         assertThat(posts.findById(existing.getId()).orElseThrow().getStatus()).isEqualTo(RoomPost.PostStatus.APPROVED);
         mvc.perform(get("/api/v1/posts/{id}", existing.getId()))

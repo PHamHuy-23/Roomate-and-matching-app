@@ -73,7 +73,7 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponseDTO updateStatus(Long appointmentId, String statusStr) {
         User user = currentUser();
-        ViewingAppointment appointment = appointmentRepository.findById(appointmentId)
+        ViewingAppointment appointment = appointmentRepository.findByIdForStatusUpdate(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lịch hẹn không tồn tại!"));
 
         boolean isHost = appointment.getHost().getId().equals(user.getId());

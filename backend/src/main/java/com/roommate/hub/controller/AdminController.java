@@ -25,15 +25,17 @@ public class AdminController {
 
     @GetMapping("/posts")
     public ResponseEntity<List<AdminPostResponseDTO>> getAllPosts() {
-        return ResponseEntity.ok(adminService.getAllPostsForModeration());
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(adminService.getAllPostsForModeration());
     }
 
     @PutMapping("/posts/{postId}/moderate")
     public ResponseEntity<AdminPostResponseDTO> moderatePost(
             @PathVariable Long postId,
             @RequestParam String status,
-            @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(AdminPostResponseDTO.from(adminService.moderatePost(postId, status, reason)));
+            @RequestParam(required = false) String reason,
+            @RequestParam Long expectedVersion) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(AdminPostResponseDTO.from(adminService.moderatePost(postId, status, reason, expectedVersion)));
     }
 
     @GetMapping("/users")
