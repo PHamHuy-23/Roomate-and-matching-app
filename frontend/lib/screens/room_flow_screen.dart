@@ -722,48 +722,12 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _location(BuildContext context) {
-    final districtName = post.district.isNotEmpty
+    final districtName = post.district.trim().isNotEmpty
         ? DistrictNames.display(post.district)
-        : 'TP. Hồ Chí Minh';
-    final addressText = post.address.isNotEmpty
+        : 'Chưa cập nhật khu vực';
+    final addressText = post.address.trim().isNotEmpty
         ? post.address
-        : 'Khu vực gần trung tâm';
-
-    final lower = '${post.address} ${DistrictNames.display(post.district)}'
-        .toLowerCase();
-    String landmark1Title = 'Trường đại học lân cận';
-    String landmark1Dist = 'Khoảng 700 m · 10 phút đi bộ';
-    String landmark2Title = 'Chợ & cửa hàng tiện lợi';
-    String landmark2Dist = 'Khoảng 300 m · 4 phút đi bộ';
-
-    if (lower.contains('bình thạnh') ||
-        lower.contains('nguyễn gia trí') ||
-        lower.contains('hutech')) {
-      landmark1Title = 'Đại học HUTECH / GTVT';
-      landmark1Dist = 'Khoảng 650 m · 8 phút đi bộ';
-      landmark2Title = 'Landmark 81 & Chợ Văn Thánh';
-      landmark2Dist = 'Khoảng 1.2 km · 4 phút xe máy';
-    } else if (lower.contains('quận 1')) {
-      landmark1Title = 'Đại học Khoa học Xã hội & Nhân văn';
-      landmark1Dist = 'Khoảng 800 m · 10 phút đi bộ';
-      landmark2Title = 'Phố đi bộ Nguyễn Huệ & Chợ Bến Thành';
-      landmark2Dist = 'Khoảng 1 km · 5 phút xe máy';
-    } else if (lower.contains('quận 3')) {
-      landmark1Title = 'Đại học Kinh tế TP.HCM (UEH)';
-      landmark1Dist = 'Khoảng 500 m · 6 phút đi bộ';
-      landmark2Title = 'Hồ Con Rùa & Công viên Lê Văn Tám';
-      landmark2Dist = 'Khoảng 700 m · 9 phút đi bộ';
-    } else if (lower.contains('quận 7')) {
-      landmark1Title = 'Đại học Tôn Đức Thắng / RMIT';
-      landmark1Dist = 'Khoảng 900 m · 12 phút đi bộ';
-      landmark2Title = 'TTTM SC VivoCity & Crescent Mall';
-      landmark2Dist = 'Khoảng 1.5 km · 5 phút xe máy';
-    } else if (lower.contains('thủ đức')) {
-      landmark1Title = 'Làng Đại học Quốc Gia TP.HCM';
-      landmark1Dist = 'Khoảng 1.2 km · 4 phút xe máy';
-      landmark2Title = 'Trạm Metro & Chợ Đêm Đại học';
-      landmark2Dist = 'Khoảng 600 m · 8 phút đi bộ';
-    }
+        : 'Chưa cập nhật địa chỉ';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,8 +746,16 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         const SizedBox(height: 6),
         Text(addressText, style: const TextStyle(color: _muted, height: 1.5)),
         const SizedBox(height: 18),
-        _locationFact(landmark1Title, landmark1Dist),
-        _locationFact(landmark2Title, landmark2Dist),
+        // The API has no verified room coordinates or nearby-place distances.
+        // A district/address keyword cannot establish proximity or travel time.
+        _locationFact(
+          'Trường học & đại học',
+          'Chưa có dữ liệu địa điểm, khoảng cách và thời gian di chuyển.',
+        ),
+        _locationFact(
+          'Chợ & cửa hàng tiện lợi',
+          'Chưa có dữ liệu địa điểm, khoảng cách và thời gian di chuyển.',
+        ),
         const SizedBox(height: 12),
         const Text(
           'Địa chỉ cụ thể được trao đổi với người đăng\nsau khi lịch xem được xác nhận.',

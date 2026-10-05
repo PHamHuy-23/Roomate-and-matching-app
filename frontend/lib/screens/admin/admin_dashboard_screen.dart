@@ -16,7 +16,9 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late final ApiService _api;
   bool _isLoading = true;
+  bool _isLoadingReports = true;
   String? _error;
+  String? _reportError;
   int? _userCount;
   int? _visiblePostCount;
   int? _pendingPostCount;
@@ -25,7 +27,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   String get _currentFormattedDate {
     final now = DateTime.now();
-    const days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+    const days = [
+      'Thứ Hai',
+      'Thứ Ba',
+      'Thứ Tư',
+      'Thứ Năm',
+      'Thứ Sáu',
+      'Thứ Bảy',
+      'Chủ Nhật',
+    ];
     final dayStr = days[(now.weekday - 1) % 7];
     return '$dayStr, ${now.day.toString().padLeft(2, '0')} / ${now.month.toString().padLeft(2, '0')} / ${now.year}';
   }
@@ -40,7 +50,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _loadStats() async {
     setState(() {
       _isLoading = true;
+      _isLoadingReports = true;
       _error = null;
+      _reportError = null;
+      _userCount = null;
+      _visiblePostCount = null;
+      _pendingPostCount = null;
+      _lockedUserCount = null;
+      _pendingReportCount = null;
     });
     try {
       final responses = await Future.wait<List<dynamic>>([
@@ -73,23 +90,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         final reports = await _api.getAdminReports();
         if (mounted) {
           setState(() {
+            _isLoadingReports = false;
             _pendingReportCount = reports.where((r) {
               if (r is! Map) return false;
               return r['status']?.toString().toUpperCase() == 'PENDING';
             }).length;
           });
         }
-      } catch (_) {}
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _isLoadingReports = false;
+          _reportError =
+              'Không thể tải số báo cáo cần xử lý, vui lòng thử lại.';
+        });
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _isLoadingReports = false;
         _error = error.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _isLoadingReports = false;
         _error = 'Không thể tải số liệu quản trị, vui lòng thử lại.';
       });
     }
@@ -99,6 +126,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (_isLoading) return '…';
     return value?.toString() ?? '—';
   }
+
+  String get _reportValue =>
+      _isLoadingReports ? '…' : _pendingReportCount?.toString() ?? '—';
 
   Widget _buildSidebarItem(
     BuildContext context,
@@ -111,7 +141,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return InkWell(
       onTap: isActive
           ? null
-          : (onTap ?? (route == null ? null : () => Navigator.pushReplacementNamed(context, route))),
+          : (onTap ??
+                (route == null
+                    ? null
+                    : () => Navigator.pushReplacementNamed(context, route))),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         width: double.infinity,
@@ -126,7 +159,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, color: isActive ? Colors.white : const Color(0xFF8FB8AC), size: 18),
+              Icon(
+                icon,
+                color: isActive ? Colors.white : const Color(0xFF8FB8AC),
+                size: 18,
+              ),
               const SizedBox(width: 10),
             ],
             Expanded(
@@ -146,11 +183,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildAlertAction(
-    BuildContext context,
-    String label,
-    String route,
-  ) {
+  Widget _buildAlertAction(BuildContext context, String label, String route) {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, route),
       borderRadius: BorderRadius.circular(8),
@@ -208,32 +241,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildChartBar(String label, double heightRatio) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 38,
-          height: 220 * heightRatio,
-          decoration: BoxDecoration(
-            color: const Color(0xFF087E6B),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'SourceSansPro',
-            color: Color(0xFF142523),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,21 +282,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ],
                   ),
                 ),
-                _buildSidebarItem(context, 'Tổng quan', isActive: true, icon: Icons.dashboard_outlined),
-                _buildSidebarItem(context, 'Người dùng', route: AppRoutes.adminUsers, icon: Icons.people_outline),
-                _buildSidebarItem(context, 'Duyệt tin đăng', route: AppRoutes.adminModeratePost, icon: Icons.approval_outlined),
-                _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports, icon: Icons.report_outlined),
-                
+                _buildSidebarItem(
+                  context,
+                  'Tổng quan',
+                  isActive: true,
+                  icon: Icons.dashboard_outlined,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Người dùng',
+                  route: AppRoutes.adminUsers,
+                  icon: Icons.people_outline,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Duyệt tin đăng',
+                  route: AppRoutes.adminModeratePost,
+                  icon: Icons.approval_outlined,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Báo cáo vi phạm',
+                  route: AppRoutes.adminReports,
+                  icon: Icons.report_outlined,
+                ),
+
                 const Spacer(),
 
-                const Divider(color: Color(0xFF2A3D39), height: 1, indent: 16, endIndent: 16),
+                const Divider(
+                  color: Color(0xFF2A3D39),
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                ),
                 const SizedBox(height: 8),
 
                 _buildSidebarItem(
                   context,
                   'Về app người dùng',
                   icon: Icons.home_outlined,
-                  onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+                  onTap: () =>
+                      Navigator.pushReplacementNamed(context, AppRoutes.home),
                 ),
                 _buildSidebarItem(
                   context,
@@ -299,14 +332,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     // Await logout để đảm bảo backend thu hồi token trước khi navigate.
                     await _api.logout();
                     if (!context.mounted) return;
-                    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.login,
+                      (r) => false,
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: SingleChildScrollView(
@@ -347,7 +384,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 40),
-                  if (_error != null)
+                  if (_error != null || _reportError != null)
                     Container(
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 20),
@@ -360,29 +397,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _error!,
+                              _error ?? _reportError!,
                               style: const TextStyle(color: Color(0xFF7A4A00)),
                             ),
                           ),
                           TextButton(
-                            onPressed: _loadStats,
+                            onPressed: _isLoading || _isLoadingReports
+                                ? null
+                                : _loadStats,
                             child: const Text('Thử lại'),
                           ),
                         ],
                       ),
                     ),
-                  
+
                   // Top Stats
                   Row(
                     children: [
                       _buildStatCard(_statValue(_userCount), 'Người dùng'),
-                      _buildStatCard(_statValue(_visiblePostCount), 'Tin đang hiển thị'),
-                      _buildStatCard(_statValue(_pendingPostCount), 'Tin chờ duyệt'),
-                      _buildStatCard(_statValue(_pendingReportCount), 'Báo cáo cần xử lý'),
+                      _buildStatCard(
+                        _statValue(_visiblePostCount),
+                        'Tin đang hiển thị',
+                      ),
+                      _buildStatCard(
+                        _statValue(_pendingPostCount),
+                        'Tin chờ duyệt',
+                      ),
+                      _buildStatCard(_reportValue, 'Báo cáo cần xử lý'),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Middle Row
                   Row(
                     children: [
@@ -408,26 +453,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   color: Color(0xFF142523),
                                 ),
                               ),
-                              const Spacer(),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  _buildChartBar('T2', 90/220),
-                                  _buildChartBar('T3', 138/220),
-                                  _buildChartBar('T4', 110/220),
-                                  _buildChartBar('T5', 189/220),
-                                  _buildChartBar('T6', 162/220),
-                                  _buildChartBar('T7', 220/220),
-                                  _buildChartBar('CN', 184/220),
-                                ],
+                              const Expanded(
+                                child: Center(
+                                  child: Text(
+                                    'Chưa hỗ trợ thống kê kết nối theo tuần.\n'
+                                    'Hệ thống chưa cung cấp dữ liệu thời điểm kết nối thành công.',
+                                    key: Key(
+                                      'admin_weekly_connections_unavailable',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Color(0xFF65746F),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(width: 24),
-                      
+
                       // Alerts
                       Expanded(
                         flex: 4,
@@ -460,8 +507,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               _buildAlertAction(
                                 context,
                                 _pendingReportCount != null
-                                    ? '${_statValue(_pendingReportCount)} báo cáo cần xử lý'
-                                    : 'Báo cáo chưa có API',
+                                    ? '$_reportValue báo cáo cần xử lý'
+                                    : _isLoadingReports
+                                    ? 'Đang tải số báo cáo cần xử lý'
+                                    : 'Chưa tải được số báo cáo cần xử lý',
                                 AppRoutes.adminReports,
                               ),
                               const SizedBox(height: 16),
@@ -477,7 +526,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Bottom Row
                   Container(
                     width: double.infinity,
@@ -501,7 +550,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         SizedBox(height: 16),
                         Text(
-                          '14:32  ·  Tin RH-024 được duyệt       14:10  ·  Báo cáo BC-028 được tiếp nhận',
+                          'Chưa hỗ trợ nhật ký hoạt động. Hệ thống chưa cung cấp lịch sử thao tác quản trị.',
+                          key: Key('admin_activity_log_unavailable'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,

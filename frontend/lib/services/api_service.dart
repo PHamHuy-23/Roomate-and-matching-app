@@ -12,6 +12,7 @@ import '../models/upload_ticket.dart';
 import '../models/chat_message.dart';
 import '../models/viewing_appointment.dart';
 import '../models/blocked_user.dart';
+import '../models/report_receipt.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -46,9 +47,17 @@ class ApiService {
   String? _refreshToken;
   bool _isHandlingUnauthorized = false;
   Future<bool>? _refreshFuture;
+  int _sessionGeneration = 0;
+
+  void _ensureCurrentSession(int generation) {
+    if (generation != _sessionGeneration) {
+      throw const ApiException('Phiên đăng nhập đã thay đổi, vui lòng thử lại');
+    }
+  }
 
   final Set<int> savedPostIds = <int>{};
   bool isSearchActive = true;
+  int _searchStatusRevision = 0;
 
   bool isPostSaved(int postId) => savedPostIds.contains(postId);
 
@@ -59,6 +68,7 @@ class ApiService {
   }
 
   Future<void> setPostSaved(int postId, bool saved) async {
+    final generation = _sessionGeneration;
     final response = await _request(
       'PUT',
       '/profile/saved-posts/$postId',
@@ -67,6 +77,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw _errorFrom(response, 'Không lưu được phòng');
     }
+    _ensureCurrentSession(generation);
     if (saved) {
       savedPostIds.add(postId);
     } else {
@@ -75,10 +86,12 @@ class ApiService {
   }
 
   Future<void> loadSavedPosts() async {
+    final generation = _sessionGeneration;
     final response = await _request('GET', '/profile/saved-posts');
     if (response.statusCode != 200) {
       throw _errorFrom(response, 'Không tải được phòng đã lưu');
     }
+    _ensureCurrentSession(generation);
     savedPostIds
       ..clear()
       ..addAll(_decodeList(response).map((id) => (id as num).toInt()));
@@ -120,6 +133,7 @@ class ApiService {
     if (normalizedToken.isEmpty) {
       throw const ApiException('Token xác thực không được để trống');
     }
+    clearAuthToken();
     _token = normalizedToken;
     _isHandlingUnauthorized = false;
   }
@@ -138,8 +152,10 @@ class ApiService {
   }
 
   void clearAuthToken() {
+    _sessionGeneration++;
     savedPostIds.clear();
     isSearchActive = true;
+    _searchStatusRevision++;
     _token = null;
     _refreshToken = null;
     _refreshFuture = null;
@@ -163,6 +179,7 @@ class ApiService {
     Object? body,
     bool authenticated = true,
   }) async {
+    final generation = _sessionGeneration;
     final uri = Uri.parse('$baseUrl$path').replace(
       queryParameters: queryParameters?.isEmpty == true
           ? null
@@ -181,9 +198,11 @@ class ApiService {
       final response = await http.Response.fromStream(
         streamedResponse,
       ).timeout(requestTimeout);
+      if (authenticated) _ensureCurrentSession(generation);
       if (authenticated && response.statusCode == 401) {
         if (hasRefreshToken) {
-          final refreshed = await (_refreshFuture ??= _tryRefreshToken());
+          final refreshed = await refreshAuthToken();
+          _ensureCurrentSession(generation);
           if (refreshed) {
             final retryRequest = http.Request(method, uri)
               ..headers.addAll(_headers(authenticated: authenticated));
@@ -196,6 +215,7 @@ class ApiService {
             final retryResponse = await http.Response.fromStream(
               retryStreamed,
             ).timeout(requestTimeout);
+            _ensureCurrentSession(generation);
             if (retryResponse.statusCode != 401) {
               return retryResponse;
             }
@@ -206,17 +226,20 @@ class ApiService {
       }
       return response;
     } on TimeoutException {
+      if (authenticated) _ensureCurrentSession(generation);
       throw const ApiException('Máy chủ phản hồi quá lâu, vui lòng thử lại');
     } on http.ClientException {
+      if (authenticated) _ensureCurrentSession(generation);
       throw const ApiException('Không thể kết nối đến máy chủ');
     }
   }
 
   Future<bool> refreshAuthToken() async {
-    return (_refreshFuture ??= _tryRefreshToken());
+    if (!hasRefreshToken) return false;
+    return (_refreshFuture ??= _tryRefreshToken(_sessionGeneration));
   }
 
-  Future<bool> _tryRefreshToken() async {
+  Future<bool> _tryRefreshToken(int generation) async {
     final currentRefreshToken = _refreshToken;
     if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
       return false;
@@ -234,6 +257,7 @@ class ApiService {
           )
           .timeout(requestTimeout);
 
+      if (generation != _sessionGeneration) return false;
       if (response.statusCode == 200) {
         final data = _decodeData(response);
         if (data is Map<String, dynamic>) {
@@ -252,25 +276,36 @@ class ApiService {
     } catch (_) {
       return false;
     } finally {
-      _refreshFuture = null;
+      // An old refresh must not remove the new session's in-flight refresh.
+      if (generation == _sessionGeneration) _refreshFuture = null;
     }
   }
 
   Future<void> logout() async {
+    final accessTokenToRevoke = _token;
     final tokenToRevoke = _refreshToken;
+    // Invalidate locally before yielding. The revocation uses only this snapshot,
+    // never refreshes, and cannot clear a later login when it finishes.
+    clearAuthToken();
     try {
-      if (hasAuthToken || tokenToRevoke != null) {
-        await _request(
-          'POST',
-          '/auth/logout',
-          authenticated: hasAuthToken,
-          body: tokenToRevoke != null ? {'refreshToken': tokenToRevoke} : null,
-        );
+      if (accessTokenToRevoke != null || tokenToRevoke != null) {
+        await _client
+            .post(
+              Uri.parse('$baseUrl/auth/logout'),
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json; charset=UTF-8',
+                if (accessTokenToRevoke != null)
+                  'Authorization': 'Bearer $accessTokenToRevoke',
+              },
+              body: tokenToRevoke != null
+                  ? jsonEncode({'refreshToken': tokenToRevoke})
+                  : null,
+            )
+            .timeout(requestTimeout);
       }
     } catch (_) {
       // Bỏ qua lỗi mạng khi logout để trạng thái local luôn được xóa sạch
-    } finally {
-      clearAuthToken();
     }
   }
 
@@ -307,6 +342,21 @@ class ApiService {
   ApiException _errorFrom(http.Response response, String fallbackMessage) {
     try {
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 400 && decoded is Map<String, dynamic>) {
+        final fields = decoded['fields'];
+        if (fields is Map) {
+          final messages = fields.values
+              .whereType<String>()
+              .where((v) => v.isNotEmpty)
+              .toSet();
+          if (messages.isNotEmpty) {
+            return ApiException(
+              messages.join('\n'),
+              statusCode: response.statusCode,
+            );
+          }
+        }
+      }
       if (decoded is Map<String, dynamic> && decoded['message'] is String) {
         return ApiException(
           decoded['message'] as String,
@@ -375,12 +425,15 @@ class ApiService {
   }
 
   Future<AuthUser> login(String email, String password) async {
+    clearAuthToken();
+    final generation = _sessionGeneration;
     final response = await _request(
       'POST',
       '/auth/login',
       authenticated: false,
       body: {'email': email, 'password': password},
     );
+    _ensureCurrentSession(generation);
     if (response.statusCode == 200) {
       final data = _decodeData(response);
       if (data is! Map<String, dynamic>) {
@@ -402,6 +455,8 @@ class ApiService {
     DateTime birthDate,
     String university,
   ) async {
+    clearAuthToken();
+    final generation = _sessionGeneration;
     final response = await _request(
       'POST',
       '/auth/register',
@@ -416,6 +471,7 @@ class ApiService {
         university: university,
       ),
     );
+    _ensureCurrentSession(generation);
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = _decodeData(response);
       if (data is! Map<String, dynamic>) {
@@ -507,7 +563,7 @@ class ApiService {
     throw _errorFrom(response, 'Không thể phản hồi yêu cầu kết nối');
   }
 
-  Future<bool> updateProfile(
+  Future<AuthUser> updateProfile(
     int userId,
     String fullName,
     String phone,
@@ -516,6 +572,7 @@ class ApiService {
     String? university, {
     String? bioNote,
   }) async {
+    final generation = _sessionGeneration;
     final response = await _request(
       'PUT',
       '/profile/user/$userId',
@@ -529,7 +586,33 @@ class ApiService {
         'bioNote': ?bioNote,
       },
     );
-    if (response.statusCode == 200) return true;
+    _ensureCurrentSession(generation);
+    if (response.statusCode == 200) {
+      final data = _decodeData(response);
+      if (data is! Map<String, dynamic> ||
+          data['id'] != userId ||
+          ![
+            'email',
+            'fullName',
+            'gender',
+            'role',
+          ].every((key) => data[key] is String) ||
+          ![
+            'phone',
+            'avatarUrl',
+            'university',
+            'birthDate',
+          ].every((key) => data[key] == null || data[key] is String) ||
+          (data['birthDate'] != null &&
+              DateTime.tryParse(data['birthDate'] as String) == null)) {
+        throw const ApiException('Dữ liệu hồ sơ từ máy chủ không hợp lệ');
+      }
+      return AuthUser.fromJson({
+        'user': data,
+        'accessToken': _token,
+        'refreshToken': _refreshToken,
+      });
+    }
     throw _errorFrom(response, 'Không thể cập nhật hồ sơ');
   }
 
@@ -620,12 +703,14 @@ class ApiService {
     required String contentType,
     required String purpose,
   }) async {
+    final generation = _sessionGeneration;
     final ticket = await createUploadTicket(
       fileName: fileName,
       contentType: contentType,
       fileSize: bytes.length,
       purpose: purpose,
     );
+    _ensureCurrentSession(generation);
     final response = await _client
         .put(
           Uri.parse(ticket.uploadUrl),
@@ -639,6 +724,7 @@ class ApiService {
           body: bytes,
         )
         .timeout(requestTimeout);
+    _ensureCurrentSession(generation);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(
         'R2 từ chối tải ảnh lên',
@@ -670,8 +756,19 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách bài đăng quản trị');
   }
 
-  Future<bool> moderatePost(int postId, String status, {String? reason}) async {
-    final query = <String, String>{'status': status};
+  Future<bool> moderatePost(
+    int postId,
+    String status, {
+    required int expectedVersion,
+    String? reason,
+  }) async {
+    if (expectedVersion < 0) {
+      throw const ApiException('Phiên bản tin đăng không hợp lệ');
+    }
+    final query = <String, String>{
+      'status': status,
+      'expectedVersion': '$expectedVersion',
+    };
     if (reason != null && reason.trim().isNotEmpty) {
       query['reason'] = reason.trim();
     }
@@ -822,7 +919,7 @@ class ApiService {
   }
 
   // --- BÁO CÁO VI PHẠM (REPORTS) ---
-  Future<bool> submitReport({
+  Future<ReportReceipt> submitReport({
     required int targetId,
     String targetType = 'USER',
     required String reason,
@@ -839,7 +936,16 @@ class ApiService {
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return true;
+      try {
+        final data = _decodeData(response);
+        if (data is Map<String, dynamic>) return ReportReceipt.fromJson(data);
+      } on FormatException {
+        // A successful HTTP status alone is not a report receipt.
+      }
+      throw ApiException(
+        'Không xác nhận được mã báo cáo. Yêu cầu có thể đã được tiếp nhận; tránh gửi lại ngay để không tạo báo cáo trùng.',
+        statusCode: response.statusCode,
+      );
     }
     throw _errorFrom(response, 'Không thể gửi báo cáo vi phạm');
   }
@@ -887,7 +993,21 @@ class ApiService {
       '/admin/reports/$reportId/moderate',
       queryParameters: query,
     );
-    if (response.statusCode == 200) return true;
+    if (response.statusCode == 200) {
+      try {
+        final data = _decodeData(response);
+        if (data is Map<String, dynamic> &&
+            data['id'] == reportId &&
+            data['status'] == status.toUpperCase()) {
+          return true;
+        }
+      } on FormatException {
+        // Do not report saved when the response lacks the requested decision.
+      }
+      throw const ApiException(
+        'Không xác nhận được kết quả xử lý báo cáo từ máy chủ',
+      );
+    }
     throw _errorFrom(response, 'Không thể xử lý báo cáo');
   }
 
@@ -1087,16 +1207,27 @@ class ApiService {
   }
 
   Future<bool> getSearchStatus() async {
+    final generation = _sessionGeneration;
+    final revision = ++_searchStatusRevision;
     final response = await _request('GET', '/profile/search-status');
     if (response.statusCode != 200) {
       throw _errorFrom(response, 'Không tải được trạng thái tìm bạn');
     }
-    final data = _decodeData(response) as Map<String, dynamic>;
-    isSearchActive = data['searchActive'] == true;
-    return isSearchActive;
+    _ensureCurrentSession(generation);
+    final data = _decodeData(response);
+    if (data is! Map<String, dynamic> || data['searchActive'] is! bool) {
+      throw const ApiException(
+        'Dữ liệu trạng thái tìm bạn từ máy chủ không hợp lệ',
+      );
+    }
+    final active = data['searchActive'] as bool;
+    if (revision == _searchStatusRevision) isSearchActive = active;
+    return active;
   }
 
-  Future<void> updateSearchStatus(bool value) async {
+  Future<bool> updateSearchStatus(bool value) async {
+    final generation = _sessionGeneration;
+    final revision = ++_searchStatusRevision;
     final response = await _request(
       'PUT',
       '/profile/search-status',
@@ -1105,6 +1236,15 @@ class ApiService {
     if (response.statusCode != 200) {
       throw _errorFrom(response, 'Không cập nhật được trạng thái tìm bạn');
     }
-    isSearchActive = value;
+    _ensureCurrentSession(generation);
+    final data = _decodeData(response);
+    if (data is! Map<String, dynamic> || data['searchActive'] is! bool) {
+      throw const ApiException(
+        'Dữ liệu trạng thái tìm bạn từ máy chủ không hợp lệ',
+      );
+    }
+    final active = data['searchActive'] as bool;
+    if (revision == _searchStatusRevision) isSearchActive = active;
+    return active;
   }
 }

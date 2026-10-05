@@ -12,17 +12,24 @@ class _ReportsApi implements ApiService {
   Future<List<dynamic>> getAdminReports() async => [
     {
       'id': 28,
+      'status': 'PENDING',
       'reason': 'Thông tin phòng không đúng thực tế',
       'targetType': 'ROOM_POST',
       'targetId': 4,
     },
     {
       'id': 27,
+      'status': 'PENDING',
       'reason': 'Nội dung tin đăng không phù hợp',
       'targetId': 5,
       'actionNote': 'Đang chờ quản trị viên kiểm tra nội dung.',
     },
-    {'id': 26, 'reason': 'Tin đăng có dấu hiệu trùng lặp', 'targetId': 6},
+    {
+      'id': 26,
+      'status': 'PENDING',
+      'reason': 'Tin đăng có dấu hiệu trùng lặp',
+      'targetId': 6,
+    },
   ];
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -84,6 +91,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Báo cáo vi phạm'), findsNWidgets(2));
-    expect(find.text('Báo cáo đang chờ'), findsOneWidget);
+    expect(find.text('Tất cả báo cáo'), findsOneWidget);
   });
 }

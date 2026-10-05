@@ -1,54 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/penpot_back_button.dart';
 import '../services/api_service.dart';
+import '../state/auth_session.dart';
 
 class PrivacyScreen extends StatefulWidget {
-  const PrivacyScreen({super.key});
+  const PrivacyScreen({super.key, this.apiService});
+  final ApiService? apiService;
 
   @override
   State<PrivacyScreen> createState() => _PrivacyScreenState();
 }
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
-  late bool _isSearchActive;
+  late final ApiService _api;
+  AuthSession? _session;
+  int? _generation;
+  int? _userId;
+  bool _isSearchActive = false;
+  bool? _confirmedStatus;
   bool _busy = true;
+  String? _loadError;
+
+  bool get _currentSession =>
+      _session != null &&
+      _userId != null &&
+      _session!.isCurrentSession(_generation!, _userId!);
 
   @override
   void initState() {
     super.initState();
-    _isSearchActive = ApiService().isSearchActive;
+    _api = widget.apiService ?? ApiService();
+    _session = context.read<AuthSession?>();
+    _generation = _session?.generation;
+    _userId = _session?.user?.userId;
     _loadStatus();
   }
 
   Future<void> _loadStatus() async {
+    if (!_currentSession) return;
+    setState(() {
+      _busy = true;
+      _loadError = null;
+    });
     try {
-      final value = await ApiService().getSearchStatus();
-      if (mounted) setState(() => _isSearchActive = value);
+      final value = await _api.getSearchStatus();
+      if (mounted && _currentSession) {
+        setState(() {
+          _isSearchActive = value;
+          _confirmedStatus = value;
+        });
+      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không tải được trạng thái: $e')),
+      if (mounted && _currentSession) {
+        setState(
+          () => _loadError = 'Không tải được trạng thái. Vui lòng thử lại.',
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && _currentSession) setState(() => _busy = false);
     }
   }
 
-  Future<void> _updateStatus(bool value) async {
+  Future<void> _saveStatus() async {
+    if (_busy ||
+        _confirmedStatus == null ||
+        _loadError != null ||
+        !_currentSession) {
+      return;
+    }
+    final value = _isSearchActive;
     setState(() => _busy = true);
     try {
-      await ApiService().updateSearchStatus(value);
-      if (mounted) setState(() => _isSearchActive = value);
+      final confirmed = await _api.updateSearchStatus(value);
+      if (!mounted || !_currentSession) return;
+      _confirmedStatus = confirmed;
+      if (confirmed != value) {
+        throw const ApiException(
+          'Máy chủ chưa xác nhận trạng thái đã chọn. Vui lòng thử lại.',
+        );
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã lưu cài đặt.')));
+      Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) {
+      if (mounted && _currentSession) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không lưu được trạng thái: $e')),
+          SnackBar(
+            content: Text('Không lưu được trạng thái: $e'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          ),
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && _currentSession) setState(() => _busy = false);
     }
   }
 
@@ -140,6 +188,14 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<AuthSession?>();
+    if (!_currentSession) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Phiên đăng nhập đã thay đổi. Vui lòng mở lại cài đặt.'),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
       body: SafeArea(
@@ -192,15 +248,34 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   // Settings list
                   _buildSettingItem(
                     'Trạng thái tìm bạn',
-                    _isSearchActive
+                    _busy && _confirmedStatus == null
+                        ? 'Đang tải trạng thái...'
+                        : _loadError != null
+                        ? 'Chưa tải được trạng thái'
+                        : _isSearchActive != _confirmedStatus
+                        ? 'Chưa lưu thay đổi'
+                        : _isSearchActive
                         ? 'Đang bật · Hiển thị trong gợi ý'
                         : 'Đã tắt · Ẩn khỏi gợi ý',
                     trailing: Switch(
                       value: _isSearchActive,
-                      onChanged: _busy ? null : _updateStatus,
+                      onChanged:
+                          _busy ||
+                              _confirmedStatus == null ||
+                              _loadError != null
+                          ? null
+                          : (value) => setState(() => _isSearchActive = value),
                       activeTrackColor: const Color(0xFF087E6B),
                     ),
                   ),
+
+                  if (_loadError != null) ...[
+                    Text(_loadError!),
+                    TextButton(
+                      onPressed: _busy ? null : _loadStatus,
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
 
                   _buildSettingItem(
                     'Thông tin liên hệ',
@@ -274,12 +349,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã lưu cài đặt.')),
-                    );
-                    Navigator.pop(context);
-                  },
+                  onPressed:
+                      _busy || _confirmedStatus == null || _loadError != null
+                      ? null
+                      : _saveStatus,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF087E6B),
                     foregroundColor: Colors.white,
@@ -288,9 +361,11 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Lưu cài đặt',
-                    style: TextStyle(
+                  child: Text(
+                    _busy && _confirmedStatus != null
+                        ? 'Đang lưu...'
+                        : 'Lưu cài đặt',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'SourceSansPro',

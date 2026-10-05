@@ -4,6 +4,7 @@ import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/match_request_item.dart';
 import '../models/room_post.dart';
+import '../models/room_amenities.dart';
 import '../models/district_names.dart';
 import '../navigation/app_routes.dart';
 import 'candidate_profile_screen.dart';
@@ -137,15 +138,13 @@ class _HomeScreenState extends State<HomeScreen> {
       // filter must not silently match a post whose value is unknown.
       final matchArea =
           _minAreaFilter == 0 ||
-          (p.areaM2 != null && p.areaM2! >= _minAreaFilter);
-      final postAmenities = p.amenities
-          .map((amenity) => amenity.trim().toLowerCase())
-          .toSet();
+          (p.hasKnownArea && p.areaM2! >= _minAreaFilter);
+      final postAmenities = p.amenities.map(RoomAmenities.key).toSet();
       final matchAmenities =
           _roomAmenitiesFilter.isEmpty ||
           (p.amenities.isNotEmpty &&
               _roomAmenitiesFilter.every(
-                (amenity) => postAmenities.contains(amenity.toLowerCase()),
+                (amenity) => postAmenities.contains(RoomAmenities.key(amenity)),
               ));
       return matchAddress &&
           matchPrice &&
@@ -629,7 +628,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _roomCard(RoomPost post) {
-    final area = post.areaM2 == null ? '28 m²' : '${post.areaM2!.round()} m²';
+    final area = post.areaLabel;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 0,

@@ -29,6 +29,7 @@ class FakeProfileApi implements ApiService {
   String? lastUpdatedUniversity;
   String? lastUpdatedBio;
   bool shouldFailUpdate = false;
+  AuthUser? profileUser;
 
   @override
   Future<Map<String, dynamic>?> getPreferences(int userId) async {
@@ -41,7 +42,7 @@ class FakeProfileApi implements ApiService {
   }
 
   @override
-  Future<bool> updateProfile(
+  Future<AuthUser> updateProfile(
     int userId,
     String fullName,
     String phone,
@@ -57,7 +58,7 @@ class FakeProfileApi implements ApiService {
     lastUpdatedBirthDate = birthDate;
     lastUpdatedUniversity = university;
     lastUpdatedBio = bioNote;
-    if (shouldFailUpdate) return false;
+    if (shouldFailUpdate) throw const ApiException('Không thể cập nhật hồ sơ');
     if (bioNote != null && preferencesData != null) {
       final raw = preferencesData!['bioDescription'] as String? ?? '';
       final metadata = RegExp(
@@ -71,7 +72,13 @@ class FakeProfileApi implements ApiService {
             : '[${metadata.group(1)}]${bioNote.isEmpty ? '' : '\n$bioNote'}',
       };
     }
-    return true;
+    return profileUser!.copyWith(
+      fullName: fullName,
+      phone: phone,
+      gender: gender,
+      birthDate: birthDate ?? profileUser!.birthDate,
+      university: university ?? profileUser!.university,
+    );
   }
 
   @override
@@ -84,7 +91,13 @@ class FakeProfileApi implements ApiService {
   bool get hasAuthToken => true;
 
   @override
+  Future<bool> getSearchStatus() async => true;
+
+  @override
   String? get authToken => 'fake-token';
+
+  @override
+  String? get refreshToken => null;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -96,6 +109,7 @@ Widget createProfileTestApp({
   AuthSession? session,
 }) {
   final authSession = session ?? AuthSession(apiService: api);
+  api.profileUser = user;
   if (authSession.user == null) authSession.updateUser(user);
 
   return ChangeNotifierProvider<AuthSession>.value(

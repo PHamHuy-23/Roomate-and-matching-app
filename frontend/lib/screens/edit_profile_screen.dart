@@ -24,6 +24,16 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final ApiService _api;
+  AuthSession? _session;
+  int? _sessionGeneration;
+  int _bioRequestId = 0;
+
+  bool get _currentSession =>
+      _session == null ||
+      _session!.isCurrentSession(
+        _sessionGeneration!,
+        widget.currentUser.userId,
+      );
 
   late TextEditingController _nameCtrl;
   late TextEditingController _universityCtrl;
@@ -38,6 +48,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _api = widget.apiService ?? ApiService();
+    _session = context.read<AuthSession?>();
+    _sessionGeneration = _session?.generation;
     _nameCtrl = TextEditingController(text: widget.currentUser.fullName);
     _universityCtrl = TextEditingController(
       text: widget.currentUser.university ?? '',
@@ -47,13 +59,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _loadBio() async {
+    if (!_currentSession) return;
+    final requestId = ++_bioRequestId;
     setState(() {
       _isLoadingBio = true;
       _bioLoadError = null;
     });
     try {
       final data = await _api.getPreferences(widget.currentUser.userId);
-      if (!mounted) return;
+      if (!mounted || !_currentSession || requestId != _bioRequestId) return;
       setState(() {
         _hasPreferences = data != null;
         _bioCtrl.text = data == null
@@ -61,13 +75,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             : UserPreference.fromJson(data).bioNote ?? '';
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || !_currentSession || requestId != _bioRequestId) return;
       setState(
         () => _bioLoadError =
             'Không thể tải giới thiệu. Vui lòng thử lại trước khi lưu.',
       );
     } finally {
-      if (mounted) setState(() => _isLoadingBio = false);
+      if (mounted && _currentSession && requestId == _bioRequestId) {
+        setState(() => _isLoadingBio = false);
+      }
     }
   }
 
@@ -80,7 +96,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _handleSave() async {
-    if (_isUpdating || _isLoadingBio || _bioLoadError != null) return;
+    if (_isUpdating ||
+        _isLoadingBio ||
+        _bioLoadError != null ||
+        !_currentSession) {
+      return;
+    }
+    final session = _session;
+    if (session == null || !session.isAuthenticated) return;
     final newName = _nameCtrl.text.trim();
     if (newName.isEmpty) {
       ScaffoldMessenger.of(
@@ -94,29 +117,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final university = _universityCtrl.text.trim();
     // A missing, unchanged university is omitted rather than sent as an invalid empty string.
     final universityUpdate =
-        university.isEmpty && widget.currentUser.university == null
+        university.isEmpty && session.user!.university == null
         ? null
         : university;
     try {
-      final ok = await _api.updateProfile(
-        widget.currentUser.userId,
-        newName,
-        widget.currentUser.phone ?? '',
-        widget.currentUser.gender,
-        widget.currentUser.birthDate,
-        universityUpdate,
+      final ok = await session.updateProfile(
+        fullName: newName,
+        phone: session.user!.phone ?? '',
+        gender: session.user!.gender,
+        birthDate: session.user!.birthDate,
+        university: universityUpdate,
         bioNote: _hasPreferences ? _bioCtrl.text.trim() : null,
       );
 
+      if (!mounted || !_currentSession) return;
       if (!ok) throw ApiException('Không thể cập nhật hồ sơ');
 
       if (mounted && ok) {
-        final updatedUser = widget.currentUser.copyWith(
-          fullName: newName,
-          university: universityUpdate ?? widget.currentUser.university,
-        );
-
-        context.read<AuthSession>().updateUser(updatedUser);
+        final updatedUser = session.user!;
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -128,7 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Navigator.pop(context, updatedUser);
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _currentSession) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e is ApiException ? e.message : 'Cập nhật thất bại'),
@@ -199,7 +217,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final avatarUrl = widget.currentUser.avatarUrl;
+    final session = context.watch<AuthSession?>();
+    if (!_currentSession) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Phiên đăng nhập đã thay đổi. Vui lòng mở lại hồ sơ.'),
+        ),
+      );
+    }
+    final currentUser = session?.user ?? widget.currentUser;
+    final avatarUrl = currentUser.avatarUrl;
     final hasValidAvatar =
         avatarUrl != null &&
         (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'));
@@ -273,8 +300,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       : null,
                                   child: !hasValidAvatar
                                       ? Text(
-                                          widget.currentUser.fullName.isNotEmpty
-                                              ? widget.currentUser.fullName[0]
+                                          currentUser.fullName.isNotEmpty
+                                              ? currentUser.fullName[0]
                                                     .toUpperCase()
                                               : 'U',
                                           style: const TextStyle(
@@ -333,11 +360,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Email Verification Status
+                    // Email information; verification is not supplied by the API.
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Email: ${widget.currentUser.email} · Đã xác minh',
+                        'Email: ${currentUser.email}',
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'SourceSansPro',
@@ -360,7 +387,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed:
-                      _isUpdating || _isLoadingBio || _bioLoadError != null
+                      _isUpdating ||
+                          _isLoadingBio ||
+                          _bioLoadError != null ||
+                          session?.isAuthenticated != true
                       ? null
                       : _handleSave,
                   style: ElevatedButton.styleFrom(

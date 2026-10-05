@@ -38,6 +38,7 @@ import '../screens/admin/admin_reports_screen.dart';
 import '../screens/admin/admin_report_resolved_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
+import '../models/report_receipt.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -334,7 +335,10 @@ class AppRoutes {
                 : null;
             return ReportViolationScreen(targetUserId: targetUserId);
           case reportReceived:
-            return const ReportReceivedScreen();
+            final receipt = routeSettings.arguments;
+            return ReportReceivedScreen(
+              receipt: receipt is ReportReceipt ? receipt : null,
+            );
           case helpSafety:
             return const HelpSafetyScreen();
           case noResults:

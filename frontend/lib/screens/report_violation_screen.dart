@@ -7,15 +7,16 @@ import '../widgets/penpot_back_button.dart';
 
 class ReportViolationScreen extends StatefulWidget {
   final int? targetUserId;
+  final ApiService? apiService;
 
-  const ReportViolationScreen({super.key, this.targetUserId});
+  const ReportViolationScreen({super.key, this.targetUserId, this.apiService});
 
   @override
   State<ReportViolationScreen> createState() => _ReportViolationScreenState();
 }
 
 class _ReportViolationScreenState extends State<ReportViolationScreen> {
-  final ApiService _api = ApiService();
+  ApiService get _api => widget.apiService ?? ApiService();
   final TextEditingController _descController = TextEditingController();
   String _selectedReason = 'Thông tin phòng không đúng thực tế';
   bool _isSubmitting = false;
@@ -95,7 +96,7 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await _api.submitReport(
+      final receipt = await _api.submitReport(
         targetId: targetId,
         targetType: 'USER',
         reason: '[$_selectedReason] $text',
@@ -103,7 +104,11 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
       );
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.reportReceived);
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.reportReceived,
+        arguments: receipt,
+      );
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
@@ -362,7 +367,9 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         final targetId = widget.targetUserId;
-                        if (targetId == null || targetId <= 0 || _isSubmitting) {
+                        if (targetId == null ||
+                            targetId <= 0 ||
+                            _isSubmitting) {
                           return;
                         }
                         setState(() => _isSubmitting = true);

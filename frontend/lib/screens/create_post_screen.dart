@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import '../models/room_amenities.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final int authorId;
@@ -31,7 +32,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     'Máy lạnh': false,
     'Nước nóng': false,
     'Máy giặt': false,
-    'Chỗ để xe': false,
+    RoomAmenities.parking: false,
     'Giờ giấc tự do': false,
   };
   XFile? _selectedImage;

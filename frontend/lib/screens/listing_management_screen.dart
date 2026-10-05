@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/room_post.dart';
+import '../models/room_amenities.dart';
 import '../models/viewing_appointment.dart';
 import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
@@ -56,7 +57,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   static const _amenityOptions = <String>[
     'Máy lạnh',
     'Bếp riêng',
-    'Giữ xe',
+    RoomAmenities.parking,
     'Wi-Fi',
     'Nội thất',
     'Máy giặt',
@@ -72,7 +73,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   late final TextEditingController _depositCtrl;
   late final TextEditingController _utilityCtrl;
   late final TextEditingController _descriptionCtrl;
-  double _area = 28;
+  final _areaCtrl = TextEditingController();
+  double get _area =>
+      double.tryParse(_areaCtrl.text.trim().replaceAll(',', '.')) ?? double.nan;
   int _maxOccupants = 2;
   String? _imageObjectKey;
   String? _imageUrl;
@@ -152,7 +155,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     _depositCtrl.text = _formatMoney(post.deposit ?? 0);
     _utilityCtrl.text = _formatMoney(post.electricityWaterCost ?? 0);
     _descriptionCtrl.text = post.description;
-    _area = post.areaM2 ?? 0;
+    _areaCtrl.text = post.hasKnownArea ? post.areaM2.toString() : '';
     _maxOccupants = post.maxOccupants;
     _amenities
       ..clear()
@@ -174,6 +177,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   }
 
   void _validatePost() {
+    _validateArea();
     final currentOccupants = _editingExisting
         ? (_selectedPost?.currentOccupants ?? 0)
         : 0;
@@ -188,9 +192,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         _addressCtrl.text.trim().isEmpty ||
         _districtCtrl.text.trim().isEmpty ||
         _descriptionCtrl.text.trim().isEmpty ||
-        _money(_priceCtrl) <= 0 ||
-        !_area.isFinite ||
-        _area <= 0) {
+        _money(_priceCtrl) <= 0) {
       throw const FormatException(
         'Vui lòng nhập đủ thông tin, giá thuê và diện tích lớn hơn 0.',
       );
@@ -208,6 +210,23 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     }
     _money(_depositCtrl);
     _money(_utilityCtrl);
+  }
+
+  void _validateArea() {
+    if (!_area.isFinite || _area <= 0) {
+      throw const FormatException('Vui lòng nhập diện tích lớn hơn 0.');
+    }
+  }
+
+  void _continueFromBasicInfo() {
+    try {
+      _validateArea();
+      _goTo(ListingFlowMode.photosAmenities);
+    } on FormatException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   Future<void> _pickImage() async {
@@ -397,6 +416,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     _depositCtrl.dispose();
     _utilityCtrl.dispose();
     _descriptionCtrl.dispose();
+    _areaCtrl.dispose();
     super.dispose();
   }
 
@@ -419,7 +439,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       case ListingFlowMode.viewingRequest:
         return 'Yêu cầu xem phòng';
       case ListingFlowMode.reportReceived:
-        return 'Đã nhận báo cáo';
+        return 'Thông tin báo cáo';
       case ListingFlowMode.confirmedViewing:
         return 'Đã xác nhận lịch';
       case ListingFlowMode.close:
@@ -535,7 +555,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
           }
           _depositCtrl.text = '0';
           _utilityCtrl.text = '0';
-          _area = 28;
+          _areaCtrl.clear();
           _maxOccupants = 2;
           _amenities.clear();
           _imageObjectKey = null;
@@ -593,7 +613,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
             ),
             const SizedBox(height: 7),
             Text(
-              '${_formatMoney(post.price)}đ / tháng · ${post.areaM2 ?? "—"} m²',
+              '${_formatMoney(post.price)}đ / tháng · ${post.areaLabel}',
               style: const TextStyle(color: _muted),
             ),
             if (post.moderationReason != null)
@@ -664,10 +684,11 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         Row(
           children: <Widget>[
             Expanded(
-              child: _numberInput(
-                'Diện tích',
-                '${_area.toStringAsFixed(0)} m²',
-                () => setState(() => _area = _area >= 60 ? 18 : _area + 2),
+              child: _input(
+                'Diện tích (m²)',
+                _areaCtrl,
+                keyboard: const TextInputType.numberWithOptions(decimal: true),
+                hint: 'Ví dụ: 25,5',
               ),
             ),
             const SizedBox(width: 12),
@@ -686,10 +707,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         ),
         const Text('Ngày nhận phòng: ghi cụ thể trong mô tả nếu cần.'),
         const SizedBox(height: 6),
-        _button(
-          'Tiếp tục · Ảnh & tiện ích',
-          () => _goTo(ListingFlowMode.photosAmenities),
-        ),
+        _button('Tiếp tục · Ảnh & tiện ích', _continueFromBasicInfo),
       ],
     );
   }
@@ -838,7 +856,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          '${_addressCtrl.text.trim()} · ${_area.toStringAsFixed(0)} m² · Tối đa $_maxOccupants người',
+          '${_addressCtrl.text.trim()} · ${RoomPost.formatArea(_area)} · Tối đa $_maxOccupants người',
           style: const TextStyle(color: _muted),
         ),
         const SizedBox(height: 14),
@@ -872,6 +890,12 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         const SizedBox(height: 14),
         _input('Tiêu đề', _titleCtrl),
         _input('Giá thuê / tháng', _priceCtrl, keyboard: TextInputType.number),
+        _input(
+          'Diện tích (m²)',
+          _areaCtrl,
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+          hint: 'Nhập diện tích thực tế',
+        ),
         _input('Địa chỉ / khu vực', _addressCtrl),
         _input('Quận / huyện', _districtCtrl),
         _input('Tiền cọc (đ)', _depositCtrl, keyboard: TextInputType.number),
@@ -1072,9 +1096,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
   Widget _reportReceived(BuildContext context) {
     return _emptyState(
       context,
-      Icons.check_circle_outline,
-      'Cảm ơn bạn đã phản hồi',
-      'Báo cáo #BC-028 đang chờ xem xét. Bạn sẽ nhận thông báo khi có kết quả.',
+      Icons.info_outline,
+      'Chưa có mã tiếp nhận',
+      'Mở báo cáo từ hồ sơ người dùng hoặc chi tiết liên hệ. Mã tiếp nhận chỉ hiển thị sau khi máy chủ xác nhận.',
       action: _button('Về hồ sơ', () => Navigator.maybePop(context)),
     );
   }

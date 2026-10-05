@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import '../navigation/app_routes.dart';
 import '../widgets/penpot_back_button.dart';
 
 class HelpSafetyScreen extends StatelessWidget {
   const HelpSafetyScreen({super.key});
 
-  Widget _buildHelpItem(
-    BuildContext context,
-    String title,
-    String subtitle,
-  ) {
+  Widget _buildHelpItem(BuildContext context, String title, String subtitle) {
     return InkWell(
       onTap: () => showModalBottomSheet<void>(
         context: context,
@@ -130,10 +125,13 @@ class HelpSafetyScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 children: [
                   _buildHelpItem(
                     context,
@@ -158,7 +156,7 @@ class HelpSafetyScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Bottom Action
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -167,7 +165,24 @@ class HelpSafetyScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.reportViolation);
+                    showDialog<void>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Cách báo cáo vi phạm'),
+                        content: const Text(
+                          'Mở hồ sơ người đăng phòng rồi chọn “Báo cáo người dùng”, '
+                          'hoặc mở chi tiết liên hệ và chọn “Báo cáo vi phạm”. '
+                          'Ứng dụng sẽ xác định đúng người bị báo cáo.\n\n'
+                          'Hiện chưa hỗ trợ gửi báo lỗi ứng dụng chung từ trang Trợ giúp.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Đã hiểu'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF087E6B),
@@ -178,7 +193,7 @@ class HelpSafetyScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Báo cáo vấn đề',
+                    'Hướng dẫn báo cáo vi phạm',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

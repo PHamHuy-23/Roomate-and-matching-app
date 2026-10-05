@@ -11,21 +11,27 @@ class _ModerationApi implements ApiService {
 
   @override
   Future<List<dynamic>> getAdminPosts() async => [
-        {
-          'id': 28,
-          'title': 'Studio ngập nắng, có ban công',
-          'description': 'Phòng có nội thất cơ bản.',
-          'price': 3500000,
-          'address': 'Bình Thạnh',
-          'maxOccupants': 2,
-          'author': {'fullName': 'Minh Anh'},
-          'createdAt': '2026-09-19T00:00:00Z',
-          'status': 'PENDING',
-        },
-      ];
+    {
+      'id': 28,
+      'version': 0,
+      'title': 'Studio ngập nắng, có ban công',
+      'description': 'Phòng có nội thất cơ bản.',
+      'price': 3500000,
+      'address': 'Bình Thạnh',
+      'maxOccupants': 2,
+      'author': {'fullName': 'Minh Anh'},
+      'createdAt': '2026-09-19T00:00:00Z',
+      'status': 'PENDING',
+    },
+  ];
 
   @override
-  Future<bool> moderatePost(int postId, String status, {String? reason}) async {
+  Future<bool> moderatePost(
+    int postId,
+    String status, {
+    required int expectedVersion,
+    String? reason,
+  }) async {
     lastStatus = status;
     return true;
   }
@@ -35,7 +41,9 @@ class _ModerationApi implements ApiService {
 }
 
 void main() {
-  testWidgets('Duyệt tin mở màn kết quả và quay lại màn kiểm duyệt', (tester) async {
+  testWidgets('Duyệt tin mở màn kết quả và quay lại màn kiểm duyệt', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -45,7 +53,8 @@ void main() {
         home: AdminModeratePostScreen(apiService: api),
         routes: {
           AppRoutes.adminPostApproved: (_) => const AdminPostApprovedScreen(),
-          AppRoutes.adminModeratePost: (_) => AdminModeratePostScreen(apiService: api),
+          AppRoutes.adminModeratePost: (_) =>
+              AdminModeratePostScreen(apiService: api),
         },
       ),
     );
@@ -62,7 +71,9 @@ void main() {
     expect(find.text('Duyệt & hiển thị tin'), findsOneWidget);
   });
 
-  testWidgets('Từ chối tin mở màn chỉnh sửa và quay lại màn kiểm duyệt', (tester) async {
+  testWidgets('Từ chối tin mở màn chỉnh sửa và quay lại màn kiểm duyệt', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -72,7 +83,8 @@ void main() {
         home: AdminModeratePostScreen(apiService: api),
         routes: {
           AppRoutes.adminPostNeedsEdit: (_) => const AdminPostNeedsEditScreen(),
-          AppRoutes.adminModeratePost: (_) => AdminModeratePostScreen(apiService: api),
+          AppRoutes.adminModeratePost: (_) =>
+              AdminModeratePostScreen(apiService: api),
         },
       ),
     );

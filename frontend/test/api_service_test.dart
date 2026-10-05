@@ -152,12 +152,33 @@ void main() {
             'phone': '',
             'gender': 'MALE',
           });
-          return http.Response('{}', 200);
+          return http.Response(
+            jsonEncode({
+              'id': 10,
+              'fullName': 'Tên mới',
+              'email': 'profile@example.test',
+              'gender': 'MALE',
+              'role': 'ROLE_USER',
+              'phone': null,
+              'birthDate': null,
+              'university': null,
+              'avatarUrl': null,
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
         }),
       );
       expect(
-        await api.updateProfile(10, 'Tên mới', '', 'MALE', null, null),
-        isTrue,
+        (await (api..setAuthToken('test-token')).updateProfile(
+          10,
+          'Tên mới',
+          '',
+          'MALE',
+          null,
+          null,
+        )).fullName,
+        'Tên mới',
       );
     },
   );
@@ -175,12 +196,27 @@ void main() {
             'Trường thử nghiệm',
           );
           expect(request.url.queryParameters['bioNote'], notes[calls++]);
-          return http.Response('{}', 200);
+          return http.Response(
+            jsonEncode({
+              'id': 10,
+              'fullName': 'Tên mới',
+              'email': 'profile@example.test',
+              'gender': 'MALE',
+              'role': 'ROLE_USER',
+              'phone': null,
+              'birthDate': '2002-05-20',
+              'university': 'Trường thử nghiệm',
+              'avatarUrl': null,
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
         }),
       );
+      api.setAuthToken('test-token');
       for (final note in notes) {
         expect(
-          await api.updateProfile(
+          (await api.updateProfile(
             10,
             'Tên mới',
             '',
@@ -188,8 +224,8 @@ void main() {
             DateTime(2002, 5, 20),
             'Trường thử nghiệm',
             bioNote: note,
-          ),
-          isTrue,
+          )).birthDate,
+          DateTime(2002, 5, 20),
         );
       }
       expect(calls, 2);

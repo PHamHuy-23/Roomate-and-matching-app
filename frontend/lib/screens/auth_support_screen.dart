@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../state/auth_session.dart';
+import '../validation/auth_validation.dart';
 import '../widgets/penpot_back_button.dart';
 
 enum AuthSupportMode {
@@ -167,8 +168,11 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           _showError('Vui lòng nhập đủ 6 ký tự mã xác nhận.');
           return;
         }
-        if (_passwordCtrl.text.length < 8) {
-          _showError('Mật khẩu phải có ít nhất 8 ký tự.');
+        final resetPasswordError = AuthValidation.newPasswordError(
+          _passwordCtrl.text,
+        );
+        if (resetPasswordError != null) {
+          _showError(resetPasswordError);
           return;
         }
         if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
@@ -182,8 +186,11 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
           _showError('Vui lòng nhập mật khẩu hiện tại.');
           return;
         }
-        if (_passwordCtrl.text.length < 8) {
-          _showError('Mật khẩu phải có ít nhất 8 ký tự.');
+        final changePasswordError = AuthValidation.newPasswordError(
+          _passwordCtrl.text,
+        );
+        if (changePasswordError != null) {
+          _showError(changePasswordError);
           return;
         }
         if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
@@ -569,7 +576,7 @@ class _AuthSupportScreenState extends State<AuthSupportScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: Text(
-                'Dùng ít nhất 8 ký tự gồm chữ hoa, chữ thường,\nchữ số và ký tự đặc biệt.',
+                'Mật khẩu có ít nhất 8 ký tự, tối đa 72 byte UTF-8.\nNên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.',
                 style: TextStyle(color: _muted, fontSize: 12, height: 1.4),
               ),
             ),

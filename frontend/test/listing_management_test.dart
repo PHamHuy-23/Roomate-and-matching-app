@@ -198,6 +198,8 @@ void main() {
     await tester.enterText(field('Địa chỉ / khu vực'), 'Địa chỉ kiểm thử');
     await tester.enterText(field('Quận / huyện'), 'Thủ Đức');
     await tester.enterText(field('Mô tả'), 'Mô tả phòng kiểm thử');
+    await tester.ensureVisible(field('Diện tích (m²)'));
+    await tester.enterText(field('Diện tích (m²)'), '25,5');
     await tester.ensureVisible(find.text('Tiếp tục · Ảnh & tiện ích'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tiếp tục · Ảnh & tiện ích'));
@@ -223,6 +225,7 @@ void main() {
     expect(mockApi.created?['district'], 'Thủ Đức');
     expect(mockApi.created?['deposit'], 1000000);
     expect(mockApi.created?['electricityWaterCost'], 200000);
+    expect(mockApi.created?['area'], 25.5);
   });
 
   testWidgets(

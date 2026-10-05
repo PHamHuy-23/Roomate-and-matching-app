@@ -11,8 +11,15 @@ import '../widgets/penpot_back_button.dart';
 
 class AvatarPickerScreen extends StatefulWidget {
   final AuthUser currentUser;
+  final ApiService? apiService;
+  final ImagePicker? imagePicker;
 
-  const AvatarPickerScreen({super.key, required this.currentUser});
+  const AvatarPickerScreen({
+    super.key,
+    required this.currentUser,
+    this.apiService,
+    this.imagePicker,
+  });
 
   @override
   State<AvatarPickerScreen> createState() => _AvatarPickerScreenState();
@@ -21,11 +28,18 @@ class AvatarPickerScreen extends StatefulWidget {
 class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
   static const int _maxBytes = 5 * 1024 * 1024;
 
-  final ImagePicker _picker = ImagePicker();
-  final ApiService _api = ApiService();
+  late final ImagePicker _picker;
+  late final ApiService _api;
   XFile? _selectedFile;
   Uint8List? _selectedBytes;
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _picker = widget.imagePicker ?? ImagePicker();
+    _api = widget.apiService ?? ApiService();
+  }
 
   Future<void> _pickImage() async {
     final file = await _picker.pickImage(
@@ -67,6 +81,10 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
     final bytes = _selectedBytes;
     if (file == null || bytes == null || _isUploading) return;
     final session = context.read<AuthSession>();
+    final generation = session.generation;
+    if (!session.isCurrentSession(generation, widget.currentUser.userId)) {
+      return;
+    }
     setState(() => _isUploading = true);
     try {
       final ticket = await _api.uploadImage(
@@ -75,15 +93,28 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
         contentType: _contentType(file.name),
         purpose: 'avatar',
       );
+      if (!mounted ||
+          !session.isCurrentSession(generation, widget.currentUser.userId)) {
+        return;
+      }
       final avatarUrl = await _api.confirmAvatar(ticket.objectKey);
-      session.updateUser(widget.currentUser.copyWith(avatarUrl: avatarUrl));
-      if (!mounted) return;
+      if (!mounted ||
+          !session.isCurrentSession(generation, widget.currentUser.userId)) {
+        return;
+      }
+      session.updateUser(
+        session.user!.copyWith(avatarUrl: avatarUrl),
+        expectedGeneration: generation,
+      );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Đã cập nhật ảnh đại diện')));
       Navigator.pop(context, avatarUrl);
     } on ApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted ||
+          !session.isCurrentSession(generation, widget.currentUser.userId)) {
+        return;
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../navigation/app_routes.dart';
 import '../state/auth_session.dart';
+import '../validation/auth_validation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.initialRegister = false});
@@ -117,12 +118,18 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
-      if (password.length < 8) {
+      final validationError =
+          AuthValidation.registrationFieldsError(
+            email: email,
+            fullName: _nameCtrl.text.trim(),
+            gender: _gender,
+            phone: _phoneCtrl.text.trim(),
+            university: _universityCtrl.text.trim(),
+          ) ??
+          AuthValidation.newPasswordError(password);
+      if (validationError != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mật khẩu phải có ít nhất 8 ký tự'),
-            backgroundColor: _danger,
-          ),
+          SnackBar(content: Text(validationError), backgroundColor: _danger),
         );
         return;
       }
@@ -173,13 +180,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final signedInUser = session.user;
-      final isAdmin = signedInUser != null &&
+      final isAdmin =
+          signedInUser != null &&
           {
             'ADMIN',
             'ROLE_ADMIN',
           }.contains(signedInUser.role.trim().toUpperCase());
-      final hasPreferences =
-          isLogin && !isAdmin ? await session.hasPreferences() : null;
+      final hasPreferences = isLogin && !isAdmin
+          ? await session.hasPreferences()
+          : null;
       if (mounted && session.isAuthenticated) {
         final needsSurvey = isLogin && hasPreferences != true;
         final destination = isAdmin
@@ -404,7 +413,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 20),
                       child: Text(
-                        'Mật khẩu gồm chữ hoa, chữ thường,\nchữ số và ký tự đặc biệt.',
+                        'Mật khẩu có ít nhất 8 ký tự, tối đa 72 byte UTF-8.\nNên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.',
                         style: TextStyle(color: _muted, fontSize: 12),
                       ),
                     ),
@@ -465,6 +474,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         items: const [
                           DropdownMenuItem(value: 'MALE', child: Text('Nam')),
                           DropdownMenuItem(value: 'FEMALE', child: Text('Nữ')),
+                          DropdownMenuItem(value: 'OTHER', child: Text('Khác')),
                         ],
                         onChanged: (val) => setState(() => _gender = val!),
                       ),
@@ -532,7 +542,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         : () => setState(() => _isLogin = !_isLogin),
                     style: TextButton.styleFrom(foregroundColor: _primary),
                     child: Text(
-                      _isLogin ? 'Tạo tài khoản' : 'Đã có tài khoản · Đăng nhập',
+                      _isLogin
+                          ? 'Tạo tài khoản'
+                          : 'Đã có tài khoản · Đăng nhập',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),

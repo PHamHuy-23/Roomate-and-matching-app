@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../navigation/app_routes.dart';
+import '../models/report_receipt.dart';
 import '../widgets/penpot_back_button.dart';
 
 class ReportReceivedScreen extends StatelessWidget {
-  const ReportReceivedScreen({super.key});
+  const ReportReceivedScreen({super.key, this.receipt});
+  final ReportReceipt? receipt;
 
   @override
   Widget build(BuildContext context) {
@@ -19,19 +21,21 @@ class ReportReceivedScreen extends StatelessWidget {
                 children: [
                   const PenpotBackButton(),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Đã nhận báo cáo',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'SourceSansPro',
-                      color: Color(0xFF142523),
+                  Expanded(
+                    child: Text(
+                      receipt == null ? 'Thông tin báo cáo' : 'Đã nhận báo cáo',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'SourceSansPro',
+                        color: Color(0xFF142523),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -46,19 +50,21 @@ class ReportReceivedScreen extends StatelessWidget {
                         color: Color(0xFFEAF8F5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
-                          Icons.check,
+                          receipt == null ? Icons.info_outline : Icons.check,
                           size: 48,
                           color: Color(0xFF087E6B),
                         ),
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Title
-                    const Text(
-                      'Cảm ơn bạn đã phản hồi',
+                    Text(
+                      receipt == null
+                          ? 'Chưa có mã tiếp nhận'
+                          : 'Cảm ơn bạn đã phản hồi',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 25,
@@ -68,10 +74,12 @@ class ReportReceivedScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Subtitle
-                    const Text(
-                      'Báo cáo #BC-028 đang chờ xem xét.\nBạn sẽ nhận thông báo khi có kết quả.',
+                    Text(
+                      receipt == null
+                          ? 'Không có thông tin xác nhận báo cáo từ máy chủ.'
+                          : 'Báo cáo #${receipt!.code} đã được tiếp nhận để ban quản trị xem xét.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 17,
@@ -86,7 +94,7 @@ class ReportReceivedScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Bottom Action
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),

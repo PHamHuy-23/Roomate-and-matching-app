@@ -36,7 +36,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     super.dispose();
   }
 
-  Future<void> _loadPosts() async {
+  Future<void> _loadPosts({int? preferredPostId}) async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -47,7 +47,10 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
       final posts = response.whereType<Map>().map(_mapPost).toList();
       setState(() {
         _posts = posts;
-        _selectedPost = posts.isEmpty ? null : _preferredPost(posts);
+        _selectedPost = posts.isEmpty ? null : posts.firstWhere(
+          (post) => post['id'] == preferredPostId,
+          orElse: () => _preferredPost(posts),
+        );
         _isLoading = false;
       });
     } on ApiException catch (error) {
@@ -72,6 +75,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     final createdAt = DateTime.tryParse(raw['createdAt']?.toString() ?? '');
     return {
       'id': id,
+      'version': raw['version'] is int ? raw['version'] : null,
       'label': id == null ? '—' : 'RH-${id.toString().padLeft(3, '0')}',
       'title': raw['title']?.toString() ?? 'Tin đăng chưa có tiêu đề',
       'description': raw['description']?.toString() ?? '',
@@ -242,17 +246,25 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
   }
 
   Future<void> _moderatePost({required bool approve}) async {
+    if (_isSubmitting) return;
     final postId = _selectedPost?['id'];
+    final version = _selectedPost?['version'];
     if (postId is! int) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tin đăng chưa có mã hợp lệ để xử lý.')),
       );
       return;
     }
+    if (version is! int || version < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thiếu phiên bản tin đăng. Hãy tải lại hoặc cập nhật backend trước khi kiểm duyệt.')),
+      );
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
       final reason = approve ? null : _reasonController.text.trim();
-      await _api.moderatePost(postId, approve ? 'APPROVED' : 'REJECTED', reason: reason);
+      await _api.moderatePost(postId, approve ? 'APPROVED' : 'REJECTED', expectedVersion: version, reason: reason);
       if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
@@ -260,6 +272,11 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
+      if (error.statusCode == 409) {
+        _reasonController.clear();
+        await _loadPosts(preferredPostId: postId);
+        if (!mounted) return;
+      }
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
@@ -294,6 +311,20 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
       );
     }
     final post = _selectedPost!;
+    if (post['version'] is! int || (post['version'] as int) < 0) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Thiếu phiên bản tin đăng. Cần backend mới để kiểm duyệt an toàn.'),
+            OutlinedButton(
+              onPressed: () => _loadPosts(preferredPostId: post['id'] as int?),
+              child: const Text('Tải lại tin đăng'),
+            ),
+          ],
+        ),
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -394,6 +425,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
             child: ChoiceChip(
               selected: isSelected,
               onSelected: (_) {
+                if (_isSubmitting) return;
                 setState(() {
                   _selectedPost = p;
                   _reasonController.clear();

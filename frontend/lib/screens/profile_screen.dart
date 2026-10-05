@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/auth_user.dart';
 import '../models/user_preference.dart';
 import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
+import '../state/auth_session.dart';
 
 class ProfileScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -18,22 +20,57 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ApiService _api;
   late AuthUser _currentUser;
+  AuthSession? _session;
+  int? _sessionGeneration;
+  bool get _currentSession =>
+      _session == null ||
+      _session!.isCurrentSession(
+        _sessionGeneration!,
+        widget.currentUser.userId,
+      );
 
   UserPreference? _preference;
   bool _isLoadingPreferences = true;
   String? _preferencesError;
   int _preferencesRequestId = 0;
+  bool? _searchActive;
+  bool _searchStatusError = false;
+  int _searchRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _api = widget.apiService ?? ApiService();
     _currentUser = widget.currentUser;
+    _session = context.read<AuthSession?>();
+    _sessionGeneration = _session?.generation;
     _loadPreferences();
+    _loadSearchStatus();
+  }
+
+  Future<void> _loadSearchStatus() async {
+    if (!mounted || !_currentSession) return;
+    final requestId = ++_searchRequestId;
+    setState(() {
+      _searchActive = null;
+      _searchStatusError = false;
+    });
+    try {
+      final active = await _api.getSearchStatus();
+      if (!mounted || !_currentSession || requestId != _searchRequestId) return;
+      setState(() => _searchActive = active);
+    } catch (_) {
+      if (!mounted || !_currentSession || requestId != _searchRequestId) return;
+      setState(() => _searchStatusError = true);
+    }
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait([_loadPreferences(), _loadSearchStatus()]);
   }
 
   Future<void> _loadPreferences() async {
-    if (!mounted) return;
+    if (!mounted || !_currentSession) return;
     final requestId = ++_preferencesRequestId;
     setState(() {
       _isLoadingPreferences = true;
@@ -42,14 +79,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final data = await _api.getPreferences(_currentUser.userId);
-      if (!mounted || requestId != _preferencesRequestId) return;
+      if (!mounted || !_currentSession || requestId != _preferencesRequestId) {
+        return;
+      }
       final preference = data != null ? UserPreference.fromJson(data) : null;
       setState(() {
         _preference = preference;
         _isLoadingPreferences = false;
       });
     } catch (_) {
-      if (!mounted || requestId != _preferencesRequestId) return;
+      if (!mounted || !_currentSession || requestId != _preferencesRequestId) {
+        return;
+      }
       setState(() {
         _isLoadingPreferences = false;
         _preferencesError = 'Không tải được tiêu chí. Vui lòng thử lại.';
@@ -75,15 +116,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       AppRoutes.editProfile,
     );
-    if (!mounted || updatedUser is! AuthUser) return;
-    setState(() => _currentUser = updatedUser);
+    if (!mounted ||
+        !_currentSession ||
+        updatedUser is! AuthUser ||
+        updatedUser.userId != widget.currentUser.userId) {
+      return;
+    }
+    setState(() => _currentUser = _session?.user ?? updatedUser);
     await _loadPreferences();
   }
 
   Future<void> _navigateToCriteria() async {
     final saved = await Navigator.pushNamed(context, AppRoutes.survey);
     // Survey returns true only after the server confirms a successful save.
-    if (!mounted || saved != true) return;
+    if (!mounted || !_currentSession || saved != true) return;
     await _loadPreferences();
   }
 
@@ -99,8 +145,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushNamed(context, AppRoutes.notifications);
   }
 
-  void _navigateToSettings() {
-    Navigator.pushNamed(context, AppRoutes.settings);
+  Future<void> _navigateToSettings() async {
+    await Navigator.pushNamed(context, AppRoutes.settings);
+    if (!mounted || !_currentSession) return;
+    await _refresh();
   }
 
   Widget _buildMenuCard({
@@ -161,6 +209,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<AuthSession?>();
+    if (!_currentSession) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Phiên đăng nhập đã thay đổi. Vui lòng mở lại hồ sơ.'),
+        ),
+      );
+    }
+    if (session?.user != null) _currentUser = session!.user!;
     final avatarUrl = _currentUser.avatarUrl;
     final hasValidAvatar =
         avatarUrl != null &&
@@ -170,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: const Color(0xFFF5F8F7), // Match Penpot background
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _loadPreferences,
+          onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
@@ -260,25 +317,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF8F5), // Surface from Penpot
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: const Text(
-                      'Đang tìm bạn ở ghép',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SourceSansPro',
-                        color: Color(0xFF0D5C46), // Darker green text
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF8F5), // Surface from Penpot
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Text(
+                        _searchStatusError
+                            ? 'Chưa tải được trạng thái tìm bạn'
+                            : _searchActive == null
+                            ? 'Đang tải trạng thái tìm bạn...'
+                            : _searchActive!
+                            ? 'Đang tìm bạn ở ghép'
+                            : 'Đã tắt tìm bạn ở ghép',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'SourceSansPro',
+                          color: Color(0xFF0D5C46), // Darker green text
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: _navigateToEditProfile,
                     borderRadius: BorderRadius.circular(15),
@@ -304,6 +370,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
+              if (_searchStatusError)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _loadSearchStatus,
+                    child: const Text('Thử lại trạng thái'),
+                  ),
+                ),
               const SizedBox(height: 32),
 
               // Menu List

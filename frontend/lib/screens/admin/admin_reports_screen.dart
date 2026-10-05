@@ -40,11 +40,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   ApiService get _api => widget.apiService ?? ApiService();
   bool _isLoading = false;
   bool _isResolving = false;
+  bool _isEditingNote = false;
   bool _isRefreshingEvidence = false;
   int _loadVersion = 0;
   String? _selectedEvidenceUrl;
   String? _evidenceError;
   final _noteController = TextEditingController();
+  final Map<int, String> _noteDrafts = {};
 
   @override
   void dispose() {
@@ -93,12 +95,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
         final map = item as Map<String, dynamic>;
         final rawId = map['id'] is int
             ? map['id'] as int
-            : int.tryParse(map['id'].toString()) ?? 1;
+            : int.tryParse(map['id'].toString()) ?? 0;
+        if (rawId <= 0) throw const FormatException('Mã báo cáo không hợp lệ');
         final targetType = map['targetType']?.toString() ?? 'USER';
         final targetId = map['targetId']?.toString() ?? '0';
         final reason = map['reason']?.toString() ?? 'Không rõ lý do';
         final sender = map['reporterName']?.toString() ?? 'Thành viên ẩn danh';
-        final status = map['status']?.toString() ?? 'PENDING';
+        final status = map['status']?.toString() ?? 'UNKNOWN';
         final note =
             map['actionNote']?.toString() ??
             (status == 'RESOLVED'
@@ -111,7 +114,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             ? 'Đã xử lý'
             : status == 'DISMISSED'
             ? 'Đã bác bỏ'
-            : 'Đang chờ';
+            : status == 'PENDING'
+            ? 'Đang chờ'
+            : 'Chưa rõ trạng thái';
         final evidenceUrl = map['evidenceUrl']?.toString();
         return _AdminReport(
           rawId: rawId,
@@ -509,7 +514,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                 Row(
                                   children: [
                                     const Text(
-                                      'Báo cáo đang chờ',
+                                      'Tất cả báo cáo',
                                       style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w700,
@@ -519,7 +524,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      '(${_reports.length})',
+                                      _isLoading || _loadError != null
+                                          ? 'Đang chờ: —'
+                                          : 'Đang chờ: ${_reports.where((report) => report.status == 'PENDING').length}',
+                                      key: const Key(
+                                        'admin_pending_report_count',
+                                      ),
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
@@ -681,16 +691,28 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
+                                    key: const Key('admin_resolve_report'),
                                     onPressed:
                                         _isResolving ||
+                                            _isEditingNote ||
                                             _selectedReport.rawId <= 0 ||
                                             _selectedReport.status != 'PENDING'
                                         ? null
                                         : () async {
+                                            if (_isResolving ||
+                                                _isEditingNote) {
+                                              return;
+                                            }
                                             final reportId =
                                                 _selectedReport.rawId;
+                                            setState(
+                                              () => _isEditingNote = true,
+                                            );
                                             final noteController =
-                                                _noteController..clear();
+                                                _noteController
+                                                  ..text =
+                                                      _noteDrafts[reportId] ??
+                                                      '';
                                             final note = await showDialog<String>(
                                               context: context,
                                               builder: (dialogContext) =>
@@ -740,23 +762,35 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                                   ),
                                             );
                                             // The dialog owns the controller until its closing animation ends.
-                                            if (!context.mounted ||
-                                                note == null) {
+                                            if (!mounted || !context.mounted) {
                                               return;
                                             }
+                                            _noteDrafts[reportId] =
+                                                noteController.text;
+                                            setState(
+                                              () => _isEditingNote = false,
+                                            );
+                                            if (note == null) return;
                                             setState(() => _isResolving = true);
                                             try {
                                               if (reportId > 0) {
-                                                await _api.moderateAdminReport(
-                                                  reportId,
-                                                  status: 'RESOLVED',
-                                                  note: note,
-                                                );
+                                                final saved = await _api
+                                                    .moderateAdminReport(
+                                                      reportId,
+                                                      status: 'RESOLVED',
+                                                      note: note,
+                                                    );
+                                                if (!saved) {
+                                                  throw const ApiException(
+                                                    'Chưa xác nhận lưu kết quả báo cáo',
+                                                  );
+                                                }
                                               }
                                               if (!mounted ||
                                                   !context.mounted) {
                                                 return;
                                               }
+                                              _noteDrafts.remove(reportId);
                                               Navigator.pushReplacementNamed(
                                                 context,
                                                 AppRoutes.adminReportResolved,

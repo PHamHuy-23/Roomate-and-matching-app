@@ -19,7 +19,8 @@ http.Response _error(int statusCode, String message) => http.Response(
 );
 
 final _calls = <String, _ApiCall>{
-  'admin post moderation': (api) => api.moderatePost(28, 'APPROVED'),
+  'admin post moderation': (api) =>
+      api.moderatePost(28, 'APPROVED', expectedVersion: 0),
   'admin report moderation': (api) => api.moderateAdminReport(
     55,
     status: 'RESOLVED',
@@ -163,7 +164,7 @@ void main() {
       final api = ApiService.withClient(client)..setAuthToken('expired-access');
 
       await expectLater(
-        api.moderatePost(28, 'APPROVED'),
+        api.moderatePost(28, 'APPROVED', expectedVersion: 0),
         throwsA(
           isA<ApiException>().having(
             (error) => error.statusCode,
@@ -195,7 +196,7 @@ void main() {
         );
 
       await expectLater(
-        api.moderatePost(28, 'APPROVED'),
+        api.moderatePost(28, 'APPROVED', expectedVersion: 0),
         throwsA(
           isA<ApiException>()
               .having((error) => error.statusCode, 'statusCode', 500)

@@ -40,9 +40,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final area = post.areaM2 == null
-        ? 'Chưa có diện tích'
-        : '${post.areaM2!.round()} m²';
+    final area = post.areaLabel;
     final hasImage = post.imageUrl?.trim().isNotEmpty == true;
     final amenities = post.amenities
         .map((value) => value.trim())

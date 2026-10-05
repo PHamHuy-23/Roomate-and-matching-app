@@ -3,20 +3,23 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  const AdminScreen({super.key, this.apiService});
+
+  final ApiService? apiService;
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   final TextEditingController _userSearchController = TextEditingController();
 
   List<dynamic> _posts = [];
   List<dynamic> _users = [];
   bool _isLoading = true;
+  bool _isModerating = false;
   String? _error;
   String _userQuery = '';
 
@@ -43,6 +46,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadData();
   }
 
@@ -75,10 +79,17 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
-  Future<void> _moderatePost(int? postId, String status) async {
-    if (postId == null) return;
+  Future<void> _moderatePost(int? postId, String status, int? version) async {
+    if (postId == null || _isModerating) return;
+    if (version == null || version < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thiếu phiên bản tin đăng. Hãy tải lại hoặc cập nhật backend trước khi kiểm duyệt.')),
+      );
+      return;
+    }
+    setState(() => _isModerating = true);
     try {
-      await _api.moderatePost(postId, status);
+      await _api.moderatePost(postId, status, expectedVersion: version);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -92,6 +103,10 @@ class _AdminScreenState extends State<AdminScreen> {
       await _loadData();
     } on ApiException catch (error) {
       if (!mounted) return;
+      if (error.statusCode == 409) {
+        await _loadData();
+        if (!mounted) return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.message)),
       );
@@ -102,6 +117,8 @@ class _AdminScreenState extends State<AdminScreen> {
           content: Text('Không thể cập nhật bài đăng, vui lòng thử lại.'),
         ),
       );
+    } finally {
+      if (mounted) setState(() => _isModerating = false);
     }
   }
 
@@ -212,9 +229,10 @@ class _AdminScreenState extends State<AdminScreen> {
                                         children: [
                                           if (status != 'REJECTED')
                                             OutlinedButton(
-                                              onPressed: () => _moderatePost(
+                                              onPressed: _isModerating ? null : () => _moderatePost(
                                                 p['id'] as int?,
                                                 'REJECTED',
+                                                p['version'] is int ? p['version'] as int : null,
                                               ),
                                               style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                                               child: const Text('Từ chối / Khóa'),
@@ -222,9 +240,10 @@ class _AdminScreenState extends State<AdminScreen> {
                                           const SizedBox(width: 8),
                                           if (status != 'APPROVED' && status != 'AVAILABLE')
                                             ElevatedButton(
-                                              onPressed: () => _moderatePost(
+                                              onPressed: _isModerating ? null : () => _moderatePost(
                                                 p['id'] as int?,
                                                 'APPROVED',
+                                                p['version'] is int ? p['version'] as int : null,
                                               ),
                                               style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.green, foregroundColor: Colors.white),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/district_names.dart';
+import '../models/room_amenities.dart';
 
 /// Draft values applied only when the user confirms the filter screen.
 class RoomFilterSelection {
@@ -66,7 +67,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
     'Nội thất',
     'Máy lạnh',
     'Bếp riêng',
-    'Giữ xe',
+    RoomAmenities.parking,
   ];
 
   @override
@@ -78,7 +79,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
         .toDouble();
     _minArea = widget.initialMinArea.clamp(0, double.infinity).toDouble();
     _district = widget.initialDistrict;
-    _amenities = Set<String>.of(widget.initialAmenities);
+    _amenities = RoomAmenities.normalize(widget.initialAmenities).toSet();
   }
 
   @override

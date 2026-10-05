@@ -1,3 +1,5 @@
+import 'room_amenities.dart';
+
 class RoomPost {
   final int id;
   final String title;
@@ -31,13 +33,22 @@ class RoomPost {
     required this.authorId,
     this.imageUrl,
     this.areaM2,
-    this.amenities = const <String>[],
+    List<String> amenities = const <String>[],
     this.deposit,
     this.electricityWaterCost,
     this.status = 'UNKNOWN',
     this.moderationReason,
     this.createdAt,
-  });
+  }) : amenities = RoomAmenities.normalize(amenities);
+
+  bool get hasKnownArea => areaM2 != null && areaM2!.isFinite && areaM2! > 0;
+
+  String get areaLabel => formatArea(areaM2);
+
+  static String formatArea(double? area) =>
+      area == null || !area.isFinite || area <= 0
+      ? 'Chưa cập nhật diện tích'
+      : '${area.toString().replaceFirst(RegExp(r'\.0$'), '')} m²';
 
   factory RoomPost.fromJson(Map<String, dynamic> json) {
     final rawAmenities = json['amenities'];
