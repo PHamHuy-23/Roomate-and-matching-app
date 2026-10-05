@@ -21,6 +21,9 @@ Authorization: Bearer <access_token>
 - Refresh token: thời hạn `7 ngày`, chỉ dùng tại endpoint refresh token.
 - Access token mới chứa claim `refresh_token_id`, trỏ tới bản ghi phiên trong `refresh_tokens` (không chứa refresh token thô hoặc hash). Backend chỉ chấp nhận grant chưa thu hồi, chưa hết hạn và mới nhất của đúng tài khoản. Đăng nhập lại hoặc xoay vòng refresh token vô hiệu hóa access token trước đó; logout/đổi hoặc đặt lại mật khẩu thu hồi toàn bộ grant. Không phụ thuộc vào việc các thao tác xảy ra cùng giây.
 - Sau khi nâng cấp backend, JWT cũ không có claim này sẽ nhận `401`: client cần refresh bằng refresh token còn hiệu lực hoặc đăng nhập lại. Không cần migration SQL cho thay đổi phiên này.
+- Flutter gắn generation cho phiên: đăng nhập/đăng ký mới hoặc đăng xuất vô hiệu hóa các request/refresh đang chạy của phiên cũ. Phản hồi cũ không được ghi token/cache, kích hoạt hết phiên mới hoặc retry bằng credential của tài khoản mới. Các request cùng phiên vẫn dùng chung một lượt refresh và được retry với token đã xoay vòng.
+- Đăng xuất xóa user/token/cache trên máy ngay; yêu cầu thu hồi gửi snapshot access/refresh token cũ, không tự refresh và không xóa phiên mới khi response đến muộn. Thu hồi trên server là best-effort khi mạng lỗi; không khẳng định token đã được thu hồi nếu request chưa thành công.
+- Upload avatar kiểm tra phiên và widget trước khi xác nhận ảnh/cập nhật user/điều hướng. Phản hồi đến sau khi thoát màn hình, đăng xuất hoặc đăng nhập lại (kể cả cùng user) không khôi phục user/ảnh cũ. Signed PUT đã gửi hoặc thao tác đã hoàn tất trên server không thể bị client hoàn tác; có thể còn object chưa được gắn nếu thoát giữa luồng. Nhóm sửa vòng đời phiên chỉ đổi Flutter, không thay API/backend, SQL hoặc cấu hình cloud.
 - Backend lấy `userId`, `email` và `role` từ JWT. Client không được truyền `userId` của người đang đăng nhập để thay thế danh tính trong token.
 - Endpoint `/admin/**` yêu cầu role `ROLE_ADMIN`.
 
@@ -183,7 +186,7 @@ Nhắn tin trong kết nối (FR-38) là phạm vi ưu tiên thấp. Nếu tri�
 
 ### 3.1. POST `/auth/register`
 
-`Public` — Tạo tài khoản mới và gửi mã xác minh email.
+`Public` — Tạo tài khoản mới, trả access token/refresh token cùng hồ sơ (`AuthResponse`). Endpoint hiện tại không tự gửi email xác minh.
 
 Request:
 
@@ -191,38 +194,44 @@ Request:
 {
   "email": "huy@gmail.com",
   "password": "Roommate@123",
-  "confirmPassword": "Roommate@123",
   "fullName": "Trần Quang Huy",
   "gender": "MALE",
-  "phone": "0970780778"
+  "phone": "0970780778",
+  "birthDate": "2003-09-18",
+  "university": "Đại học Quốc gia TP.HCM"
 }
 ```
 
 Validation:
 
 - `email`: bắt buộc, đúng định dạng, tối đa 100 ký tự và chưa tồn tại.
-- `password`: 8–72 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
-- `confirmPassword`: phải trùng `password`.
-- `fullName`: bắt buộc, 2–100 ký tự.
-- `gender`: `MALE`, `FEMALE` hoặc `OTHER`.
-- `phone`: tùy chọn, 10–15 chữ số.
+- `password`: không được chỉ chứa khoảng trắng, tối thiểu 8 ký tự và tối đa **72 byte UTF-8** (giới hạn BCrypt; không phải 72 ký tự Unicode). Không trim mật khẩu. Kết hợp chữ hoa/thường/số/ký tự đặc biệt là khuyến nghị, không phải điều kiện bắt buộc trong implementation hiện tại.
+- Xác nhận mật khẩu được Flutter kiểm tra trước khi gọi API; không có `confirmPassword` trong DTO backend.
+- `fullName`: bắt buộc, không chỉ chứa khoảng trắng, tối đa 100 ký tự.
+- `gender`: `MALE`, `FEMALE` hoặc `OTHER`; chấp nhận chữ thường và lưu dạng uppercase theo `Locale.ROOT`.
+- `phone`: tùy chọn tại API, tối đa 20 ký tự theo cấu trúc DB; Flutter hiện vẫn yêu cầu nhập khi đăng ký. Nhóm này không thêm quy tắc định dạng số điện thoại.
+- `birthDate`: bắt buộc, ngày trong quá khứ và đủ 18 tuổi.
+- `university`: bắt buộc, không chỉ chứa khoảng trắng, tối đa 150 ký tự.
 
-Response `201 Created`:
+Response `200 OK` (giá trị token dưới đây chỉ là placeholder):
 
 ```json
 {
-  "status": 201,
-  "message": "Đăng ký thành công, vui lòng xác minh email",
-  "data": {
-    "userId": 5,
-    "email": "huy@gmail.com",
-    "emailVerified": false,
-    "createdAt": "2026-09-12T10:30:00Z"
-  }
+  "token": "<access-token>",
+  "refreshToken": "<refresh-token>",
+  "userId": 5,
+  "email": "huy@gmail.com",
+  "fullName": "Trần Quang Huy",
+  "gender": "MALE",
+  "phone": "0970780778",
+  "birthDate": "2003-09-18",
+  "university": "Đại học Quốc gia TP.HCM",
+  "role": "ROLE_USER",
+  "avatarUrl": null
 }
 ```
 
-Lỗi: `400` validation, `409 EMAIL_ALREADY_EXISTS`.
+Lỗi: `400` validation với `message` chung và `fields` chứa thông báo từng trường (không trả giá trị mật khẩu bị từ chối); `409` khi email đã tồn tại. Backend kiểm tra DTO cả ở controller và service trước khi lưu/cấp token. Flutter hiển thị lỗi từng trường thay vì chỉ báo "Dữ liệu không hợp lệ".
 
 ### 3.2. POST `/auth/login`
 
@@ -316,13 +325,14 @@ Request:
 ```json
 {
   "email": "huy@gmail.com",
-  "resetCode": "572910",
-  "newPassword": "NewPassword@123",
-  "confirmPassword": "NewPassword@123"
+  "code": "572910",
+  "newPassword": "NewPassword@123"
 }
 ```
 
 Response `200`: đặt lại mật khẩu thành công và thu hồi toàn bộ refresh token cũ.
+
+`email` bắt buộc, đúng định dạng, tối đa 100 ký tự; `code` gồm đúng 6 chữ số. `newPassword` áp dụng cùng policy với đăng ký (ít nhất 8 ký tự, không chỉ khoảng trắng, tối đa 72 byte UTF-8). Validation trả `400`/`fields` trước khi dùng OTP; mật khẩu mới sai không tiêu thụ OTP, đổi hash hay thu hồi token. Flutter kiểm tra xác nhận mật khẩu cục bộ.
 
 ### 3.8. PUT `/auth/change-password`
 
@@ -330,14 +340,15 @@ Request:
 
 ```json
 {
-  "currentPassword": "Roommate@123",
-  "newPassword": "NewPassword@123",
-  "confirmPassword": "NewPassword@123"
+  "oldPassword": "Roommate@123",
+  "newPassword": "NewPassword@123"
 }
 ```
 
 Response `200`: đổi mật khẩu thành công.  
-Lỗi: `400 PASSWORD_CONFIRMATION_MISMATCH`, `401 CURRENT_PASSWORD_INCORRECT`.
+`newPassword` áp dụng cùng policy với đăng ký/đặt lại mật khẩu. `oldPassword` bắt buộc nhưng không áp minimum mới: tài khoản demo/legacy dùng 6 ký tự vẫn đăng nhập và đổi mật khẩu được. Mật khẩu đang đăng nhập/hiện tại dài hơn 72 byte được xử lý như sai mật khẩu, không gây lỗi BCrypt `500`. Lỗi: `400` validation hoặc sai mật khẩu hiện tại, `401` khi không có phiên hợp lệ. Xác nhận mật khẩu kiểm tra trên Flutter, không gửi lên API.
+
+Nhóm validation này không thay đổi schema: giới hạn email/họ tên/điện thoại/trường học khớp cấu trúc hiện có. Không chạy lại schema/seed trên Supabase cho riêng nhóm 3.
 
 ### 3.9. GET `/auth/me`
 
@@ -581,7 +592,16 @@ Trạng thái: `PENDING`, `APPROVED`, `REJECTED`, `AVAILABLE`, `CLOSED`.
 - API hiện lưu/trả một ảnh phòng (`imageObjectKey` khi tải lên, `imageUrl` khi đọc), chưa hỗ trợ bộ ảnh theo phòng khách/phòng ngủ/bếp. Flutter chỉ hiển thị ảnh này, không giả lập bốn ảnh. Chưa có ảnh thì vô hiệu hóa nút xem ảnh; các đường dẫn ảnh cũ vẫn mở cùng ảnh thực tế.
 - Tiện ích, tiền cọc và tổng chi phí hiển thị từ dữ liệu thực tế; dữ liệu thiếu ghi “Chưa cập nhật”. Không tự gán nội thất, cọc một tháng, đơn giá điện/nước, nội quy hoặc mô tả phòng mẫu. Nhóm sửa này không đổi schema và không cần chạy thêm SQL.
 
+**Tin phòng và bộ lọc (đợt sửa mới — nhóm 5):**
+
+- Form quản lý tin có ô nhập `Diện tích (m²)` ở cả tạo mới và chỉnh sửa. Tin legacy thiếu diện tích mở ô trống, không tự gán 28; người đăng bổ sung diện tích thực tế rồi lưu được. Dữ liệu đã có được điền đúng giá trị, không giới hạn bằng vòng lặp 18–60 m². Cho nhập phần thập phân bằng dấu phẩy hoặc dấu chấm; Flutter chặn giá trị trống, không hữu hạn hoặc không lớn hơn 0 trước khi gửi request. Lỗi lưu giữ bản nháp. Đây là validation của form Flutter; API vẫn giữ contract diện tích tùy chọn/không âm và cập nhật một phần như trên.
+- `RoomAmenities` ở Flutter nhận diện chính xác `Chỗ để xe` và `Giữ xe` (bỏ khoảng trắng thừa, không phân biệt hoa/thường) thành nhãn `Giữ xe`. Dùng cùng nhãn cho form đăng tin, model hiển thị và trạng thái bộ lọc; tiện ích khác được giữ, không tự thêm tiện ích chưa cung cấp. Lọc nhiều tiện ích vẫn cần đủ tất cả điều kiện; chuỗi `Không có giữ xe` không bị coi là có giữ xe.
+- Diện tích null/0/âm/không hữu hạn hiển thị `Chưa cập nhật diện tích` trên feed, chi tiết và danh sách tin cá nhân; không thay bằng 28 m². Diện tích dương giữ phần thập phân thật khi hiển thị. Bộ lọc diện tích đang bật không cho tin thiếu/sai dữ liệu lọt qua; không lọc diện tích vẫn giữ tin legacy trong kết quả.
+- Tương thích tiện ích được xử lý khi đọc ở Flutter, không tự ghi lại dữ liệu backend/Supabase. Chỉ thêm kiểm thử backend cho luồng bổ sung diện tích legacy; không đổi code backend, endpoint, SQL, seed, R2 hoặc `.env` trong nhóm 5. Build/chạy lại Flutter để áp dụng.
+
 ### 5.3. Viewing Appointment
+
+**Cập nhật đồng thời (đợt sửa mới — nhóm 2):** `viewing_appointments.version` được Hibernate quản lý bằng `@Version`. Nếu hai transaction cùng đọc phiên bản cũ, chỉ một lần ghi được commit; lần ghi còn lại rollback và trả `409` với message yêu cầu tải lại. Không tự retry thao tác trên trạng thái mới. Ví dụ hủy commit trước thì xác nhận/hoàn tất dùng snapshot cũ không thể khôi phục lịch đã hủy. Các quy tắc vai trò, điều kiện và trạng thái cuối bên dưới vẫn giữ nguyên. Nâng cấp database hiện có bằng `20261005_room_appointment_versions.sql`; đây là thay đổi bổ sung sau các đợt sửa không cần migration trước đó.
 
 ```json
 {
@@ -616,6 +636,15 @@ Trạng thái: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`. Server lấy `r
 `targetType`: `USER` hoặc `ROOM_POST`. Trạng thái: `PENDING`, `RESOLVED`, `DISMISSED`.
 
 ### 5.5. Admin status update
+
+**Kiểm duyệt tin theo phiên bản (đợt sửa mới — nhóm 2):**
+
+- `GET /admin/posts` và response kiểm duyệt chứa `version` (số nguyên không âm); trả `Cache-Control: no-store`. Flutter giữ version cùng nội dung đang hiển thị, không đoán `0` nếu thiếu.
+- `PUT /admin/posts/{id}/moderate?status=APPROVED&expectedVersion=7` (hoặc `REJECTED`/`CLOSED`, thêm `reason` nếu cần). `expectedVersion` bắt buộc: lấy từ chính snapshot đã xem, không tự lấy bản mới chỉ để gửi lại lệnh cũ. Thiếu/sai định dạng/số âm trả `400`; post không tồn tại trả `404` khi tham số hợp lệ.
+- Version không khớp trả `409`, không ghi trạng thái/lý do. `room_posts.version` là `@Version`, nên sửa/đóng/kiểm duyệt khác commit sau bước kiểm tra cũng khiến lần ghi cũ rollback. Response thành công chứa version sau flush.
+- Truy vấn cập nhật lịch hẹn/kiểm duyệt đăng ký khóa `OPTIMISTIC` để kiểm tra version khi commit, kể cả lệnh lặp lại không tạo thay đổi (không có SQL UPDATE). Không báo thành công từ snapshot cũ nếu một transaction khác đã thay đổi bản ghi trước khi commit.
+- Sau `409`, cả hai màn admin tải lại nội dung, không chuyển màn thành công và không tự retry. Màn kiểm duyệt chi tiết giữ ID đang xem nếu còn tồn tại, xóa lý do dành cho bản cũ và yêu cầu admin quyết định lại. Tải lại lỗi thì chặn thao tác dựa trên nội dung cũ. Version thiếu thì cần tải lại/cập nhật backend, không dùng đường vòng duyệt không version.
+- Chạy migration `20261005_room_appointment_versions.sql`, nâng cấp toàn bộ backend rồi Flutter admin. Client cũ không gửi `expectedVersion` bị từ chối bằng `400`; không giữ backend cũ chạy song song. Không có endpoint bỏ qua version. Thay đổi không tự chạy SQL hoặc deploy cloud.
 
 Endpoint hiện hành: `PUT`/`PATCH /admin/users/{userId}/status`, nhận JSON với trạng thái đích bắt buộc. Khóa tài khoản gửi `LOCKED`; mở khóa gửi `ACTIVE`:
 
@@ -669,6 +698,24 @@ Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên 
 - Chưa có tiêu chí: vẫn sửa thông tin tài khoản được, nhưng cần hoàn thành khảo sát trước khi thêm giới thiệu; backend trả `400` nếu gửi giới thiệu không trống, không tự tạo tiêu chí giả. Lỗi tải giới thiệu chặn nút lưu và cho thử lại; lỗi lưu giữ bản nháp. Sau khi lưu, màn hồ sơ cập nhật thông tin và tải lại tiêu chí.
 - Dùng cấu trúc database hiện có, không thêm migration SQL cho nhóm sửa này.
 
+#### Đồng bộ hồ sơ và quyền riêng tư — đợt sửa mới nhóm 4
+
+- Flutter chỉ xác nhận lưu hồ sơ khi `PUT /profile/user/{userId}` trả `200` với DTO hợp lệ và đúng ID. Dữ liệu tên/trường học/liên hệ/avatar/ngày sinh lấy từ response của backend, không dựng hồ sơ từ snapshot cũ lúc mở màn hình. Token giữ từ phiên hiện tại, gồm token đã refresh; không lấy token từ DTO hồ sơ.
+- Avatar đã được xác nhận trong lúc request lưu hồ sơ đang chờ không bị response snapshot cũ ghi đè. Màn sửa và màn hồ sơ quan sát `AuthSession`; sửa qua Cài đặt vẫn cập nhật màn hồ sơ bên dưới. Khi trở về từ Cài đặt, tải lại tiêu chí và trạng thái tìm bạn. Đổi tài khoản/đăng nhập lại/đăng xuất khiến màn cũ không thể ghi vào phiên mới hoặc báo thành công từ response đến trễ.
+- `gender` khi sửa hồ sơ chấp nhận `MALE`, `FEMALE`, `OTHER`, đồng nhất với đăng ký và cấu trúc hiện có. Email trên màn sửa chỉ là thông tin tài khoản; không gắn nhãn đã xác minh khi API chưa có trạng thái xác minh.
+- Endpoint thực tế là `GET /profile/search-status` và `PUT /profile/search-status`, không phải route `/profiles/me` trong bảng thiết kế ban đầu. PUT nhận JSON `{"searchActive": true|false}`; cả GET/PUT trả `200` với `{"searchActive": true|false}`. Flutter kiểm tra boolean bắt buộc, không hiểu trường thiếu/sai kiểu là `false`. Cache chỉ nhận giá trị backend xác nhận; response đọc cũ không ghi đè lượt cập nhật mới.
+- Công tắc Quyền riêng tư chỉ thay đổi **bản nháp**. Nút **Lưu cài đặt** mới gửi PUT, khóa gửi trùng và đợi backend xác nhận đúng trạng thái đã chọn rồi mới báo lưu thành công/quay lại. Lỗi mạng, lỗi HTTP, body sai hoặc trạng thái không khớp giữ màn hình/bản nháp để thử lại; quay lại trước khi lưu không gửi PUT. GET thất bại hiển thị trạng thái chưa biết, khóa lưu và cho tải lại, không giả định đã bật/tắt.
+- Badge tìm bạn trên hồ sơ dùng dữ liệu GET thực tế, hiển thị tải/lỗi và cho thử lại thay vì luôn ghi đang tìm bạn. Nhóm 4 không thay đổi quyền xem liên hệ, schema, seed, bucket R2 hoặc `.env`; không cần SQL mới trên Supabase. Cần chạy/build lại Flutter và cập nhật backend để áp dụng kiểm tra giới tính đồng nhất.
+
+#### Báo cáo vi phạm — đợt sửa mới nhóm 6
+
+- Endpoint hiện có `POST /api/v1/reports` nhận `targetId`, `targetType` (`USER` hoặc `ROOM_POST`), `reason` và `evidenceObjectKey` tùy chọn. Backend hiện trả `200` với `reportId` thực tế, `status: PENDING` và lời xác nhận đã tiếp nhận. Flutter dùng `ReportReceipt` thay cho boolean: chỉ chấp nhận ID nguyên dương và trạng thái `PENDING` (hỗ trợ cả response trực tiếp và envelope `data`). Không dựng mã mặc định khi response thiếu/sai; HTTP thành công nhưng không có receipt hiển thị cảnh báo kết quả chưa xác nhận, có thể đã lưu, không tự gửi lại.
+- Mã hiển thị `BC-<reportId>` chỉ thêm số 0 phía trước đến tối thiểu 3 chữ số, không cắt ID dài. Form chờ request và chặn gửi trùng; chỉ chuyển đến trang tiếp nhận cùng receipt backend trả về. Lỗi giữ mô tả và bằng chứng đã upload; response đến trễ sau đóng màn/đổi phiên API không báo thành công. Mở trang tiếp nhận thiếu receipt hiển thị chưa có mã tiếp nhận, không hiện dấu xác nhận hay mã giả. Không hứa thông báo kết quả vì luồng thông báo xử lý báo cáo chưa được triển khai.
+- Trang Trợ giúp dùng “Hướng dẫn báo cáo vi phạm”, chỉ đường tới hồ sơ người đăng phòng (“Báo cáo người dùng”) hoặc chi tiết liên hệ (“Báo cáo vi phạm”) có `targetUserId`. Không mở form thiếu đối tượng; không dùng ID giả hoặc mở rộng API thành báo lỗi ứng dụng chung. Các lối vào có đối tượng và quyền gửi/chặn người dùng vẫn giữ nguyên.
+- Admin hiển thị **Tất cả báo cáo**, giữ lịch sử `RESOLVED`/`DISMISSED`, chỉ đếm `PENDING` cho **Đang chờ**. Thiếu trạng thái không tự coi là chờ; thiếu ID hợp lệ báo lỗi tải thay vì dựng `BC-001`. Khi lần đầu tải lỗi, số đang chờ là chưa biết, không phải 0.
+- Ghi chú xử lý là draft cục bộ theo ID báo cáo trong vòng đời màn hình: hủy dialog, đổi lựa chọn, làm mới bằng chứng và lỗi lưu vẫn giữ đúng bản nháp; mở báo cáo khác không dùng nhầm ghi chú. Chỉ xóa draft sau lưu thành công. Khóa mở dialog/gửi lặp khi đang xử lý; `PUT /admin/reports/{id}/moderate` chỉ được xác nhận thành công khi body trả đúng ID và trạng thái đã yêu cầu. Không thêm hành động khóa người dùng hay đóng tin tự động.
+- Nhóm 6 không sửa backend production, schema, seed, quyền private R2 hoặc `.env`; không cần chạy SQL mới trên Supabase. Cần build/chạy lại Flutter và nghiệm thu trên điện thoại/backend deployed. Chưa bổ sung push, lịch sử báo cáo cá nhân hay báo lỗi ứng dụng chung.
+
 ### 5.7. Trạng thái tải kết nối và lịch sử chat
 
 - Màn kết nối chỉ hiển thị dữ liệu sau khi cả danh sách đã nhận và đã gửi tải thành công. Lỗi mạng, HTTP hoặc dữ liệu không hợp lệ hiển thị lỗi và nút “Thử lại”, không bị coi là danh sách trống. Có thể kéo để tải lại cả khi danh sách thực sự trống.
@@ -706,6 +753,14 @@ Hồ sơ công khai vẫn dùng DTO riêng, không mở thêm quyền xem liên 
 - MVC giữ `404` cho route không tồn tại, `405` cùng header `Allow` cho method không hỗ trợ, `415` cho Content-Type không phù hợp. `RuntimeException`/exception ngoài dự kiến vẫn trả `500` với thông báo chung “Đã xảy ra lỗi máy chủ”; chi tiết chỉ ghi log server, không trả exception, SQL hay thông tin cấu hình nội bộ cho client.
 - Flutter giữ mã HTTP/thông báo lỗi; các lỗi `400/403/404/409/500/503` không tự làm mất phiên, không cập nhật trạng thái hoặc mở màn thành công khi request thất bại. `401` vẫn xử lý refresh token/hết phiên theo cơ chế hiện có.
 - Không thêm bảng/cột, migration, dependency hoặc cấu hình Supabase trong nhóm này. Cần khởi động lại backend để áp dụng; kiểm thử tự động dùng H2/mock, không thay thế kiểm thử thiết bị và dịch vụ thật.
+
+### 5.11. Hiển thị trung thực khi chưa có dữ liệu vị trí/thống kê/audit
+
+- API tin phòng hiện trả `address` và `district`, không có tọa độ phòng đã xác minh, danh sách trường/chợ, khoảng cách hoặc thời gian di chuyển. Màn “Vị trí & khu vực” giữ địa chỉ/khu vực từ tin, ghi rõ chưa có dữ liệu địa điểm/khoảng cách/thời gian; không gán trường/chợ hay số phút/km theo từ khóa. Địa chỉ/khu vực trống hoặc chỉ có khoảng trắng hiển thị chưa cập nhật, không khẳng định gần trung tâm.
+- Bản đồ vẫn dùng tâm khu vực tham khảo, không phải vị trí chính xác của phòng. Giữ nhãn “Khu vực tham khảo”, các nút bản đồ và điều hướng đặt lịch; không bổ sung geocoding hoặc gọi dịch vụ tính tuyến đường trong nhóm này.
+- Dashboard đếm người dùng, tin công khai, tin chờ duyệt và báo cáo `PENDING` từ các API admin hiện có. Báo cáo có trạng thái đang tải/lỗi/thử lại riêng; lỗi không biến thành số 0 hay “chưa có API”. Khi thử lại thất bại, không trình bày bộ đếm lần tải trước như dữ liệu hiện tại.
+- Chưa có endpoint thống kê kết nối theo tuần hoặc lịch sử thao tác admin. `match_requests.createdAt` chỉ là thời điểm tạo lời mời, không phải lúc kết nối thành công; thời điểm tạo tin/báo cáo không chứng minh sự kiện duyệt/tiếp nhận của admin. Hai khối dashboard ghi rõ chưa hỗ trợ, không dùng biểu đồ mẫu, sự kiện giả hoặc khẳng định lịch sử trống. Cần backend lưu thời điểm/sự kiện thật và cung cấp API trước khi triển khai hai tính năng này.
+- Nhóm 7 chỉ sửa Flutter/kiểm thử/tài liệu; không thêm endpoint, dependency, schema, migration hoặc cấu hình `.env`, không cần chạy thêm SQL trên Supabase cho riêng nhóm này.
 
 ## 6. Sự kiện tự động và quyền riêng tư
 
