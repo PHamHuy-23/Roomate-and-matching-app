@@ -1,176 +1,99 @@
--- =============================================================================
--- ROOMMATE HUB - DU LIEU MAU CHO DISCOVERY FEED / COMPATIBILITY
--- MySQL 8.0+
---
--- Tai khoan dung de test:
---   Email:    huy@gmail.com
---   Mat khau: 123456 (neu dang dung bo seed mac dinh cua du an)
---
--- Script khong TRUNCATE bang va co the chay lai ma khong tao user trung.
--- Cac ung vien duoc tao cung gioi tinh va cung quan voi tai khoan test,
--- de dap ung bo loc cung hien tai cua MatchingService.
--- =============================================================================
+-- Roommate Hub discovery-feed sample data for PostgreSQL / Supabase.
+-- Run after 01_schema.sql and 02_seed_data.sql.
+-- The script is idempotent and derives the candidates from huy@gmail.com.
 
-USE `roommate_hub`;
+BEGIN;
 
--- Dong bo charset/collation cua bien va chuoi literal voi schema hien tai.
--- Neu khong co dong nay, MySQL 8 co the bao Error 1267 khi so sanh
--- utf8mb4_0900_ai_ci cua session voi utf8mb4_unicode_ci cua cot email.
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+WITH source_user AS (
+    SELECT u.password_hash, u.gender
+    FROM users u
+    WHERE u.email = 'huy@gmail.com'
+), candidates(email, full_name, phone, birth_date, university) AS (
+    VALUES
+        ('demo.match.high@roommatehub.local', 'Tuấn Minh', '0908000101',
+         DATE '2004-02-15', 'Đại học Công nghệ Thông tin'),
+        ('demo.match.medium@roommatehub.local', 'Hoàng Nam', '0908000102',
+         DATE '2003-08-21', 'Đại học Sư phạm Kỹ thuật TP.HCM'),
+        ('demo.match.low@roommatehub.local', 'Gia Bảo', '0908000103',
+         DATE '2002-11-09', 'Đại học Quốc gia TP.HCM')
+)
+INSERT INTO users
+    (email, password_hash, full_name, gender, phone, birth_date, university,
+     role, status)
+SELECT c.email, s.password_hash, c.full_name, s.gender, c.phone, c.birth_date,
+       c.university, 'ROLE_USER', 'ACTIVE'
+FROM candidates c
+CROSS JOIN source_user s
+ON CONFLICT (email) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    gender = EXCLUDED.gender,
+    phone = EXCLUDED.phone,
+    birth_date = EXCLUDED.birth_date,
+    university = EXCLUDED.university;
 
-SET @test_email = _utf8mb4'huy@gmail.com' COLLATE utf8mb4_unicode_ci;
-SET @test_user_id = (SELECT `id` FROM `users` WHERE `email` = @test_email LIMIT 1);
-SET @test_password = (SELECT `password_hash` FROM `users` WHERE `id` = @test_user_id);
-SET @test_gender = (SELECT `gender` FROM `users` WHERE `id` = @test_user_id);
-SET @test_district = (
-    SELECT `target_district`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-SET @test_budget = (
-    SELECT `budget_amount`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-SET @test_sleep = (
-    SELECT `sleep_habit`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-SET @test_cleanliness = (
-    SELECT `cleanliness_level`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-SET @test_smoking = (
-    SELECT `is_smoking`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-SET @test_pets = (
-    SELECT `allow_pets`
-    FROM `user_preferences`
-    WHERE `user_id` = @test_user_id
-    LIMIT 1
-);
-
-START TRANSACTION;
-
--- Ba ung vien phu ba nhom diem: cao, trung binh va thap.
-INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
+WITH source_preference AS (
+    SELECT p.target_district, p.budget_amount, p.sleep_habit,
+           p.cleanliness_level, p.is_smoking, p.allow_pets
+    FROM user_preferences p
+    JOIN users u ON u.id = p.user_id
+    WHERE u.email = 'huy@gmail.com'
+), candidate_preferences AS (
+    SELECT u.id AS candidate_id, u.email, s.*
+    FROM users u
+    CROSS JOIN source_preference s
+    WHERE u.email LIKE 'demo.match.%@roommatehub.local'
+)
+INSERT INTO user_preferences
+    (user_id, target_district, budget_amount, sleep_habit,
+     cleanliness_level, is_smoking, allow_pets, bio_description)
 SELECT
-    'demo.match.high@roommatehub.local', @test_password, 'Tuấn Minh',
-    @test_gender, '0908000101', NULL, '2004-02-15', 'Đại học Công nghệ Thông tin', 'ROLE_USER', 'ACTIVE'
-WHERE @test_user_id IS NOT NULL;
-
-INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
-SELECT
-    'demo.match.medium@roommatehub.local', @test_password, 'Hoàng Nam',
-    @test_gender, '0908000102', NULL, '2003-08-21', 'Đại học Sư phạm Kỹ thuật TP.HCM', 'ROLE_USER', 'ACTIVE'
-WHERE @test_user_id IS NOT NULL;
-
-INSERT IGNORE INTO `users`
-    (`email`, `password_hash`, `full_name`, `gender`, `phone`, `avatar_url`, `birth_date`, `university`, `role`, `status`)
-SELECT
-    'demo.match.low@roommatehub.local', @test_password, 'Gia Bảo',
-    @test_gender, '0908000103', NULL, '2002-11-09', 'Đại học Quốc gia TP.HCM', 'ROLE_USER', 'ACTIVE'
-WHERE @test_user_id IS NOT NULL;
-
--- Đồng bộ thông tin hồ sơ nếu các tài khoản mẫu đã tồn tại từ lần chạy trước.
-UPDATE `users`
-SET `birth_date` = '2004-02-15', `university` = 'Đại học Công nghệ Thông tin'
-WHERE `email` = 'demo.match.high@roommatehub.local';
-
-UPDATE `users`
-SET `birth_date` = '2003-08-21', `university` = 'Đại học Sư phạm Kỹ thuật TP.HCM'
-WHERE `email` = 'demo.match.medium@roommatehub.local';
-
-UPDATE `users`
-SET `birth_date` = '2002-11-09', `university` = 'Đại học Quốc gia TP.HCM'
-WHERE `email` = 'demo.match.low@roommatehub.local';
-
--- Gan nhu trung khop hoan toan: badge xanh, diem thuong tren 90%.
-INSERT INTO `user_preferences`
-    (`user_id`, `target_district`, `budget_amount`, `sleep_habit`,
-     `cleanliness_level`, `is_smoking`, `allow_pets`, `bio_description`)
-SELECT
-    u.`id`, @test_district, ROUND(@test_budget * 1.05), @test_sleep,
-    @test_cleanliness, @test_smoking, @test_pets,
-    'Dữ liệu mẫu: giờ giấc, ngân sách và nếp sống rất tương đồng.'
-FROM `users` u
-WHERE u.`email` = 'demo.match.high@roommatehub.local'
-ON DUPLICATE KEY UPDATE
-    `target_district` = @test_district,
-    `budget_amount` = ROUND(@test_budget * 1.05),
-    `sleep_habit` = @test_sleep,
-    `cleanliness_level` = @test_cleanliness,
-    `is_smoking` = @test_smoking,
-    `allow_pets` = @test_pets,
-    `bio_description` = 'Dữ liệu mẫu: giờ giấc, ngân sách và nếp sống rất tương đồng.';
-
--- Co mot vai khac biet: badge cam, diem du kien khoang 65-75%.
-INSERT INTO `user_preferences`
-    (`user_id`, `target_district`, `budget_amount`, `sleep_habit`,
-     `cleanliness_level`, `is_smoking`, `allow_pets`, `bio_description`)
-SELECT
-    u.`id`, @test_district, ROUND(@test_budget * 1.5),
-    CASE WHEN @test_sleep = 1 THEN 2 WHEN @test_sleep = 2 THEN 1 ELSE 2 END,
-    CASE WHEN @test_cleanliness >= 3 THEN @test_cleanliness - 2 ELSE @test_cleanliness + 2 END,
-    @test_smoking, @test_pets,
-    'Dữ liệu mẫu: có vài khác biệt để kiểm tra phần điểm cần lưu ý.'
-FROM `users` u
-WHERE u.`email` = 'demo.match.medium@roommatehub.local'
-ON DUPLICATE KEY UPDATE
-    `target_district` = @test_district,
-    `budget_amount` = ROUND(@test_budget * 1.5),
-    `sleep_habit` = CASE WHEN @test_sleep = 1 THEN 2 WHEN @test_sleep = 2 THEN 1 ELSE 2 END,
-    `cleanliness_level` = CASE
-        WHEN @test_cleanliness >= 3 THEN @test_cleanliness - 2
-        ELSE @test_cleanliness + 2
+    candidate_id,
+    target_district,
+    CASE
+        WHEN email = 'demo.match.high@roommatehub.local' THEN ROUND((budget_amount * 1.05)::numeric)::double precision
+        WHEN email = 'demo.match.medium@roommatehub.local' THEN ROUND((budget_amount * 1.5)::numeric)::double precision
+        ELSE ROUND((budget_amount * 2)::numeric)::double precision
     END,
-    `is_smoking` = @test_smoking,
-    `allow_pets` = @test_pets,
-    `bio_description` = 'Dữ liệu mẫu: có vài khác biệt để kiểm tra phần điểm cần lưu ý.';
-
--- Khac biet lon: badge xam, diem du kien duoi 60%.
-INSERT INTO `user_preferences`
-    (`user_id`, `target_district`, `budget_amount`, `sleep_habit`,
-     `cleanliness_level`, `is_smoking`, `allow_pets`, `bio_description`)
-SELECT
-    u.`id`, @test_district, ROUND(@test_budget * 2),
-    CASE WHEN @test_sleep = 1 THEN 3 ELSE 1 END,
-    CASE WHEN @test_cleanliness >= 3 THEN 1 ELSE 5 END,
-    NOT @test_smoking, NOT @test_pets,
-    'Dữ liệu mẫu: khác biệt lớn về giờ giấc và thói quen sinh hoạt.'
-FROM `users` u
-WHERE u.`email` = 'demo.match.low@roommatehub.local'
-ON DUPLICATE KEY UPDATE
-    `target_district` = @test_district,
-    `budget_amount` = ROUND(@test_budget * 2),
-    `sleep_habit` = CASE WHEN @test_sleep = 1 THEN 3 ELSE 1 END,
-    `cleanliness_level` = CASE WHEN @test_cleanliness >= 3 THEN 1 ELSE 5 END,
-    `is_smoking` = NOT @test_smoking,
-    `allow_pets` = NOT @test_pets,
-    `bio_description` = 'Dữ liệu mẫu: khác biệt lớn về giờ giấc và thói quen sinh hoạt.';
+    CASE
+        WHEN email = 'demo.match.high@roommatehub.local' THEN sleep_habit
+        WHEN email = 'demo.match.medium@roommatehub.local' THEN
+            CASE WHEN sleep_habit = 1 THEN 2 WHEN sleep_habit = 2 THEN 1 ELSE 2 END
+        ELSE CASE WHEN sleep_habit = 1 THEN 3 ELSE 1 END
+    END,
+    CASE
+        WHEN email = 'demo.match.high@roommatehub.local' THEN cleanliness_level
+        WHEN email = 'demo.match.medium@roommatehub.local' THEN
+            CASE WHEN cleanliness_level >= 3 THEN cleanliness_level - 2 ELSE cleanliness_level + 2 END
+        ELSE CASE WHEN cleanliness_level >= 3 THEN 1 ELSE 5 END
+    END,
+    CASE WHEN email = 'demo.match.low@roommatehub.local' THEN NOT is_smoking ELSE is_smoking END,
+    CASE WHEN email = 'demo.match.low@roommatehub.local' THEN NOT allow_pets ELSE allow_pets END,
+    CASE
+        WHEN email = 'demo.match.high@roommatehub.local'
+            THEN 'Dữ liệu mẫu: giờ giấc, ngân sách và nếp sống rất tương đồng.'
+        WHEN email = 'demo.match.medium@roommatehub.local'
+            THEN 'Dữ liệu mẫu: có vài khác biệt để kiểm tra phần điểm cần lưu ý.'
+        ELSE 'Dữ liệu mẫu: khác biệt lớn về giờ giấc và thói quen sinh hoạt.'
+    END
+FROM candidate_preferences
+ON CONFLICT (user_id) DO UPDATE SET
+    target_district = EXCLUDED.target_district,
+    budget_amount = EXCLUDED.budget_amount,
+    sleep_habit = EXCLUDED.sleep_habit,
+    cleanliness_level = EXCLUDED.cleanliness_level,
+    is_smoking = EXCLUDED.is_smoking,
+    allow_pets = EXCLUDED.allow_pets,
+    bio_description = EXCLUDED.bio_description;
 
 COMMIT;
 
--- Xem nhanh cac ban ghi vua tao.
-SELECT
-    u.`id`, u.`full_name`, u.`birth_date`, u.`university`, u.`email`, p.`target_district`,
-    p.`budget_amount`, p.`sleep_habit`, p.`cleanliness_level`,
-    p.`is_smoking`, p.`allow_pets`
-FROM `users` u
-JOIN `user_preferences` p ON p.`user_id` = u.`id`
-WHERE u.`email` LIKE 'demo.match.%@roommatehub.local'
-ORDER BY u.`email`;
+SELECT u.id, u.full_name, u.birth_date, u.university, u.email,
+       p.target_district, p.budget_amount, p.sleep_habit,
+       p.cleanliness_level, p.is_smoking, p.allow_pets
+FROM users u
+JOIN user_preferences p ON p.user_id = u.id
+WHERE u.email LIKE 'demo.match.%@roommatehub.local'
+ORDER BY u.email;
 
--- Neu can xoa du lieu mau, chay lenh sau (FK se xoa preference kem theo):
--- DELETE FROM `users` WHERE `email` LIKE 'demo.match.%@roommatehub.local';
+-- Cleanup if needed (preferences are removed by ON DELETE CASCADE):
+-- DELETE FROM users WHERE email LIKE 'demo.match.%@roommatehub.local';

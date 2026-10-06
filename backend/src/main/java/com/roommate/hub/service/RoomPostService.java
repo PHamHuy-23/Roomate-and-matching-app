@@ -1,14 +1,22 @@
 package com.roommate.hub.service;
 
 import com.roommate.hub.dto.CreateRoomPostDTO;
+import com.roommate.hub.util.DistrictNames;
 import com.roommate.hub.dto.RoomPostResponseDTO;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.exception.ForbiddenException;
+import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,9 +27,12 @@ public class RoomPostService {
 
     private final RoomPostRepository roomPostRepository;
     private final UserRepository userRepository;
+    private final ObjectProvider<R2StorageService> storageServiceProvider;
 
+    @Transactional(readOnly = true)
     public List<RoomPostResponseDTO> getAllAvailablePosts() {
-        return roomPostRepository.findByStatusIn(List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE))
+        return roomPostRepository.findByStatusInAndAuthorStatus(
+                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE), "ACTIVE")
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -29,8 +40,16 @@ public class RoomPostService {
 
     @Transactional
     public RoomPostResponseDTO createPost(CreateRoomPostDTO dto) {
-        User author = userRepository.findById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("Tài khoản người dùng không tồn tại!"));
+        validateFiniteNumbers(dto);
+        validateOccupancy(dto.getMaxOccupants(), dto.getCurrentOccupants() == null ? 0 : dto.getCurrentOccupants());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User author = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
+
+        String imageUrl = null;
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            imageUrl = requireImageUrl(author.getId(), dto.getImageObjectKey());
+        }
 
         RoomPost post = RoomPost.builder()
                 .author(author)
@@ -38,7 +57,14 @@ public class RoomPostService {
                 .description(dto.getDescription())
                 .price(dto.getPrice())
                 .address(dto.getAddress())
+                .district(DistrictNames.canonical(dto.getDistrict()))
+                .deposit(dto.getDeposit())
+                .electricityWaterCost(dto.getElectricityWaterCost())
+                .area(dto.getArea())
                 .maxOccupants(dto.getMaxOccupants())
+                .currentOccupants(dto.getCurrentOccupants() == null ? 0 : dto.getCurrentOccupants())
+                .amenities(dto.getAmenities())
+                .imageUrl(imageUrl)
                 .status(RoomPost.PostStatus.PENDING) // Mặc định chờ duyệt
                 .build();
 
@@ -55,8 +81,119 @@ public class RoomPostService {
                 .description(post.getDescription())
                 .price(post.getPrice())
                 .address(post.getAddress())
+                .district(DistrictNames.canonical(post.getDistrict()))
+                .deposit(post.getDeposit())
+                .electricityWaterCost(post.getElectricityWaterCost())
+                .area(post.getArea())
                 .maxOccupants(post.getMaxOccupants())
+                .currentOccupants(post.getCurrentOccupants())
+                .amenities(post.getAmenities())
+                .status(post.getStatus() != null ? post.getStatus().name() : null)
                 .createdAt(post.getCreatedAt())
+                .status(post.getStatus().name())
+                .moderationReason(post.getModerationReason())
+                .imageUrl(post.getImageUrl())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public RoomPostResponseDTO getPost(Long postId) {
+        return convertToDTO(roomPostRepository.findByIdAndStatusInAndAuthorStatus(postId,
+                List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE), "ACTIVE")
+                .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!")));
+    }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        RoomPost post = roomPostRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!admin && !post.getAuthor().getEmail().equals(authentication.getName())) {
+            throw new ForbiddenException("Bạn không có quyền xóa bài đăng này!");
+        }
+        // Đóng tin đăng (soft-close) để bảo toàn dữ liệu lịch hẹn và lịch sử tương tác
+        post.setStatus(RoomPost.PostStatus.CLOSED);
+        roomPostRepository.save(post);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoomPostResponseDTO> getMyPosts() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User author = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
+        return roomPostRepository.findByAuthorId(author.getId())
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RoomPostResponseDTO updatePost(Long postId, CreateRoomPostDTO dto) {
+        RoomPost post = roomPostRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài đăng không tồn tại!"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!admin && !post.getAuthor().getEmail().equals(authentication.getName())) {
+            throw new ForbiddenException("Bạn không có quyền sửa bài đăng này!");
+        }
+
+        validateFiniteNumbers(dto);
+        validateOccupancy(dto.getMaxOccupants() == null ? post.getMaxOccupants() : dto.getMaxOccupants(),
+                dto.getCurrentOccupants() == null ? post.getCurrentOccupants() : dto.getCurrentOccupants());
+
+        // Resolve a requested replacement before changing the post; never silently ignore an unavailable upload.
+        String imageUrl = null;
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            imageUrl = requireImageUrl(post.getAuthor().getId(), dto.getImageObjectKey());
+        }
+
+        // Khi người dùng chỉnh sửa nội dung tin, chuyển về trạng thái PENDING để kiểm duyệt lại
+        if (!admin) {
+            post.setStatus(RoomPost.PostStatus.PENDING);
+        }
+
+        if (dto.getTitle() != null) post.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) post.setDescription(dto.getDescription());
+        if (dto.getPrice() != null) post.setPrice(dto.getPrice());
+        if (dto.getAddress() != null) post.setAddress(dto.getAddress());
+        if (dto.getDistrict() != null) post.setDistrict(DistrictNames.canonical(dto.getDistrict()));
+        if (dto.getDeposit() != null) post.setDeposit(dto.getDeposit());
+        if (dto.getElectricityWaterCost() != null) post.setElectricityWaterCost(dto.getElectricityWaterCost());
+        if (dto.getArea() != null) post.setArea(dto.getArea());
+        if (dto.getMaxOccupants() != null) post.setMaxOccupants(dto.getMaxOccupants());
+        if (dto.getCurrentOccupants() != null) post.setCurrentOccupants(dto.getCurrentOccupants());
+        if (dto.getAmenities() != null) post.setAmenities(dto.getAmenities());
+
+        if (imageUrl != null) {
+            post.setImageUrl(imageUrl);
+        }
+
+        return convertToDTO(roomPostRepository.save(post));
+    }
+
+    private String requireImageUrl(Long authorId, String imageObjectKey) {
+        R2StorageService storageService = storageServiceProvider.getIfAvailable();
+        if (storageService == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Cloudflare R2 chưa được cấu hình");
+        }
+        return storageService.requireOwnedObject(authorId, "room-post", imageObjectKey);
+    }
+
+    private void validateFiniteNumbers(CreateRoomPostDTO dto) {
+        for (Double value : new Double[]{dto.getPrice(), dto.getDeposit(), dto.getElectricityWaterCost(), dto.getArea()}) {
+            if (value != null && !Double.isFinite(value)) {
+                throw new IllegalArgumentException("Giá, tiền cọc, chi phí điện nước và diện tích phải là số hữu hạn");
+            }
+        }
+    }
+
+    private void validateOccupancy(Integer maxOccupants, Integer currentOccupants) {
+        if (maxOccupants == null || maxOccupants < 1) {
+            throw new IllegalArgumentException("Số người tối đa phải lớn hơn hoặc bằng 1");
+        }
+        if (currentOccupants == null || currentOccupants < 0 || currentOccupants > maxOccupants) {
+            throw new IllegalArgumentException("Số người hiện tại phải từ 0 đến số người tối đa");
+        }
     }
 }

@@ -10,9 +10,11 @@ Thumbs.db
 ~$*.doc*
 
 # Java/Maven
+.m2/
 backend/target/
 backend/*.log
 backend/.env
+backend/.env.*.local
 
 # Flutter/Dart
 frontend/.dart_tool/
@@ -24,6 +26,7 @@ frontend/*.log
 
 # AI & Memory Bank (Do not push to GitHub)
 .ai/
+.agents/
 PROJECT_MEMORY.md
 MEMORY.md
 .gemini/
@@ -35,3 +38,6 @@ MEMORY.md
 .codex-*/
 .bugbot-*/
 .bugbot-*.zip
+
+.worktrees/
+frontend/android/.kotlin/

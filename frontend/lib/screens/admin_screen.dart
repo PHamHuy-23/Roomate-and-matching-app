@@ -3,36 +3,122 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  const AdminScreen({super.key, this.apiService});
+
+  final ApiService? apiService;
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+  final TextEditingController _userSearchController = TextEditingController();
 
   List<dynamic> _posts = [];
   List<dynamic> _users = [];
   bool _isLoading = true;
+  bool _isModerating = false;
+  String? _error;
+  String _userQuery = '';
+
+  @override
+  void dispose() {
+    _userSearchController.dispose();
+    super.dispose();
+  }
+
+  List<dynamic> get _filteredUsers {
+    final query = _userQuery.trim().toLowerCase();
+    if (query.isEmpty) return _users;
+    return _users.where((user) {
+      if (user is! Map) return false;
+      final values = [
+        user['fullName'],
+        user['email'],
+        user['id'],
+      ].map((value) => value?.toString().toLowerCase() ?? '');
+      return values.any((value) => value.contains(query));
+    }).toList(growable: false);
+  }
 
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadData();
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final posts = await _api.getAdminPosts();
-    final users = await _api.getAdminUsers();
-    if (mounted) {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final posts = await _api.getAdminPosts();
+      final users = await _api.getAdminUsers();
+      if (!mounted) return;
       setState(() {
         _posts = posts;
         _users = users;
         _isLoading = false;
       });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Không thể tải dữ liệu quản trị, vui lòng thử lại.';
+      });
+    }
+  }
+
+  Future<void> _moderatePost(int? postId, String status, int? version) async {
+    if (postId == null || _isModerating) return;
+    if (version == null || version < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thiếu phiên bản tin đăng. Hãy tải lại hoặc cập nhật backend trước khi kiểm duyệt.')),
+      );
+      return;
+    }
+    setState(() => _isModerating = true);
+    try {
+      await _api.moderatePost(postId, status, expectedVersion: version);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'APPROVED'
+                ? 'Đã phê duyệt bài đăng.'
+                : 'Đã từ chối bài đăng.',
+          ),
+        ),
+      );
+      await _loadData();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      if (error.statusCode == 409) {
+        await _loadData();
+        if (!mounted) return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể cập nhật bài đăng, vui lòng thử lại.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isModerating = false);
     }
   }
 
@@ -81,6 +167,25 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off_outlined, size: 44),
+                          const SizedBox(height: 12),
+                          Text(_error!, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          OutlinedButton(
+                            onPressed: _loadData,
+                            child: const Text('Thử lại'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
             : TabBarView(
                 children: [
                   // TAB 1: DUYỆT BÀI ĐĂNG
@@ -124,20 +229,22 @@ class _AdminScreenState extends State<AdminScreen> {
                                         children: [
                                           if (status != 'REJECTED')
                                             OutlinedButton(
-                                              onPressed: () async {
-                                                await _api.moderatePost(p['id'], 'REJECTED');
-                                                _loadData();
-                                              },
+                                              onPressed: _isModerating ? null : () => _moderatePost(
+                                                p['id'] as int?,
+                                                'REJECTED',
+                                                p['version'] is int ? p['version'] as int : null,
+                                              ),
                                               style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                                               child: const Text('Từ chối / Khóa'),
                                             ),
                                           const SizedBox(width: 8),
                                           if (status != 'APPROVED' && status != 'AVAILABLE')
                                             ElevatedButton(
-                                              onPressed: () async {
-                                                await _api.moderatePost(p['id'], 'APPROVED');
-                                                _loadData();
-                                              },
+                                              onPressed: _isModerating ? null : () => _moderatePost(
+                                                p['id'] as int?,
+                                                'APPROVED',
+                                                p['version'] is int ? p['version'] as int : null,
+                                              ),
                                               style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.green, foregroundColor: Colors.white),
                                               child: const Text('Phê Duyệt'),
@@ -159,34 +266,57 @@ class _AdminScreenState extends State<AdminScreen> {
                         ? const Center(child: Text('Không có tài khoản nào'))
                         : ListView.builder(
                             padding: const EdgeInsets.all(12),
-                            itemCount: _users.length,
+                            itemCount: _filteredUsers.length +
+                                1 +
+                                (_filteredUsers.isEmpty ? 1 : 0),
                             itemBuilder: (context, i) {
-                              final u = _users[i];
-                              final isLocked = 'LOCKED'.equalsIgnoreCase(u['status']?.toString());
+                              if (i == 0) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: TextField(
+                                    controller: _userSearchController,
+                                    onChanged: (value) =>
+                                        setState(() => _userQuery = value),
+                                    decoration: InputDecoration(
+                                      hintText: 'Tìm theo tên, email hoặc mã người dùng',
+                                      prefixIcon: const Icon(Icons.search),
+                                      suffixIcon: _userQuery.isEmpty
+                                          ? null
+                                          : IconButton(
+                                              tooltip: 'Xóa tìm kiếm',
+                                              onPressed: () {
+                                                _userSearchController.clear();
+                                                setState(() => _userQuery = '');
+                                              },
+                                              icon: const Icon(Icons.close),
+                                            ),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              if (_filteredUsers.isEmpty) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Text('Không tìm thấy tài khoản phù hợp.'),
+                                );
+                              }
+                              final u = _filteredUsers[i - 1];
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: isLocked ? Colors.red.shade100 : Colors.indigo.shade100,
-                                    child: Icon(
-                                      isLocked ? Icons.lock : Icons.person,
-                                      color: isLocked ? Colors.red : Colors.indigo,
-                                    ),
+                                    backgroundColor: Colors.indigo.shade100,
+                                    child: const Icon(Icons.person, color: Colors.indigo),
                                   ),
                                   title: Text(u['fullName'] ?? 'Chưa đặt tên',
                                       style: const TextStyle(fontWeight: FontWeight.bold)),
                                   subtitle: Text('${u['email']} | SĐT: ${u['phone'] ?? 'Chưa có'}\nQuyền: ${u['role']}'),
-                                  trailing: ElevatedButton(
-                                    onPressed: () async {
-                                      await _api.toggleUserStatus(u['id']);
-                                      _loadData();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isLocked ? Colors.green : Colors.red,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: Text(isLocked ? 'Mở Khóa' : 'Khóa'),
-                                  ),
                                 ),
                               );
                             },
@@ -197,8 +327,4 @@ class _AdminScreenState extends State<AdminScreen> {
       ),
     );
   }
-}
-
-extension StringIgnoreCase on String {
-  bool equalsIgnoreCase(String? other) => toLowerCase() == other?.toLowerCase();
 }

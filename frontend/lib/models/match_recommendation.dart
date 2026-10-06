@@ -1,6 +1,8 @@
 import 'match_criteria_detail.dart';
+import 'district_names.dart';
 
 class MatchRecommendation {
+  String get districtDisplay => DistrictNames.display(targetDistrict);
   final int userId;
   final String fullName;
   final String? avatarUrl;

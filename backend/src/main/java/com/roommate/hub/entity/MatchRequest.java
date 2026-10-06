@@ -37,8 +37,11 @@ public class MatchRequest {
     private MatchStatus status; // PENDING, ACCEPTED, REJECTED
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column
     private LocalDateTime createdAt;
+
+    @Version
+    private Long version;
 
     public enum MatchStatus {
         PENDING, ACCEPTED, REJECTED

@@ -50,7 +50,7 @@ class MatchRecommendationIntegrationTest {
         LocalDate birthDate = LocalDate.of(2003, 9, 18);
         RegisterRequest registration = new RegisterRequest();
         registration.setEmail("candidate-" + suffix + "@integration.test");
-        registration.setPassword("123456");
+        registration.setPassword("12345678");
         registration.setFullName("Văn Nam");
         registration.setGender("MALE");
         registration.setPhone("0901234567");
