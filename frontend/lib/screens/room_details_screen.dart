@@ -266,7 +266,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Widget _hero(RoomPost post) {
-    final url = post.imageUrl?.trim();
+    final url = post.primaryImageUrl;
     return InkWell(
       onTap: url == null || url.isEmpty
           ? null

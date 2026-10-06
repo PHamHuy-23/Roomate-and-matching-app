@@ -503,11 +503,40 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _photoGallery(BuildContext context) {
-    final hasImage = post.imageUrl?.trim().isNotEmpty == true;
+    final images = post.images;
+    final hasImage = images.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _photoPreview(),
+        if (images.length > 1) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: images.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    images[index],
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 72,
+                      height: 72,
+                      color: _soft,
+                      child: const Icon(Icons.broken_image, size: 24, color: _muted),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
         const SizedBox(height: 18),
         const Text(
           'Ảnh người đăng cung cấp',
@@ -519,7 +548,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          hasImage ? '1 ảnh phòng' : 'Người đăng chưa cập nhật ảnh phòng.',
+          hasImage ? '${images.length} ảnh phòng' : 'Người đăng chưa cập nhật ảnh phòng.',
           style: const TextStyle(color: _muted),
         ),
         const SizedBox(height: 8),
@@ -773,7 +802,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _photoPreview() {
-    final url = post.imageUrl?.trim();
+    final url = post.primaryImageUrl;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: SizedBox(

@@ -59,7 +59,7 @@ public class RoomPost {
     @Column(length = 500)
     private String amenities;
 
-    @Column(length = 255)
+    @Column(length = 1000)
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)

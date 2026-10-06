@@ -48,6 +48,9 @@ public class AuthService {
     private final Validator validator;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private LoginAttemptService loginAttemptService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     private <T> T runInTransaction(org.springframework.transaction.support.TransactionCallback<T> action) {
@@ -101,11 +104,27 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest req) {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
+        if (loginAttemptService != null && loginAttemptService.isBlocked(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau 15 phút!");
+        }
+
         User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!"));
+                .orElseThrow(() -> {
+                    if (loginAttemptService != null) {
+                        loginAttemptService.loginFailed(normalizedEmail);
+                    }
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!");
+                });
 
         if (!matchesExistingPassword(req.getPassword(), user.getPasswordHash())) {
+            if (loginAttemptService != null) {
+                loginAttemptService.loginFailed(normalizedEmail);
+            }
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác!");
+        }
+
+        if (loginAttemptService != null) {
+            loginAttemptService.loginSucceeded(normalizedEmail);
         }
 
         if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {

@@ -43,6 +43,21 @@ class RoomPost {
 
   bool get hasKnownArea => areaM2 != null && areaM2!.isFinite && areaM2! > 0;
 
+  List<String> get images {
+    final raw = imageUrl?.trim();
+    if (raw == null || raw.isEmpty) return const <String>[];
+    return raw
+        .split(',')
+        .map((u) => u.trim())
+        .where((u) => u.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String? get primaryImageUrl {
+    final list = images;
+    return list.isNotEmpty ? list.first : null;
+  }
+
   String get areaLabel => formatArea(areaM2);
 
   static String formatArea(double? area) =>
