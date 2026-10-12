@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/match_request_item.dart';
+import '../navigation/app_routes.dart';
 import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
 
@@ -271,7 +272,7 @@ class _SentRequestScreenState extends State<SentRequestScreen> {
           ),
         ),
         const SizedBox(height: 48),
-        if (request.status == 'PENDING')
+        if (request.status == 'PENDING') ...[
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -297,6 +298,30 @@ class _SentRequestScreenState extends State<SentRequestScreen> {
                   : const Text('Hủy lời mời'),
             ),
           ),
+          const SizedBox(height: 12),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton(
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.home,
+                (route) => false,
+                arguments: {'initialTab': 0},
+              );
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF087E6B),
+              side: const BorderSide(color: Color(0xFF087E6B)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text('Tiếp tục tìm bạn trọ'),
+          ),
+        ),
       ],
     );
   }

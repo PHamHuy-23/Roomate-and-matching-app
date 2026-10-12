@@ -68,10 +68,13 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   bool _busy = false;
   String? _appointmentError;
   int _scheduleTab = 0;
+  int _currentPhotoIndex = 0;
+  late final PageController _photoPageController;
 
   @override
   void initState() {
     super.initState();
+    _photoPageController = PageController();
     _mode = widget.mode;
     final appointment = widget.appointment;
     if (appointment != null &&
@@ -81,6 +84,12 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     if (_isAppointmentMode(_mode) && _mode != RoomFlowMode.requestSent) {
       _loadAppointments();
     }
+  }
+
+  @override
+  void dispose() {
+    _photoPageController.dispose();
+    super.dispose();
   }
 
   RoomPost get post => widget.post!;
@@ -510,26 +519,62 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       children: [
         _photoPreview(),
         if (images.length > 1) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
-            height: 72,
+            height: 74,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: images.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    images[index],
-                    width: 72,
-                    height: 72,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 72,
-                      height: 72,
-                      color: _soft,
-                      child: const Icon(Icons.broken_image, size: 24, color: _muted),
+                final isSelected = _currentPhotoIndex == index;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _currentPhotoIndex = index);
+                    if (_photoPageController.hasClients) {
+                      _photoPageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? _primary : Colors.transparent,
+                        width: 2.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: _primary.withOpacity(0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9),
+                      child: Image.network(
+                        images[index],
+                        width: 68,
+                        height: 68,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 68,
+                          height: 68,
+                          color: _soft,
+                          child: const Icon(
+                            Icons.broken_image,
+                            size: 24,
+                            color: _muted,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -548,7 +593,9 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          hasImage ? '${images.length} ảnh phòng' : 'Người đăng chưa cập nhật ảnh phòng.',
+          hasImage
+              ? '${images.length} ảnh phòng'
+              : 'Người đăng chưa cập nhật ảnh phòng.',
           style: const TextStyle(color: _muted),
         ),
         const SizedBox(height: 8),
@@ -593,6 +640,33 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
         _button(
           'Xem lịch xem phòng',
           () => _changeMode(RoomFlowMode.viewingSchedule),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.home,
+                (route) => false,
+                arguments: {'initialTab': 1},
+              );
+            }
+          },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _primary,
+            side: const BorderSide(color: _primary),
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: const Text(
+            'Quay về danh sách phòng',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
@@ -802,19 +876,102 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
   }
 
   Widget _photoPreview() {
-    final url = post.primaryImageUrl;
+    final images = post.images;
+    if (images.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 250,
+          width: double.infinity,
+          child: _photoFallback(),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: SizedBox(
+      child: Container(
         height: 250,
         width: double.infinity,
-        child: url != null && url.isNotEmpty
-            ? Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _photoFallback(),
-              )
-            : _photoFallback(),
+        color: Colors.black12,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _photoPageController,
+              itemCount: images.length,
+              onPageChanged: (index) {
+                setState(() => _currentPhotoIndex = index);
+              },
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => _openFullscreenImage(context, index),
+                  child: Hero(
+                    tag: 'room-photo-$index-${post.id}',
+                    child: Image.network(
+                      images[index],
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, _, _) => _photoFallback(),
+                    ),
+                  ),
+                );
+              },
+            ),
+            if (images.length > 1)
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_currentPhotoIndex + 1}/${images.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.zoom_in,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openFullscreenImage(BuildContext context, int initialIndex) {
+    final images = post.images;
+    if (images.isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => _FullscreenImageViewer(
+          images: images,
+          initialIndex: initialIndex,
+          roomId: post.id,
+        ),
       ),
     );
   }
@@ -943,3 +1100,110 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
     child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
   );
 }
+
+class _FullscreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  final int roomId;
+
+  const _FullscreenImageViewer({
+    required this.images,
+    required this.initialIndex,
+    required this.roomId,
+  });
+
+  @override
+  State<_FullscreenImageViewer> createState() => _FullscreenImageViewerState();
+}
+
+class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
+  late int _currentIndex;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.images.length,
+              onPageChanged: (idx) => setState(() => _currentIndex = idx),
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: Hero(
+                      tag: 'room-photo-$index-${widget.roomId}',
+                      child: Image.network(
+                        widget.images[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                            size: 64,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Header bar với nút đóng và số lượng ảnh
+            Positioned(
+              top: 12,
+              left: 16,
+              right: 16,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    tooltip: 'Đóng',
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  if (widget.images.length > 1)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentIndex + 1} / ${widget.images.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 48), // Cân bằng với icon close
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

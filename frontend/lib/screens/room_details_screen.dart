@@ -265,31 +265,90 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
+  int _heroPhotoIndex = 0;
+
   Widget _hero(RoomPost post) {
-    final url = post.primaryImageUrl;
-    return InkWell(
-      onTap: url == null || url.isEmpty
-          ? null
-          : () => Navigator.push<void>(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) =>
-                    RoomFlowScreen(post: post, mode: RoomFlowMode.roomPhotos),
-              ),
-            ),
-      borderRadius: BorderRadius.circular(20),
-      child: ClipRRect(
+    final images = post.images;
+    if (images.isEmpty) {
+      return ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: SizedBox(
           height: 210,
           width: double.infinity,
-          child: url != null && url.isNotEmpty
-              ? Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _fallbackImage(),
-                )
-              : _fallbackImage(),
+          child: _fallbackImage(),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 210,
+        width: double.infinity,
+        color: Colors.black12,
+        child: Stack(
+          children: [
+            PageView.builder(
+              itemCount: images.length,
+              onPageChanged: (idx) => setState(() => _heroPhotoIndex = idx),
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onTap: () => Navigator.push<void>(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => RoomFlowScreen(
+                        post: post,
+                        mode: RoomFlowMode.roomPhotos,
+                      ),
+                    ),
+                  ),
+                  child: Image.network(
+                    images[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, _, _) => _fallbackImage(),
+                  ),
+                );
+              },
+            ),
+            if (images.length > 1)
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_heroPhotoIndex + 1}/${images.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
