@@ -56,6 +56,7 @@ class ApiService {
   }
 
   final Set<int> savedPostIds = <int>{};
+  final Set<int> reportedUserIds = <int>{};
   bool isSearchActive = true;
   int _searchStatusRevision = 0;
 
@@ -154,6 +155,7 @@ class ApiService {
   void clearAuthToken() {
     _sessionGeneration++;
     savedPostIds.clear();
+    reportedUserIds.clear();
     isSearchActive = true;
     _searchStatusRevision++;
     _token = null;
@@ -936,6 +938,9 @@ class ApiService {
       },
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
+      if (targetType.toUpperCase() == 'USER') {
+        reportedUserIds.add(targetId);
+      }
       try {
         final data = _decodeData(response);
         if (data is Map<String, dynamic>) return ReportReceipt.fromJson(data);

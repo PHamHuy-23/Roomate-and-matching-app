@@ -115,7 +115,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _applyPostFilters() {
     final query = DistrictNames.fold(_searchKeyword);
+    final reported = _api.reportedUserIds;
     _filteredPosts = _allPosts.where((p) {
+      if (reported.contains(p.authorId)) return false;
       final matchAddress =
           DistrictNames.fold(p.address).contains(query) ||
           DistrictNames.fold(p.title).contains(query) ||
@@ -241,7 +243,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<MatchRecommendation> _filterMatches(List<MatchRecommendation> source) {
     final query = DistrictNames.fold(_matchSearchKeyword);
+    final reported = _api.reportedUserIds;
     final filtered = source.where((item) {
+      if (reported.contains(item.userId)) return false;
       final matchesSearch =
           query.isEmpty ||
           DistrictNames.fold(item.fullName).contains(query) ||
