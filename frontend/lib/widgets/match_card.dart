@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/match_recommendation.dart';
 import '../theme/discovery_palette.dart';
+import '../services/api_service.dart';
+import '../screens/room_details_screen.dart';
 
 class MatchCard extends StatelessWidget {
   const MatchCard({super.key, required this.item, required this.onViewDetails});
@@ -129,6 +131,8 @@ class MatchCard extends StatelessWidget {
                     color: DiscoveryPalette.muted,
                   ),
                 ),
+                const SizedBox(height: 8),
+                _HousingStatusBadge(hasRoom: item.hasRoom, roomId: item.roomId),
                 if (habits.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Wrap(
@@ -257,6 +261,100 @@ class CandidatePhoto extends StatelessWidget {
       height: height,
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => fallback,
+    );
+  }
+}
+
+class _HousingStatusBadge extends StatelessWidget {
+  const _HousingStatusBadge({required this.hasRoom, this.roomId});
+
+  final bool hasRoom;
+  final int? roomId;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hasRoom) {
+      return InkWell(
+        onTap: roomId != null
+            ? () async {
+                try {
+                  final post = await ApiService().getRoomPost(roomId!);
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoomDetailsScreen(post: post),
+                      ),
+                    );
+                  }
+                } catch (_) {}
+              }
+            : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F7EE),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFBBE5CC)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.home_outlined,
+                size: 15,
+                color: Color(0xFF1B7A43),
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                'Đã có phòng sẵn',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1B7A43),
+                ),
+              ),
+              if (roomId != null) ...[
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 10,
+                  color: Color(0xFF1B7A43),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF5FB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFCFE1F3)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.person_search_outlined,
+            size: 15,
+            color: Color(0xFF20639B),
+          ),
+          SizedBox(width: 5),
+          Text(
+            'Chưa có phòng • Tìm bạn cùng thuê',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF20639B),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

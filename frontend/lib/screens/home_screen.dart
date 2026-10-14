@@ -16,6 +16,7 @@ import '../services/api_service.dart';
 import 'penpot_state_screens.dart';
 import '../theme/discovery_palette.dart';
 import '../widgets/match_card.dart';
+import '../widgets/tinder_card_stack.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<int, MatchRequestItem> _connectionRequests = {};
   Set<int> get _savedPostIds => _api.savedPostIds;
   int _unreadNotificationCount = 0;
+  bool _isSwipeViewMode = false;
 
   @override
   void initState() {
@@ -333,6 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     selectedDistrict: _districtFilter,
                     filtersActive:
                         _minimumMatchScore > 0 || _districtFilter != 'Tất cả',
+                    isSwipeMode: _isSwipeViewMode,
+                    onToggleViewMode: () {
+                      setState(() {
+                        _isSwipeViewMode = !_isSwipeViewMode;
+                      });
+                    },
                     onSearchChanged: (value) {
                       setState(() => _matchSearchKeyword = value);
                     },
@@ -362,6 +370,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.person_search_outlined,
                       title: 'Không tìm thấy người phù hợp',
                       description: 'Hãy giảm mức điểm hoặc chọn khu vực khác.',
+                    ),
+                  )
+                else if (_isSwipeViewMode)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: TinderCardStack(
+                      candidates: matches,
+                      onConnect: (candidate) => _sendMatchRequest(candidate),
+                      onPass: (candidate) {},
+                      onViewDetails: (candidate) =>
+                          _openCandidateProfile(candidate),
+                      onRefresh: _refreshMatches,
                     ),
                   )
                 else
@@ -945,6 +965,8 @@ class _DiscoveryHeader extends StatelessWidget {
     required this.onNotificationsPressed,
     this.unreadNotificationCount = 0,
     this.onAdminPressed,
+    this.isSwipeMode = false,
+    this.onToggleViewMode,
   });
 
   final String userName;
@@ -957,6 +979,8 @@ class _DiscoveryHeader extends StatelessWidget {
   final VoidCallback onNotificationsPressed;
   final int unreadNotificationCount;
   final VoidCallback? onAdminPressed;
+  final bool isSwipeMode;
+  final VoidCallback? onToggleViewMode;
 
   @override
   Widget build(BuildContext context) {
@@ -984,6 +1008,19 @@ class _DiscoveryHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onToggleViewMode != null)
+                IconButton(
+                  tooltip: isSwipeMode
+                      ? 'Chuyển sang dạng danh sách'
+                      : 'Chuyển sang vuốt thẻ Tinder',
+                  onPressed: onToggleViewMode,
+                  icon: Icon(
+                    isSwipeMode
+                        ? Icons.view_agenda_outlined
+                        : Icons.style_outlined,
+                    color: DiscoveryPalette.primary,
+                  ),
+                ),
               IconButton(
                 tooltip: 'Thông báo',
                 onPressed: onNotificationsPressed,

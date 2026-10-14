@@ -14,6 +14,8 @@ class MatchRecommendation {
   final double totalScore;
   final MatchCriteriaDetail criteriaDetail;
   final List<String> matchedReasons;
+  final bool hasRoom;
+  final int? roomId;
 
   MatchRecommendation({
     required this.userId,
@@ -27,6 +29,8 @@ class MatchRecommendation {
     required this.totalScore,
     required this.criteriaDetail,
     this.matchedReasons = const [],
+    this.hasRoom = false,
+    this.roomId,
   });
 
   factory MatchRecommendation.fromJson(Map<String, dynamic> json) {
@@ -49,6 +53,8 @@ class MatchRecommendation {
               ?.whereType<String>()
               .toList() ??
           const [],
+      hasRoom: json['hasRoom'] as bool? ?? false,
+      roomId: (json['roomId'] as num?)?.toInt(),
     );
   }
 }

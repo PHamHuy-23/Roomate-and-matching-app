@@ -19,7 +19,8 @@ class MatchingServiceTest {
 
     private final UserPreferenceRepository preferenceRepository = mock(UserPreferenceRepository.class);
     private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository = mock(com.roommate.hub.repository.BlockedUserRepository.class);
-    private final MatchingService matchingService = new MatchingService(preferenceRepository, blockedUserRepository);
+    private final com.roommate.hub.repository.RoomPostRepository roomPostRepository = mock(com.roommate.hub.repository.RoomPostRepository.class);
+    private final MatchingService matchingService = new MatchingService(preferenceRepository, blockedUserRepository, roomPostRepository);
 
     @Test
     void returnsEmptyListWhenUserHasNoPreference() {

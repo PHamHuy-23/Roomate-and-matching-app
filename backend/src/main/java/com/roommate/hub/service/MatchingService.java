@@ -21,6 +21,7 @@ public class MatchingService {
 
     private final UserPreferenceRepository preferenceRepository;
     private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
+    private final com.roommate.hub.repository.RoomPostRepository roomPostRepository;
 
     public List<MatchRecommendationDTO> getRecommendations(User currentUser) {
         if (!"ACTIVE".equalsIgnoreCase(currentUser.getStatus()) || !currentUser.isSearchActive()) return List.of();
@@ -64,9 +65,18 @@ public class MatchingService {
                             + 0.10 * details.getPetMatch()) / (budgetWeight + sleepWeight + cleanWeight + 0.25);
 
                     double roundedTotal = Math.round(total * 10.0) / 10.0;
+                    Long candidateId = candidate.getUser().getId();
+                    Long activeRoomId = null;
+                    if (roomPostRepository != null) {
+                        activeRoomId = roomPostRepository.findByAuthorId(candidateId).stream()
+                                .filter(p -> p.getStatus() == com.roommate.hub.entity.RoomPost.PostStatus.APPROVED)
+                                .map(com.roommate.hub.entity.RoomPost::getId)
+                                .findFirst()
+                                .orElse(null);
+                    }
 
                     return MatchRecommendationDTO.builder()
-                            .userId(candidate.getUser().getId())
+                            .userId(candidateId)
                             .fullName(candidate.getUser().getFullName())
                             .avatarUrl(candidate.getUser().getAvatarUrl())
                             .age(calculateAge(candidate.getUser().getBirthDate()))
@@ -76,6 +86,8 @@ public class MatchingService {
                             .bioDescription(candidate.getBioDescription())
                             .totalScore(roundedTotal)
                             .criteriaDetail(details)
+                            .hasRoom(activeRoomId != null)
+                            .roomId(activeRoomId)
                             .build();
                 })
                 .sorted(Comparator.comparingDouble(MatchRecommendationDTO::getTotalScore).reversed())
