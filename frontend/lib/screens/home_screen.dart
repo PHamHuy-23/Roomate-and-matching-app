@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Set<int> _savingPostIds = {};
   final Map<int, MatchRequestItem> _connectionRequests = {};
   Set<int> get _savedPostIds => _api.savedPostIds;
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
@@ -85,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadData() {
     _loadSavedPosts();
+    _loadNotificationCount();
     setState(() {
       _matchesFuture = _api.getRecommendations(_currentUserId);
       _isLoadingPosts = true;
@@ -156,7 +158,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
+  Future<void> _loadNotificationCount() async {
+    try {
+      int count = 0;
+      final appointments = await _api.getMyAppointments();
+      for (final apt in appointments) {
+        if (apt.status.toUpperCase() == 'PENDING') count++;
+      }
+      final received = await _api.getReceivedRequests(_currentUserId);
+      for (final req in received) {
+        if (req.status.toUpperCase() == 'PENDING') count++;
+      }
+      if (mounted) {
+        setState(() => _unreadNotificationCount = count);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _refreshMatches() async {
+    _loadNotificationCount();
     final refreshed = _api.getRecommendations(_currentUserId);
     setState(() => _matchesFuture = refreshed);
     await refreshed;
@@ -318,8 +338,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     onFiltersPressed: () => _showDiscoveryFilters(districts),
                     onPreferencesPressed: _openSurvey,
-                    onNotificationsPressed: () =>
-                        Navigator.pushNamed(context, AppRoutes.notifications),
+                    onNotificationsPressed: () async {
+                      await Navigator.pushNamed(
+                        context,
+                        AppRoutes.notifications,
+                      );
+                      _loadNotificationCount();
+                    },
+                    unreadNotificationCount: _unreadNotificationCount,
                     onAdminPressed:
                         {
                           'ADMIN',
@@ -917,6 +943,7 @@ class _DiscoveryHeader extends StatelessWidget {
     required this.onFiltersPressed,
     required this.onPreferencesPressed,
     required this.onNotificationsPressed,
+    this.unreadNotificationCount = 0,
     this.onAdminPressed,
   });
 
@@ -928,6 +955,7 @@ class _DiscoveryHeader extends StatelessWidget {
   final VoidCallback onFiltersPressed;
   final VoidCallback onPreferencesPressed;
   final VoidCallback onNotificationsPressed;
+  final int unreadNotificationCount;
   final VoidCallback? onAdminPressed;
 
   @override
@@ -959,9 +987,21 @@ class _DiscoveryHeader extends StatelessWidget {
               IconButton(
                 tooltip: 'Thông báo',
                 onPressed: onNotificationsPressed,
-                icon: const Icon(
-                  Icons.notifications_none_outlined,
-                  color: DiscoveryPalette.primary,
+                icon: Badge(
+                  isLabelVisible: unreadNotificationCount > 0,
+                  label: Text(
+                    unreadNotificationCount > 9 ? '9+' : '$unreadNotificationCount',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  backgroundColor: const Color(0xFFE53935),
+                  child: const Icon(
+                    Icons.notifications_none_outlined,
+                    color: DiscoveryPalette.primary,
+                  ),
                 ),
               ),
               PopupMenuButton<String>(

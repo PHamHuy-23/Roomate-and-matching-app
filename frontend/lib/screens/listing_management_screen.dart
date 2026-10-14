@@ -7,6 +7,7 @@ import '../models/room_amenities.dart';
 import '../models/viewing_appointment.dart';
 import '../services/api_service.dart';
 import '../widgets/penpot_back_button.dart';
+import '../navigation/app_routes.dart';
 
 enum ListingFlowMode {
   myListings,
@@ -1074,6 +1075,22 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                               }
                             },
                             child: const Text('Từ chối / hủy lịch'),
+                          ),
+                        if (apt.status == 'CONFIRMED')
+                          FilledButton.icon(
+                            onPressed: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.chat,
+                              arguments: {
+                                'partnerId': apt.requesterId,
+                                'partnerName': apt.requesterName,
+                              },
+                            ),
+                            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                            label: const Text('Nhắn tin cho khách'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _primary,
+                            ),
                           ),
                       ],
                     ),

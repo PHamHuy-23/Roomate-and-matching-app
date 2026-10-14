@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:roommate_hub_mobile/models/auth_user.dart';
 import 'package:roommate_hub_mobile/navigation/app_routes.dart';
 import 'package:roommate_hub_mobile/screens/login_screen.dart';
@@ -97,6 +98,10 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('Đăng nhập user chưa có tiêu chí sẽ mở khảo sát', (tester) async {
     final api = _LoginApi();
     await tester.pumpWidget(_loginApp(api));

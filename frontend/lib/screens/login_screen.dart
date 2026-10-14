@@ -456,7 +456,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     _labeledField(
-                      'Trường đại học',
+                      'Trường đại học (không bắt buộc)',
                       TextField(
                         key: const Key('register_university_field'),
                         controller: _universityCtrl,

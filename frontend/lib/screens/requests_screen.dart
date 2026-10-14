@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/match_request_item.dart';
+import '../models/viewing_appointment.dart';
 import '../services/api_service.dart';
 import '../navigation/app_routes.dart';
 
@@ -21,10 +22,11 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   List<MatchRequestItem> _receivedRequests = [];
   List<MatchRequestItem> _sentRequests = [];
+  List<ViewingAppointment> _appointments = [];
   bool _isLoading = false;
   String? _error;
 
-  // 0: Đã kết nối, 1: Đã nhận, 2: Đã gửi
+  // 0: Đã kết nối, 1: Lịch xem phòng, 2: Đã nhận, 3: Đã gửi
   int _selectedTabIndex = 0;
 
   @override
@@ -43,10 +45,16 @@ class _RequestsScreenState extends State<RequestsScreen> {
       final received = await _api.getReceivedRequests(widget.currentUserId);
       final sent = await _api.getSentRequests(widget.currentUserId);
 
+      List<ViewingAppointment> apts = [];
+      try {
+        apts = await _api.getMyAppointments();
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _receivedRequests = received;
           _sentRequests = sent;
+          _appointments = apts;
           _isLoading = false;
         });
       }
@@ -104,6 +112,8 @@ class _RequestsScreenState extends State<RequestsScreen> {
     required String name,
     required String subtitle,
     required VoidCallback onTap,
+    VoidCallback? onChatTap,
+    String? avatarUrl,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -121,8 +131,17 @@ class _RequestsScreenState extends State<RequestsScreen> {
               child: Container(
                 width: 48,
                 height: 48,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.person, color: Colors.grey),
+                color: const Color(0xFFE8F4F1),
+                child: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? Image.network(
+                        avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.person,
+                          color: Color(0xFF087E6B),
+                        ),
+                      )
+                    : const Icon(Icons.person, color: Color(0xFF087E6B)),
               ),
             ),
             const SizedBox(width: 16),
@@ -152,6 +171,17 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 ],
               ),
             ),
+            if (onChatTap != null)
+              IconButton(
+                tooltip: 'Nhắn tin',
+                onPressed: onChatTap,
+                icon: const Icon(
+                  Icons.chat_bubble_outline,
+                  color: Color(0xFF087E6B),
+                ),
+              )
+            else
+              const Icon(Icons.chevron_right, color: Color(0xFFB0BEC5)),
           ],
         ),
       ),
@@ -194,9 +224,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
     List<MatchRequestItem> currentList = [];
     if (_selectedTabIndex == 0) {
       currentList = connected;
-    } else if (_selectedTabIndex == 1) {
+    } else if (_selectedTabIndex == 2) {
       currentList = pendingReceived;
-    } else {
+    } else if (_selectedTabIndex == 3) {
       currentList = pendingSent;
     }
 
@@ -243,12 +273,18 @@ class _RequestsScreenState extends State<RequestsScreen> {
                   _buildFilterChip(0, 'Đã kết nối'),
                   _buildFilterChip(
                     1,
+                    _appointments.isNotEmpty
+                        ? 'Lịch xem phòng · ${_appointments.length}'
+                        : 'Lịch xem phòng',
+                  ),
+                  _buildFilterChip(
+                    2,
                     pendingReceived.isNotEmpty
                         ? 'Đã nhận · ${pendingReceived.length}'
                         : 'Đã nhận',
                   ),
                   _buildFilterChip(
-                    2,
+                    3,
                     pendingSent.isNotEmpty
                         ? 'Đã gửi · ${pendingSent.length}'
                         : 'Đã gửi',
@@ -287,7 +323,17 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                 ],
                               ),
                             ),
-                          if (_error == null && currentList.isEmpty)
+                          if (_error == null && _selectedTabIndex == 1 && _appointments.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: Text(
+                                  'Chưa có lịch xem phòng nào',
+                                  style: TextStyle(color: Color(0xFF65746F)),
+                                ),
+                              ),
+                            ),
+                          if (_error == null && _selectedTabIndex != 1 && currentList.isEmpty)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 40),
                               child: Center(
@@ -298,61 +344,105 @@ class _RequestsScreenState extends State<RequestsScreen> {
                               ),
                             ),
 
-                          ...currentList.map((item) {
-                            String subtitle = '';
-                            if (_selectedTabIndex == 0) {
-                              subtitle = 'Đã kết nối · Xem thông tin liên hệ';
-                            } else if (_selectedTabIndex == 1) {
-                              subtitle =
-                                  'Lời mời mới · ${item.matchScore}% phù hợp';
-                            } else {
-                              subtitle =
-                                  'Chờ chấp nhận · ${item.matchScore}% phù hợp';
-                            }
+                          if (_selectedTabIndex == 1)
+                            ..._appointments.map((apt) {
+                              final isHost = apt.hostId == widget.currentUserId;
+                              final partnerName = isHost ? apt.requesterName : apt.hostName;
+                              final partnerId = isHost ? apt.requesterId : apt.hostId;
+                              final avatar = isHost ? apt.requesterAvatar : apt.hostAvatar;
+                              final roleLabel = isHost ? 'Khách thuê' : 'Chủ phòng';
+                              final statusLabel = apt.status == 'CONFIRMED'
+                                  ? 'Đã xác nhận'
+                                  : (apt.status == 'PENDING' ? 'Chờ xác nhận' : 'Đã hủy');
 
-                            return _buildConnectionItem(
-                              name: item.partnerName,
-                              subtitle: subtitle,
-                              onTap: () async {
-                                if (_selectedTabIndex == 0) {
-                                  final res = await Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.contactDetails,
-                                    arguments: {
-                                      'contactId': item.partnerId,
-                                      'partnerName': item.partnerName,
-                                      'phone': item.contactPhone,
-                                      'email': item.contactEmail,
-                                      'avatarUrl': item.partnerAvatar,
-                                    },
-                                  );
-                                  if (res == true && mounted) {
-                                    _loadData();
+                              return _buildConnectionItem(
+                                name: partnerName,
+                                subtitle: '$roleLabel · $statusLabel · ${apt.roomTitle}',
+                                avatarUrl: avatar,
+                                onChatTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.chat,
+                                  arguments: {
+                                    'partnerId': partnerId,
+                                    'partnerName': partnerName,
+                                  },
+                                ),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  isHost ? AppRoutes.listingManagement : AppRoutes.viewingAppointments,
+                                  arguments: isHost
+                                      ? {'roomPostId': apt.roomPostId}
+                                      : {'appointmentId': apt.id},
+                                ),
+                              );
+                            })
+                          else
+                            ...currentList.map((item) {
+                              String subtitle = '';
+                              if (_selectedTabIndex == 0) {
+                                subtitle = 'Đã kết nối · Xem thông tin liên hệ';
+                              } else if (_selectedTabIndex == 2) {
+                                subtitle =
+                                    'Lời mời mới · ${item.matchScore}% phù hợp';
+                              } else {
+                                subtitle =
+                                    'Chờ chấp nhận · ${item.matchScore}% phù hợp';
+                              }
+
+                              return _buildConnectionItem(
+                                name: item.partnerName,
+                                subtitle: subtitle,
+                                avatarUrl: item.partnerAvatar,
+                                onChatTap: _selectedTabIndex == 0
+                                    ? () => Navigator.pushNamed(
+                                        context,
+                                        AppRoutes.chat,
+                                        arguments: {
+                                          'partnerId': item.partnerId,
+                                          'partnerName': item.partnerName,
+                                        },
+                                      )
+                                    : null,
+                                onTap: () async {
+                                  if (_selectedTabIndex == 0) {
+                                    final res = await Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.contactDetails,
+                                      arguments: {
+                                        'contactId': item.partnerId,
+                                        'partnerName': item.partnerName,
+                                        'phone': item.contactPhone,
+                                        'email': item.contactEmail,
+                                        'avatarUrl': item.partnerAvatar,
+                                      },
+                                    );
+                                    if (res == true && mounted) {
+                                      _loadData();
+                                    }
+                                  } else if (_selectedTabIndex == 2) {
+                                    await Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.receivedRequests,
+                                    );
+                                    if (mounted) {
+                                      _loadData();
+                                    }
+                                  } else {
+                                    final res = await Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.sentRequest,
+                                      arguments: {
+                                        'partnerId': item.partnerId,
+                                        'partnerName': item.partnerName,
+                                      },
+                                    );
+                                    if (res == true && mounted) {
+                                      _loadData();
+                                    }
                                   }
-                                } else if (_selectedTabIndex == 1) {
-                                  await Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.receivedRequests,
-                                  );
-                                  if (mounted) {
-                                    _loadData();
-                                  }
-                                } else {
-                                  final res = await Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.sentRequest,
-                                    arguments: {
-                                      'partnerId': item.partnerId,
-                                      'partnerName': item.partnerName,
-                                    },
-                                  );
-                                  if (res == true && mounted) {
-                                    _loadData();
-                                  }
-                                }
-                              },
-                            );
-                          }),
+                                },
+                              );
+                            }),
 
                           const SizedBox(height: 16),
 

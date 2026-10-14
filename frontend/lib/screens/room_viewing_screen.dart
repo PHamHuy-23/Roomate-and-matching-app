@@ -18,6 +18,7 @@ class RoomViewingScreen extends StatefulWidget {
 class _RoomViewingScreenState extends State<RoomViewingScreen> {
   static const _canvas = Color(0xFFF5F8F7);
   static const _primary = Color(0xFF087E6B);
+  static const _soft = Color(0xFFE8F4F1);
   static const _ink = Color(0xFF142523);
   static const _muted = Color(0xFF52625F);
 
@@ -230,25 +231,82 @@ class _RoomViewingScreenState extends State<RoomViewingScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: ['09:00', '10:30', '14:00', '16:30'].map((time) {
-              final selected = time == _selectedTime;
-              return ChoiceChip(
-                selected: selected,
-                label: Text(time),
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ...['09:00', '10:30', '14:00', '16:30'].map((time) {
+                final selected = time == _selectedTime;
+                return ChoiceChip(
+                  selected: selected,
+                  label: Text(time),
+                  labelStyle: TextStyle(
+                    color: selected ? Colors.white : _ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  selectedColor: _primary,
+                  backgroundColor: Colors.white,
+                  side: BorderSide(
+                    color: selected ? _primary : const Color(0xFFDCE6E3),
+                  ),
+                  onSelected: _isSubmitting
+                      ? null
+                      : (_) => setState(() => _selectedTime = time),
+                );
+              }),
+              ActionChip(
+                avatar: Icon(
+                  Icons.access_time_outlined,
+                  size: 18,
+                  color: !['09:00', '10:30', '14:00', '16:30'].contains(_selectedTime) && _selectedTime != null
+                      ? Colors.white
+                      : _primary,
+                ),
+                label: Text(
+                  !['09:00', '10:30', '14:00', '16:30'].contains(_selectedTime) && _selectedTime != null
+                      ? 'Giờ khác: $_selectedTime'
+                      : 'Chọn giờ khác',
+                ),
                 labelStyle: TextStyle(
-                  color: selected ? Colors.white : _ink,
+                  color: !['09:00', '10:30', '14:00', '16:30'].contains(_selectedTime) && _selectedTime != null
+                      ? Colors.white
+                      : _primary,
                   fontWeight: FontWeight.w700,
                 ),
-                selectedColor: _primary,
-                backgroundColor: Colors.white,
+                backgroundColor: !['09:00', '10:30', '14:00', '16:30'].contains(_selectedTime) && _selectedTime != null
+                    ? _primary
+                    : _soft,
                 side: BorderSide(
-                  color: selected ? _primary : const Color(0xFFDCE6E3),
+                  color: !['09:00', '10:30', '14:00', '16:30'].contains(_selectedTime) && _selectedTime != null
+                      ? _primary
+                      : const Color(0xFFDCE6E3),
                 ),
-                onSelected: _isSubmitting
+                onPressed: _isSubmitting
                     ? null
-                    : (_) => setState(() => _selectedTime = time),
-              );
-            }).toList(),
+                    : () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: const TimeOfDay(hour: 9, minute: 0),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: _primary,
+                                  onPrimary: Colors.white,
+                                  surface: Colors.white,
+                                  onSurface: _ink,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          final h = picked.hour.toString().padLeft(2, '0');
+                          final m = picked.minute.toString().padLeft(2, '0');
+                          setState(() => _selectedTime = '$h:$m');
+                        }
+                      },
+              ),
+            ],
           ),
           const SizedBox(height: 26),
           const Text(

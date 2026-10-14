@@ -58,8 +58,13 @@ public class EmailServiceImpl implements EmailService {
         // để đảm bảo phản hồi HTTP hoàn toàn đối xứng giữa email tồn tại và không tồn tại
         // (chống Account Enumeration qua status code - OWASP).
         if (mailSender.isEmpty()) {
-            log.error("[EMAIL SERVICE] JavaMailSender chưa được cấu hình.");
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ gửi email chưa được kích hoạt hoặc chưa sẵn sàng!");
+            log.warn("[EMAIL SERVICE DEV MODE] JavaMailSender chưa được cấu hình. Giả lập độ trễ hoàn tất.");
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return;
         }
         try {
             // Giả lập độ trễ mạng tương đương cuộc gọi SMTP thực tế (200-400ms)
@@ -75,8 +80,13 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendEmail(String toEmail, String subject, String body) {
         if (mailSender.isEmpty()) {
-            log.error("[EMAIL SERVICE] JavaMailSender chưa được cấu hình. Không thể gửi email tới {}", maskEmail(toEmail));
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ gửi email chưa được kích hoạt hoặc chưa sẵn sàng!");
+            log.warn("[EMAIL SERVICE DEV MODE] JavaMailSender chưa được cấu hình. Giả lập độ trễ gửi email cho {}", maskEmail(toEmail));
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return;
         }
 
         try {

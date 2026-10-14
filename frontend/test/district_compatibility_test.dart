@@ -24,6 +24,8 @@ class _DistrictApi implements ApiService {
   @override
   Set<int> get savedPostIds => {};
   @override
+  Set<int> get reportedUserIds => {};
+  @override
   Future<List<MatchRecommendation>> getRecommendations(int userId) async =>
       matches;
   @override

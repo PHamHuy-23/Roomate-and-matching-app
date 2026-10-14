@@ -100,6 +100,9 @@ class FakeProfileApi implements ApiService {
   String? get refreshToken => null;
 
   @override
+  Future<void> logout() async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

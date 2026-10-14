@@ -183,17 +183,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final realItems = <PenpotNotificationItem>[];
       final appointments = await _api.getMyAppointments();
       for (final apt in appointments) {
+        final isHost = apt.hostId == widget.currentUserId;
+        final statusUpper = apt.status.toUpperCase();
+        String title;
+        String statusLabel;
+        IconData iconData = Icons.calendar_today_outlined;
+        final isPending = statusUpper == 'PENDING';
+
+        if (statusUpper == 'CONFIRMED' || statusUpper == 'ACCEPTED') {
+          statusLabel = isHost
+              ? 'Đã xác nhận · Bạn đã đồng ý lịch hẹn'
+              : 'Đã xác nhận · Chủ phòng đã đồng ý lịch hẹn';
+          iconData = Icons.check_circle_outline;
+        } else if (statusUpper == 'CANCELLED' || statusUpper == 'REJECTED') {
+          statusLabel = isHost
+              ? 'Đã hủy · Lịch hẹn đã hủy'
+              : 'Đã từ chối · Chủ phòng không thể tiếp bạn vào giờ này';
+          iconData = Icons.cancel_outlined;
+        } else {
+          statusLabel = isHost
+              ? 'Chờ xác nhận · Yêu cầu từ ${apt.requesterName}'
+              : 'Chờ xác nhận · Đang chờ chủ nhà phản hồi';
+          iconData = Icons.schedule_outlined;
+        }
+
+        final timeFormatted =
+            '${apt.appointmentTime.day.toString().padLeft(2, '0')}/${apt.appointmentTime.month.toString().padLeft(2, '0')}/${apt.appointmentTime.year} lúc ${apt.appointmentTime.hour.toString().padLeft(2, '0')}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}';
+
         realItems.add(
           PenpotNotificationItem(
             title: 'Lịch xem phòng: ${apt.roomTitle}',
-            description:
-                '${apt.status} · ${apt.appointmentTime.day}/${apt.appointmentTime.month}/${apt.appointmentTime.year} ${apt.appointmentTime.hour}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}',
-            icon: Icons.calendar_today_outlined,
-            destination: apt.requesterId == widget.currentUserId
-                ? NotificationDestination.requesterAppointments
-                : NotificationDestination.hostAppointments,
+            description: '$statusLabel · $timeFormatted',
+            icon: iconData,
+            destination: isHost
+                ? NotificationDestination.hostAppointments
+                : NotificationDestination.requesterAppointments,
             appointmentId: apt.id,
             roomPostId: apt.roomPostId,
+            createdAt: apt.createdAt,
+            isPending: isPending,
           ),
         );
       }
@@ -201,17 +229,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (userId != null) {
         final received = await _api.getReceivedRequests(userId);
         for (final request in received) {
+          final statusUpper = request.status.toUpperCase();
+          String statusLabel = 'Đang chờ bạn phản hồi';
+          IconData iconData = Icons.person_add_alt_1_outlined;
+          final isPending = statusUpper == 'PENDING';
+
+          if (statusUpper == 'ACCEPTED') {
+            statusLabel = 'Đã chấp nhận kết nối';
+            iconData = Icons.people_outline;
+          } else if (statusUpper == 'REJECTED') {
+            statusLabel = 'Đã từ chối kết nối';
+            iconData = Icons.person_off_outlined;
+          }
+
+          DateTime? reqTime;
+          if (request.createdAt != null) {
+            reqTime = DateTime.tryParse(request.createdAt!);
+          }
+
           realItems.add(
             PenpotNotificationItem(
               title: '${request.partnerName} gửi lời mời kết nối',
               description:
-                  '${request.status} · ${request.matchScore.round()}% phù hợp',
-              icon: Icons.person_add_alt_1_outlined,
+                  '$statusLabel · Độ tương thích: ${request.matchScore.round()}%',
+              icon: iconData,
               destination: NotificationDestination.requests,
+              createdAt: reqTime,
+              isPending: isPending,
             ),
           );
         }
       }
+
+      // Sort notifications by newest first
+      realItems.sort((a, b) {
+        final timeA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final timeB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return timeB.compareTo(timeA);
+      });
+
       if (mounted) {
         setState(() {
           _items = realItems;
@@ -314,6 +370,16 @@ class _NotificationCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (item.isPending)
+              Container(
+                margin: const EdgeInsets.only(top: 4, left: 6),
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE53935),
+                  shape: BoxShape.circle,
+                ),
+              ),
             if (onTap != null)
               const Icon(Icons.chevron_right, color: _PenpotColors.muted),
           ],
@@ -337,6 +403,8 @@ class PenpotNotificationItem {
     this.destination,
     this.appointmentId,
     this.roomPostId,
+    this.createdAt,
+    this.isPending = false,
   });
 
   final String title;
@@ -345,6 +413,8 @@ class PenpotNotificationItem {
   final NotificationDestination? destination;
   final int? appointmentId;
   final int? roomPostId;
+  final DateTime? createdAt;
+  final bool isPending;
 }
 
 class PenpotStateScreen extends StatelessWidget {

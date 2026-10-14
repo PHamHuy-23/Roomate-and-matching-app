@@ -97,14 +97,12 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
     );
 
     try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể mở ứng dụng bản đồ.')),
-          );
-        }
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await launchUrl(url, mode: LaunchMode.platformDefault);
       }
     } catch (_) {
       if (mounted) {

@@ -125,7 +125,7 @@ void main() {
       expect(find.text('Thử lại'), findsNothing);
       await tester.drag(find.byType(ListView), const Offset(0, 350));
       await tester.pumpAndSettle();
-      expect(calls, 4);
+      expect(calls, 6);
     },
   );
   testWidgets('Tải lại lỗi không để liên hệ cũ trông như dữ liệu mới nhất', (

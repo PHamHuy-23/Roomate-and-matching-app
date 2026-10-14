@@ -37,7 +37,6 @@ public class RegisterRequest {
     @Past(message = "Ngày sinh phải ở trong quá khứ")
     private LocalDate birthDate;
 
-    @NotBlank(message = "Trường đại học không được để trống")
     @Size(max = 150, message = "Tên trường không được vượt quá 150 ký tự")
     private String university;
 

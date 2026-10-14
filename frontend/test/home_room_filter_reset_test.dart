@@ -12,6 +12,8 @@ class _RoomApi implements ApiService {
   @override
   Set<int> get savedPostIds => {};
   @override
+  Set<int> get reportedUserIds => {};
+  @override
   Future<List<MatchRecommendation>> getRecommendations(int userId) async => [];
   @override
   Future<List<RoomPost>> getRoomPosts() async => [

@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
 import '../models/match_request_item.dart';
@@ -150,6 +152,53 @@ class ApiService {
   void setTokens({required String accessToken, String? refreshToken}) {
     setAuthToken(accessToken);
     setRefreshToken(refreshToken);
+  }
+
+  static const String _prefUserKey = 'auth_user_data';
+  static const String _prefAccessTokenKey = 'auth_access_token';
+  static const String _prefRefreshTokenKey = 'auth_refresh_token';
+
+  static Future<void> persistSession(AuthUser user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefUserKey, jsonEncode(user.toJson()));
+      await prefs.setString(_prefAccessTokenKey, user.token);
+      if (user.refreshToken != null && user.refreshToken!.isNotEmpty) {
+        await prefs.setString(_prefRefreshTokenKey, user.refreshToken!);
+      } else {
+        await prefs.remove(_prefRefreshTokenKey);
+      }
+    } catch (_) {}
+  }
+
+  static Future<AuthUser?> restoreStoredUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJsonStr = prefs.getString(_prefUserKey);
+      final accessToken = prefs.getString(_prefAccessTokenKey);
+      if (userJsonStr == null || accessToken == null || accessToken.isEmpty) {
+        return null;
+      }
+      final decoded = jsonDecode(userJsonStr);
+      if (decoded is Map<String, dynamic>) {
+        final refreshToken = prefs.getString(_prefRefreshTokenKey);
+        final user = AuthUser.fromJson(decoded).copyWith(
+          token: accessToken,
+          refreshToken: refreshToken,
+        );
+        return user;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Future<void> clearPersistedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefUserKey);
+      await prefs.remove(_prefAccessTokenKey);
+      await prefs.remove(_prefRefreshTokenKey);
+    } catch (_) {}
   }
 
   void clearAuthToken() {

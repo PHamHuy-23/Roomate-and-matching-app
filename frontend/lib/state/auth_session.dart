@@ -25,6 +25,19 @@ class AuthSession extends ChangeNotifier {
   AuthUser? get user => _user;
   bool get isAuthenticated => _user != null && _api.hasAuthToken;
 
+  Future<AuthUser?> restoreSession() async {
+    try {
+      final user = await ApiService.restoreStoredUser();
+      if (user != null && user.token.isNotEmpty) {
+        _user = user;
+        _api.setTokens(accessToken: user.token, refreshToken: user.refreshToken);
+        notifyListeners();
+        return user;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<AuthUser> login(String email, String password) async {
     final generation = ++_generation;
     final login = _api.login(email, password);
@@ -33,6 +46,7 @@ class AuthSession extends ChangeNotifier {
     final user = await login;
     _ensureCurrentOperation(generation);
     _user = user;
+    await ApiService.persistSession(user);
     notifyListeners();
     return user;
   }
@@ -79,6 +93,7 @@ class AuthSession extends ChangeNotifier {
     final user = await registration;
     _ensureCurrentOperation(generation);
     _user = user;
+    await ApiService.persistSession(user);
     notifyListeners();
     return user;
   }
@@ -90,6 +105,7 @@ class AuthSession extends ChangeNotifier {
     }
     if (_user?.userId != updatedUser.userId) _generation++;
     _user = updatedUser;
+    ApiService.persistSession(updatedUser);
     notifyListeners();
   }
 
@@ -119,15 +135,16 @@ class AuthSession extends ChangeNotifier {
     if (updated.userId != currentUser.userId) {
       throw const ApiException('Dữ liệu hồ sơ từ máy chủ không hợp lệ');
     }
+    final nextUser = updated.copyWith(
+      token: _api.authToken ?? latest.token,
+      refreshToken: _api.refreshToken ?? latest.refreshToken,
+      // An avatar confirmed while this request was pending is newer than its response snapshot.
+      avatarUrl: latest.avatarUrl != currentUser.avatarUrl
+          ? latest.avatarUrl
+          : updated.avatarUrl,
+    );
     updateUser(
-      updated.copyWith(
-        token: _api.authToken ?? latest.token,
-        refreshToken: _api.refreshToken ?? latest.refreshToken,
-        // An avatar confirmed while this request was pending is newer than its response snapshot.
-        avatarUrl: latest.avatarUrl != currentUser.avatarUrl
-            ? latest.avatarUrl
-            : updated.avatarUrl,
-      ),
+      nextUser,
       expectedGeneration: generation,
     );
     return true;
@@ -138,6 +155,7 @@ class AuthSession extends ChangeNotifier {
     // Start revocation first: logout invalidates the transport synchronously.
     final logout = Future<void>.sync(_api.logout);
     _user = null;
+    await ApiService.clearPersistedSession();
     notifyListeners();
     try {
       await logout;

@@ -89,4 +89,21 @@ class AuthUser {
           : (university as String?),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'token': token,
+      'refreshToken': refreshToken,
+      'userId': userId,
+      'email': email,
+      'fullName': fullName,
+      'gender': gender,
+      'role': role,
+      'phone': phone,
+      'avatarUrl': avatarUrl,
+      'birthDate': birthDate?.toIso8601String().split('T').first,
+      'university': university,
+    };
+  }
 }
+
