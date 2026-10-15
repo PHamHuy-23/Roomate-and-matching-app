@@ -109,13 +109,18 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
       _appointmentError = null;
     });
     try {
-      final userId = widget.currentUserId;
+      int? userId = widget.currentUserId;
+      if (userId == null) {
+        final stored = await ApiService.restoreStoredUser();
+        userId = stored?.userId;
+      }
       if (userId == null) {
         throw const ApiException('Không xác định được tài khoản đặt lịch.');
       }
       final data = await _api.getMyAppointments();
       if (!mounted) return;
-      final owned = data.where((apt) => apt.requesterId == userId).toList();
+      // Hiển thị tất cả lịch hẹn mà user tham gia (cả vai trò người đi xem và chủ phòng)
+      final owned = data.where((apt) => apt.requesterId == userId || apt.hostId == userId).toList();
       final selectedId = _selectedAppointment?.id ?? widget.appointmentId;
       setState(() {
         _appointments = owned;
@@ -674,9 +679,10 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
 
   Widget _viewingSchedule(BuildContext context) {
     final now = DateTime.now();
+    // Các lịch hẹn PENDING (chờ xác nhận) hoặc CONFIRMED trong tương lai (kèm 1 ngày dung sai) luôn hiện ở mục Sắp tới
     bool upcoming(ViewingAppointment apt) =>
-        {'PENDING', 'CONFIRMED'}.contains(apt.status) &&
-        apt.appointmentTime.isAfter(now);
+        apt.status == 'PENDING' ||
+        (apt.status == 'CONFIRMED' && apt.appointmentTime.isAfter(now.subtract(const Duration(hours: 12))));
     final appointments =
         _appointments
             .where(

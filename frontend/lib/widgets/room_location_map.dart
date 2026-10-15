@@ -150,9 +150,14 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.roommate.hub',
-                  maxZoom: 19,
+                  urlTemplate: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                  subdomains: const ['0', '1', '2', '3'],
+                  maxZoom: 20,
+                  tileProvider: NetworkTileProvider(
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    },
+                  ),
                 ),
                 MarkerLayer(
                   markers: [
@@ -238,7 +243,7 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
                 ),
               ),
 
-            // Nhãn OpenStreetMap
+            // Nhãn Google Maps
             Positioned(
               bottom: 6,
               left: 10,
@@ -249,8 +254,8 @@ class _RoomLocationMapState extends State<RoomLocationMap> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  '© OpenStreetMap contributors',
-                  style: TextStyle(color: _ink, fontSize: 9),
+                  'Google Maps',
+                  style: TextStyle(color: _ink, fontSize: 9, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

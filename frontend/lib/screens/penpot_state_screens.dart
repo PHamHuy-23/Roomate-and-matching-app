@@ -163,13 +163,13 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   ApiService get _api => widget.apiService ?? ApiService();
   late List<PenpotNotificationItem> _items;
+  bool _isLoading = false;
   String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    final shouldLoad =
-        widget.items == null && widget.loadRealData && _api.hasAuthToken;
+    final shouldLoad = widget.items == null && widget.loadRealData;
     _items = shouldLoad
         ? []
         : widget.items ?? NotificationsScreen._defaultItems;
@@ -179,89 +179,111 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _loadRealNotifications() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
     try {
       final realItems = <PenpotNotificationItem>[];
-      final appointments = await _api.getMyAppointments();
-      for (final apt in appointments) {
-        final isHost = apt.hostId == widget.currentUserId;
-        final statusUpper = apt.status.toUpperCase();
-        String title;
-        String statusLabel;
-        IconData iconData = Icons.calendar_today_outlined;
-        final isPending = statusUpper == 'PENDING';
+      int? effectiveUserId = widget.currentUserId;
 
-        if (statusUpper == 'CONFIRMED' || statusUpper == 'ACCEPTED') {
-          statusLabel = isHost
-              ? 'Đã xác nhận · Bạn đã đồng ý lịch hẹn'
-              : 'Đã xác nhận · Chủ phòng đã đồng ý lịch hẹn';
-          iconData = Icons.check_circle_outline;
-        } else if (statusUpper == 'CANCELLED' || statusUpper == 'REJECTED') {
-          statusLabel = isHost
-              ? 'Đã hủy · Lịch hẹn đã hủy'
-              : 'Đã từ chối · Chủ phòng không thể tiếp bạn vào giờ này';
-          iconData = Icons.cancel_outlined;
-        } else {
-          statusLabel = isHost
-              ? 'Chờ xác nhận · Yêu cầu từ ${apt.requesterName}'
-              : 'Chờ xác nhận · Đang chờ chủ nhà phản hồi';
-          iconData = Icons.schedule_outlined;
-        }
-
-        final timeFormatted =
-            '${apt.appointmentTime.day.toString().padLeft(2, '0')}/${apt.appointmentTime.month.toString().padLeft(2, '0')}/${apt.appointmentTime.year} lúc ${apt.appointmentTime.hour.toString().padLeft(2, '0')}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}';
-
-        realItems.add(
-          PenpotNotificationItem(
-            title: 'Lịch xem phòng: ${apt.roomTitle}',
-            description: '$statusLabel · $timeFormatted',
-            icon: iconData,
-            destination: isHost
-                ? NotificationDestination.hostAppointments
-                : NotificationDestination.requesterAppointments,
-            appointmentId: apt.id,
-            roomPostId: apt.roomPostId,
-            createdAt: apt.createdAt,
-            isPending: isPending,
-          ),
-        );
+      if (effectiveUserId == null) {
+        final stored = await ApiService.restoreStoredUser();
+        effectiveUserId = stored?.userId;
       }
-      final userId = widget.currentUserId;
-      if (userId != null) {
-        final received = await _api.getReceivedRequests(userId);
-        for (final request in received) {
-          final statusUpper = request.status.toUpperCase();
-          String statusLabel = 'Đang chờ bạn phản hồi';
-          IconData iconData = Icons.person_add_alt_1_outlined;
+
+      // 1. Tải lịch xem phòng
+      try {
+        final appointments = await _api.getMyAppointments();
+        for (final apt in appointments) {
+          final isHost = effectiveUserId != null && apt.hostId == effectiveUserId;
+          final statusUpper = apt.status.toUpperCase();
+          String statusLabel;
+          IconData iconData = Icons.calendar_today_outlined;
           final isPending = statusUpper == 'PENDING';
 
-          if (statusUpper == 'ACCEPTED') {
-            statusLabel = 'Đã chấp nhận kết nối';
-            iconData = Icons.people_outline;
-          } else if (statusUpper == 'REJECTED') {
-            statusLabel = 'Đã từ chối kết nối';
-            iconData = Icons.person_off_outlined;
+          if (statusUpper == 'CONFIRMED' || statusUpper == 'ACCEPTED') {
+            statusLabel = isHost
+                ? 'Đã xác nhận · Bạn đã đồng ý lịch hẹn'
+                : 'Đã xác nhận · Chủ phòng đã đồng ý lịch hẹn';
+            iconData = Icons.check_circle_outline;
+          } else if (statusUpper == 'CANCELLED' || statusUpper == 'REJECTED') {
+            statusLabel = isHost
+                ? 'Đã hủy · Lịch hẹn đã hủy'
+                : 'Đã từ chối · Chủ phòng không thể tiếp bạn vào giờ này';
+            iconData = Icons.cancel_outlined;
+          } else {
+            statusLabel = isHost
+                ? 'Chờ xác nhận · Yêu cầu từ ${apt.requesterName}'
+                : 'Chờ xác nhận · Đang chờ chủ nhà phản hồi';
+            iconData = Icons.schedule_outlined;
           }
 
-          DateTime? reqTime;
-          if (request.createdAt != null) {
-            reqTime = DateTime.tryParse(request.createdAt!);
-          }
+          final timeFormatted =
+              '${apt.appointmentTime.day.toString().padLeft(2, '0')}/${apt.appointmentTime.month.toString().padLeft(2, '0')}/${apt.appointmentTime.year} lúc ${apt.appointmentTime.hour.toString().padLeft(2, '0')}:${apt.appointmentTime.minute.toString().padLeft(2, '0')}';
 
           realItems.add(
             PenpotNotificationItem(
-              title: '${request.partnerName} gửi lời mời kết nối',
-              description:
-                  '$statusLabel · Độ tương thích: ${request.matchScore.round()}%',
+              title: 'Lịch xem phòng: ${apt.roomTitle}',
+              description: '$statusLabel · $timeFormatted',
               icon: iconData,
-              destination: NotificationDestination.requests,
-              createdAt: reqTime,
+              destination: isHost
+                  ? NotificationDestination.hostAppointments
+                  : NotificationDestination.requesterAppointments,
+              appointmentId: apt.id,
+              roomPostId: apt.roomPostId,
+              createdAt: apt.createdAt,
               isPending: isPending,
             ),
           );
         }
+      } catch (err) {
+        debugPrint('Lỗi tải lịch hẹn trong thông báo: $err');
       }
 
-      // Sort notifications by newest first
+      // 2. Tải lời mời kết nối nhận được
+      if (effectiveUserId != null) {
+        try {
+          final received = await _api.getReceivedRequests(effectiveUserId);
+          for (final request in received) {
+            final statusUpper = request.status.toUpperCase();
+            String statusLabel = 'Đang chờ bạn phản hồi';
+            IconData iconData = Icons.person_add_alt_1_outlined;
+            final isPending = statusUpper == 'PENDING';
+
+            if (statusUpper == 'ACCEPTED') {
+              statusLabel = 'Đã chấp nhận kết nối';
+              iconData = Icons.people_outline;
+            } else if (statusUpper == 'REJECTED') {
+              statusLabel = 'Đã từ chối kết nối';
+              iconData = Icons.person_off_outlined;
+            }
+
+            DateTime? reqTime;
+            if (request.createdAt != null) {
+              reqTime = DateTime.tryParse(request.createdAt!);
+            }
+
+            realItems.add(
+              PenpotNotificationItem(
+                title: '${request.partnerName} gửi lời mời kết nối',
+                description:
+                    '$statusLabel · Độ tương thích: ${request.matchScore.round()}%',
+                icon: iconData,
+                destination: NotificationDestination.requests,
+                createdAt: reqTime,
+                isPending: isPending,
+              ),
+            );
+          }
+        } catch (err) {
+          debugPrint('Lỗi tải lời mời kết nối trong thông báo: $err');
+        }
+      }
+
+      // Sắp xếp thông báo mới nhất lên đầu
       realItems.sort((a, b) {
         final timeA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final timeB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -271,13 +293,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (mounted) {
         setState(() {
           _items = realItems;
+          _isLoading = false;
           _loadError = null;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _items = [];
+          _isLoading = false;
           _loadError = 'Không tải được thông báo: $e';
         });
       }
@@ -294,27 +317,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         foregroundColor: _PenpotColors.ink,
         elevation: 0,
       ),
-      body: _items.isEmpty
-          ? PenpotStateView(
-              icon: Icons.notifications_none_outlined,
-              title: _loadError == null
-                  ? 'Chưa có thông báo'
-                  : 'Chưa tải được thông báo',
-              description:
-                  _loadError ??
-                  'Thông báo về kết nối và lịch hẹn sẽ xuất hiện ở đây.',
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-              children: [
-                for (final item in _items)
-                  _NotificationCard(
-                    item: item,
-                    onTap: widget.onItemTap == null
-                        ? null
-                        : () => widget.onItemTap!(item),
-                  ),
-              ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadRealNotifications,
+              child: _items.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: PenpotStateView(
+                            icon: Icons.notifications_none_outlined,
+                            title: _loadError == null
+                                ? 'Chưa có thông báo'
+                                : 'Chưa tải được thông báo',
+                            description: _loadError ??
+                                'Thông báo về kết nối và lịch hẹn sẽ xuất hiện ở đây.',
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      children: [
+                        for (final item in _items)
+                          _NotificationCard(
+                            item: item,
+                            onTap: widget.onItemTap == null
+                                ? null
+                                : () => widget.onItemTap!(item),
+                          ),
+                      ],
+                    ),
             ),
     );
   }

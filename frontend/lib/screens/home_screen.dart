@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _minAreaFilter = 0;
   String _roomDistrictFilter = 'Tất cả khu vực';
   final Set<String> _roomAmenitiesFilter = <String>{};
-  bool _quickPriceActive = false;
+  int _selectedPriceTier = 0; // 0: Tất cả giá, 1: < 3tr, 2: 3-5tr, 3: > 5tr
   bool _quickNearbyActive = false;
 
   // Trạng thái tìm kiếm và lọc ứng viên bạn trọ.
@@ -522,15 +522,50 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Row(
                         children: [
                           _quickFilter(
-                            label: 'Dưới 4 triệu',
-                            selected: _quickPriceActive,
+                            label: 'Dưới 3 triệu',
+                            selected: _selectedPriceTier == 1,
                             onTap: () => setState(() {
-                              _quickPriceActive = !_quickPriceActive;
-                              if (_quickPriceActive) {
+                              if (_selectedPriceTier == 1) {
+                                _selectedPriceTier = 0;
                                 _minPriceFilter = 0;
-                                _maxPriceFilter = 4000000;
+                                _maxPriceFilter = double.infinity;
                               } else {
+                                _selectedPriceTier = 1;
                                 _minPriceFilter = 0;
+                                _maxPriceFilter = 3000000;
+                              }
+                              _applyPostFilters();
+                            }),
+                          ),
+                          const SizedBox(width: 8),
+                          _quickFilter(
+                            label: '3 – 5 triệu',
+                            selected: _selectedPriceTier == 2,
+                            onTap: () => setState(() {
+                              if (_selectedPriceTier == 2) {
+                                _selectedPriceTier = 0;
+                                _minPriceFilter = 0;
+                                _maxPriceFilter = double.infinity;
+                              } else {
+                                _selectedPriceTier = 2;
+                                _minPriceFilter = 3000000;
+                                _maxPriceFilter = 5000000;
+                              }
+                              _applyPostFilters();
+                            }),
+                          ),
+                          const SizedBox(width: 8),
+                          _quickFilter(
+                            label: 'Trên 5 triệu',
+                            selected: _selectedPriceTier == 3,
+                            onTap: () => setState(() {
+                              if (_selectedPriceTier == 3) {
+                                _selectedPriceTier = 0;
+                                _minPriceFilter = 0;
+                                _maxPriceFilter = double.infinity;
+                              } else {
+                                _selectedPriceTier = 3;
+                                _minPriceFilter = 5000000;
                                 _maxPriceFilter = double.infinity;
                               }
                               _applyPostFilters();
@@ -611,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _maxPriceFilter = double.infinity;
                     _minAreaFilter = 0;
                     _roomDistrictFilter = 'Tất cả khu vực';
-                    _quickPriceActive = false;
+                    _selectedPriceTier = 0;
                     _quickNearbyActive = false;
                     _roomAmenitiesFilter.clear();
                     _applyPostFilters();
@@ -863,8 +898,15 @@ class _HomeScreenState extends State<HomeScreen> {
       _maxPriceFilter = selection.maxPrice;
       _minAreaFilter = selection.minArea;
       _roomDistrictFilter = selection.district;
-      _quickPriceActive =
-          selection.minPrice == 0 && selection.maxPrice <= 4000000;
+      if (selection.minPrice == 0 && selection.maxPrice <= 3000000) {
+        _selectedPriceTier = 1;
+      } else if (selection.minPrice >= 3000000 && selection.maxPrice <= 5000000) {
+        _selectedPriceTier = 2;
+      } else if (selection.minPrice >= 5000000 && selection.maxPrice.isInfinite) {
+        _selectedPriceTier = 3;
+      } else {
+        _selectedPriceTier = 0;
+      }
       _quickNearbyActive = selection.district == 'Bình Thạnh, TP.HCM';
       _roomAmenitiesFilter
         ..clear()

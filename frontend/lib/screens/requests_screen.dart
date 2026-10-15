@@ -266,7 +266,8 @@ class _RequestsScreenState extends State<RequestsScreen> {
             ),
 
             // Filters
-            Padding(
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
