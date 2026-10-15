@@ -41,3 +41,8 @@ MEMORY.md
 
 .worktrees/
 frontend/android/.kotlin/
+
+# Mobile Builds & Artifacts (Upload via GitHub Releases instead)
+releases/
+*.apk
+*.aab
