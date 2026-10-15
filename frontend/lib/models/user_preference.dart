@@ -1,31 +1,13 @@
 import 'package:intl/intl.dart';
+import 'district_names.dart';
 
 class UserPreference {
-  static final NumberFormat _currencyFmt =
-      NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+  static final NumberFormat _currencyFmt = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: 'đ',
+  );
 
-  static const Map<String, String> districtMap = {
-    'Thu Duc': 'TP. Thủ Đức',
-    'Quan 1': 'Quận 1',
-    'Quan 3': 'Quận 3',
-    'Quan 4': 'Quận 4',
-    'Quan 5': 'Quận 5',
-    'Quan 6': 'Quận 6',
-    'Quan 7': 'Quận 7',
-    'Quan 8': 'Quận 8',
-    'Quan 10': 'Quận 10',
-    'Quan 11': 'Quận 11',
-    'Quan 12': 'Quận 12',
-    'Binh Thanh': 'Bình Thạnh',
-    'Go Vap': 'Gò Vấp',
-    'Phu Nhuan': 'Phú Nhuận',
-    'Tan Binh': 'Tân Bình',
-    'Tan Phu': 'Tân Phú',
-    'Binh Tan': 'Bình Tân',
-    'Binh Chanh': 'Huyện Bình Chánh',
-    'Hoc Mon': 'Huyện Hóc Môn',
-    'Nha Be': 'Huyện Nhà Bè',
-  };
+  static const Map<String, String> districtMap = DistrictNames.labels;
 
   final String targetDistrict;
   final double budgetAmount;
@@ -34,6 +16,35 @@ class UserPreference {
   final bool isSmoking;
   final bool allowPets;
   final String? bioDescription;
+  final DateTime? moveInDate;
+  final String? roomType;
+  final String? workSchedule;
+  final String? personalValue;
+
+  static const roomTypeValues = {'PRIVATE', 'SHARED'};
+  static const workScheduleValues = {'DAY', 'NIGHT'};
+  static const personalValueValues = {'PRIVACY', 'SCHEDULE', 'CLEAN'};
+
+  static String? parseSurveyChoice(Object? value, Set<String> allowed) {
+    if (value == null) return null;
+    if (value is! String || !allowed.contains(value)) {
+      throw const FormatException('Lựa chọn khảo sát đã lưu không hợp lệ');
+    }
+    return value;
+  }
+
+  static DateTime? parseMoveInDate(Object? value) {
+    if (value == null) return null;
+    if (value is! String || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+      throw const FormatException('Ngày chuyển vào đã lưu không hợp lệ');
+    }
+    final parsed = DateTime.tryParse(value);
+    // DateTime.parse normalizes invalid dates (e.g. February 30); reject them.
+    if (parsed == null || DateFormat('yyyy-MM-dd').format(parsed) != value) {
+      throw const FormatException('Ngày chuyển vào đã lưu không hợp lệ');
+    }
+    return parsed;
+  }
 
   // Parsed metadata fields from bioDescription
   final String? targetGender;
@@ -55,6 +66,10 @@ class UserPreference {
     required this.isSmoking,
     required this.allowPets,
     this.bioDescription,
+    this.moveInDate,
+    this.roomType,
+    this.workSchedule,
+    this.personalValue,
     this.targetGender,
     this.minBudget,
     this.maxBudget,
@@ -103,10 +118,13 @@ class UserPreference {
             targetGender = part.replaceFirst('Yêu cầu giới tính:', '').trim();
           } else if (part.startsWith('Ngân sách:')) {
             final numMatches = RegExp(r'([\d\.]+)').allMatches(part);
-            final nums = numMatches.map((m) {
-              final cleanStr = m.group(1)!.replaceAll('.', '');
-              return double.tryParse(cleanStr);
-            }).whereType<double>().toList();
+            final nums = numMatches
+                .map((m) {
+                  final cleanStr = m.group(1)!.replaceAll('.', '');
+                  return double.tryParse(cleanStr);
+                })
+                .whereType<double>()
+                .toList();
             if (nums.length >= 2) {
               minB = nums[0];
               maxB = nums[1];
@@ -143,6 +161,13 @@ class UserPreference {
       isSmoking: smoking,
       allowPets: pets,
       bioDescription: rawBio,
+      moveInDate: parseMoveInDate(json['moveInDate']),
+      roomType: parseSurveyChoice(json['roomType'], roomTypeValues),
+      workSchedule: parseSurveyChoice(json['workSchedule'], workScheduleValues),
+      personalValue: parseSurveyChoice(
+        json['personalValue'],
+        personalValueValues,
+      ),
       targetGender: targetGender,
       minBudget: minB,
       maxBudget: maxB,
@@ -156,9 +181,7 @@ class UserPreference {
     );
   }
 
-  String get districtDisplay =>
-      districtMap[targetDistrict] ??
-      (targetDistrict.isNotEmpty ? targetDistrict : 'Chưa chọn');
+  String get districtDisplay => DistrictNames.display(targetDistrict);
 
   String get budgetDisplay {
     if (minBudget != null && maxBudget != null) {
@@ -189,7 +212,9 @@ class UserPreference {
 
   String get petDisplay {
     if (petHabit != null && petHabit!.isNotEmpty) {
-      if (petHabit == 'LOVE_PETS' || petHabit!.contains('Thích') || petHabit!.contains('Nuôi')) {
+      if (petHabit == 'LOVE_PETS' ||
+          petHabit!.contains('Thích') ||
+          petHabit!.contains('Nuôi')) {
         return 'Thích / Nuôi thú cưng';
       }
       if (petHabit == 'ALLERGIC' || petHabit!.contains('Dị ứng')) {

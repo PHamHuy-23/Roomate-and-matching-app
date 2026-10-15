@@ -56,6 +56,28 @@ public class User {
     @Builder.Default
     private String status = "ACTIVE"; // Mặc định tài khoản mới tạo là ACTIVE
 
+    @Column(name = "search_active", nullable = false)
+    @Builder.Default
+    private boolean searchActive = true;
+
+    @ElementCollection
+    @CollectionTable(name = "user_saved_posts", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "post_id")
+    @Builder.Default
+    private java.util.Set<Long> savedPostIds = new java.util.HashSet<>();
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
+    @Column(name = "logged_out_at")
+    private LocalDateTime loggedOutAt;
+
+    /** Timestamp thực của lần đăng nhập thành công gần nhất, dùng cho audit.
+     *  Việc thu hồi access token dựa vào refresh-token grant, không so sánh timestamp.
+     */
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     public enum Role {
         ROLE_USER, ROLE_ADMIN
     }

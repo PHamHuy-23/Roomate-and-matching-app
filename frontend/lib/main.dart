@@ -9,7 +9,11 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final authSession = AuthSession();
+  await authSession.restoreSession();
+
   ApiService.configureUnauthorizedHandler(() {
     appNavigatorKey.currentContext?.read<AuthSession>().signOut();
     appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
@@ -20,16 +24,25 @@ void main() {
       const SnackBar(content: Text('Phiên làm việc đã hết hạn')),
     );
   });
-  runApp(const RoommateHubApp());
+  runApp(RoommateHubApp(authSession: authSession));
 }
 
 class RoommateHubApp extends StatelessWidget {
-  const RoommateHubApp({super.key});
+  const RoommateHubApp({super.key, this.authSession});
+
+  final AuthSession? authSession;
 
   @override
   Widget build(BuildContext context) {
+    final session = authSession;
+    final initialRoute = session != null && session.isAuthenticated
+        ? (session.user?.role.toUpperCase().contains('ADMIN') == true
+            ? AppRoutes.adminDashboard
+            : AppRoutes.home)
+        : AppRoutes.welcome;
+
     return ChangeNotifierProvider(
-      create: (_) => AuthSession(),
+      create: (_) => authSession ?? AuthSession(),
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
         scaffoldMessengerKey: appScaffoldMessengerKey,
@@ -39,7 +52,7 @@ class RoommateHubApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
           useMaterial3: true,
         ),
-        initialRoute: AppRoutes.login,
+        initialRoute: initialRoute,
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
