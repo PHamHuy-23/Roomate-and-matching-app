@@ -1208,6 +1208,8 @@ class ApiService {
     int? currentOccupants,
     required List<String> amenities,
     String? imageObjectKey,
+    List<String>? imageObjectKeys,
+    List<String>? imageUrls,
   }) async {
     final cleanCostStr = electricityWaterCost
         .replaceAll('.', '')
@@ -1234,7 +1236,9 @@ class ApiService {
         'maxOccupants': maxOccupants,
         'currentOccupants': currentOccupants,
         'amenities': amenitiesString,
-        'imageObjectKey': imageObjectKey,
+        'imageObjectKey': ?imageObjectKey,
+        'imageObjectKeys': ?imageObjectKeys,
+        'imageUrls': ?imageUrls,
       },
     );
     if (response.statusCode == 200) {

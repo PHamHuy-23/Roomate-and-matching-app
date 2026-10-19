@@ -46,10 +46,8 @@ public class RoomPostService {
         User author = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại!"));
 
-        String imageUrl = null;
-        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
-            imageUrl = requireImageUrl(author.getId(), dto.getImageObjectKey());
-        }
+        // Resolve multiple or single image keys with strict ownership check (max 4 images)
+        String imageUrl = resolveImages(author.getId(), dto, null);
 
         RoomPost post = RoomPost.builder()
                 .author(author)
@@ -142,11 +140,11 @@ public class RoomPostService {
         validateOccupancy(dto.getMaxOccupants() == null ? post.getMaxOccupants() : dto.getMaxOccupants(),
                 dto.getCurrentOccupants() == null ? post.getCurrentOccupants() : dto.getCurrentOccupants());
 
-        // Resolve a requested replacement before changing the post; never silently ignore an unavailable upload.
-        String imageUrl = null;
-        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
-            imageUrl = requireImageUrl(post.getAuthor().getId(), dto.getImageObjectKey());
-        }
+        // Resolve requested replacement / multi-image album (max 4 images)
+        String newImageUrl = resolveImages(post.getAuthor().getId(), dto, post.getImageUrl());
+        boolean hasImageChange = (dto.getImageObjectKeys() != null)
+                || (dto.getImageUrls() != null)
+                || (dto.getImageObjectKey() != null);
 
         // Khi người dùng chỉnh sửa nội dung tin, chuyển về trạng thái PENDING để kiểm duyệt lại
         if (!admin) {
@@ -165,11 +163,57 @@ public class RoomPostService {
         if (dto.getCurrentOccupants() != null) post.setCurrentOccupants(dto.getCurrentOccupants());
         if (dto.getAmenities() != null) post.setAmenities(dto.getAmenities());
 
-        if (imageUrl != null) {
-            post.setImageUrl(imageUrl);
+        if (hasImageChange) {
+            post.setImageUrl(newImageUrl);
         }
 
         return convertToDTO(roomPostRepository.save(post));
+    }
+
+    private String resolveImages(Long authorId, CreateRoomPostDTO dto, String existingImageUrl) {
+        java.util.List<String> combinedUrls = new java.util.ArrayList<>();
+
+        // 1. Giữ lại các ảnh URL hợp lệ đã tồn tại (cho phép xóa bớt 1 trong các ảnh cũ)
+        if (dto.getImageUrls() != null) {
+            for (String url : dto.getImageUrls()) {
+                if (url != null && !url.isBlank()) {
+                    String cleanUrl = url.trim();
+                    if (!combinedUrls.contains(cleanUrl)) {
+                        combinedUrls.add(cleanUrl);
+                    }
+                }
+            }
+        }
+
+        // 2. Kiểm tra và bổ sung các ảnh mới upload lên qua R2 Object Keys
+        if (dto.getImageObjectKeys() != null) {
+            for (String key : dto.getImageObjectKeys()) {
+                if (key != null && !key.isBlank()) {
+                    String resolvedUrl = requireImageUrl(authorId, key.trim());
+                    if (!combinedUrls.contains(resolvedUrl)) {
+                        combinedUrls.add(resolvedUrl);
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback cho single imageObjectKey (tương thích ngược)
+        if (dto.getImageObjectKey() != null && !dto.getImageObjectKey().isBlank()) {
+            String resolvedUrl = requireImageUrl(authorId, dto.getImageObjectKey().trim());
+            if (!combinedUrls.contains(resolvedUrl)) {
+                combinedUrls.add(resolvedUrl);
+            }
+        }
+
+        // 4. Ràng buộc bảo mật & dung lượng: Tối đa 4 ảnh
+        if (combinedUrls.size() > 4) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Một bài đăng chỉ được tối đa 4 hình ảnh");
+        }
+
+        if (combinedUrls.isEmpty()) {
+            return null;
+        }
+        return String.join(",", combinedUrls);
     }
 
     private String requireImageUrl(Long authorId, String imageObjectKey) {

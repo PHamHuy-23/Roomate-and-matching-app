@@ -35,8 +35,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     RoomAmenities.parking: false,
     'Giờ giấc tự do': false,
   };
-  XFile? _selectedImage;
-  Uint8List? _selectedImageBytes;
+  final List<XFile> _selectedImages = [];
+  final List<Uint8List> _selectedImagesBytes = [];
   bool _isLoading = false;
 
   double? _parseMoney(String value) {
@@ -57,6 +57,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _pickRoomImage() async {
+    if (_selectedImages.length >= 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chỉ được tải lên tối đa 4 ảnh cho mỗi phòng.')),
+      );
+      return;
+    }
     final image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 90,
@@ -72,8 +78,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
     setState(() {
-      _selectedImage = image;
-      _selectedImageBytes = bytes;
+      _selectedImages.add(image);
+      _selectedImagesBytes.add(bytes);
+    });
+  }
+
+  void _removeRoomImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+      _selectedImagesBytes.removeAt(index);
     });
   }
 
@@ -104,18 +117,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           'Số người hiện tại không được lớn hơn số người tối đa',
         );
       }
-      String? imageObjectKey;
-      final image = _selectedImage;
-      final imageBytes = _selectedImageBytes;
-      if (image != null && imageBytes != null) {
+      final List<String> imageObjectKeys = [];
+      for (int i = 0; i < _selectedImages.length; i++) {
+        final image = _selectedImages[i];
+        final bytes = _selectedImagesBytes[i];
         final upload = await _api.uploadImage(
-          bytes: imageBytes,
+          bytes: bytes,
           fileName: image.name,
           contentType: _contentType(image.name),
           purpose: 'room-post',
         );
-        imageObjectKey = upload.objectKey;
+        imageObjectKeys.add(upload.objectKey);
       }
+
       final payload = {
         'title': _titleCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
@@ -130,7 +144,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             .where((entry) => entry.value)
             .map((entry) => entry.key)
             .join(','),
-        'imageObjectKey': imageObjectKey,
+        'imageObjectKeys': imageObjectKeys,
+        'imageObjectKey': imageObjectKeys.isNotEmpty ? imageObjectKeys.first : null,
         'description': _descCtrl.text.trim(),
       };
 
@@ -385,35 +400,82 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: 14),
-                  OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _pickRoomImage,
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: Text(
-                      _selectedImageBytes == null
-                          ? 'Chọn ảnh phòng'
-                          : 'Đổi ảnh phòng',
-                    ),
-                  ),
-                  if (_selectedImageBytes != null) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(
-                        _selectedImageBytes!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Hình ảnh phòng trọ (${_selectedImages.length}/4)',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _isLoading
-                          ? null
-                          : () => setState(() {
-                              _selectedImage = null;
-                              _selectedImageBytes = null;
-                            }),
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Bỏ ảnh'),
+                      if (_selectedImages.length < 4)
+                        OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _pickRoomImage,
+                          icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                          label: const Text('Thêm ảnh'),
+                        ),
+                    ],
+                  ),
+                  if (_selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.3,
+                      ),
+                      itemCount: _selectedImages.length,
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.memory(
+                                _selectedImagesBytes[index],
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: InkWell(
+                                onTap: _isLoading ? null : () => _removeRoomImage(index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 4,
+                              left: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: index == 0 ? Colors.indigo : Colors.black45,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  index == 0 ? 'Ảnh bìa' : 'Ảnh ${index + 1}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                   const SizedBox(height: 14),

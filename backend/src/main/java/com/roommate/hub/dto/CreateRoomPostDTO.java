@@ -55,4 +55,10 @@ public class CreateRoomPostDTO {
     private String amenities;
 
     private String imageObjectKey;
+
+    @Size(max = 4, message = "Tối đa 4 ảnh phòng")
+    private java.util.List<String> imageObjectKeys;
+
+    @Size(max = 4, message = "Tối đa 4 ảnh phòng")
+    private java.util.List<String> imageUrls;
 }

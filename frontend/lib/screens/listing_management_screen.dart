@@ -79,7 +79,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       double.tryParse(_areaCtrl.text.trim().replaceAll(',', '.')) ?? double.nan;
   int _maxOccupants = 2;
   String? _imageObjectKey;
-  String? _imageUrl;
+  List<String> _currentImageUrls = [];
+  final List<String> _newImageObjectKeys = [];
+  final List<String> _newImagePreviewUrls = [];
   bool _busy = false;
   String? _loadError;
   bool _loadingData = false;
@@ -161,7 +163,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     _amenities
       ..clear()
       ..addAll(post.amenities);
-    _imageUrl = post.imageUrl;
+    _currentImageUrls = List<String>.from(post.images);
+    _newImageObjectKeys.clear();
+    _newImagePreviewUrls.clear();
     _imageObjectKey = null;
   }
 
@@ -232,6 +236,12 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
 
   Future<void> _pickImage() async {
     if (_busy) return;
+    if (_currentImageUrls.length + _newImageObjectKeys.length >= 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mỗi bài đăng chỉ được tối đa 4 hình ảnh.')),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final image = await ImagePicker().pickImage(
@@ -257,8 +267,11 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
       );
       if (mounted) {
         setState(() {
+          _newImageObjectKeys.add(ticket.objectKey);
+          if (ticket.publicUrl != null) {
+            _newImagePreviewUrls.add(ticket.publicUrl!);
+          }
           _imageObjectKey = ticket.objectKey;
-          _imageUrl = ticket.publicUrl;
         });
       }
     } catch (e) {
@@ -270,6 +283,21 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _removeExistingImage(int index) {
+    setState(() {
+      _currentImageUrls.removeAt(index);
+    });
+  }
+
+  void _removeNewImage(int index) {
+    setState(() {
+      _newImageObjectKeys.removeAt(index);
+      if (index < _newImagePreviewUrls.length) {
+        _newImagePreviewUrls.removeAt(index);
+      }
+    });
   }
 
   Future<void> _handleSaveEdit() async {
@@ -302,7 +330,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
           maxOccupants: _maxOccupants,
           currentOccupants: post.currentOccupants,
           amenities: _amenities.toList(),
-          imageObjectKey: _imageObjectKey,
+          imageUrls: _currentImageUrls,
+          imageObjectKeys: _newImageObjectKeys,
+          imageObjectKey: _newImageObjectKeys.isNotEmpty ? _newImageObjectKeys.first : null,
         );
         if (!mounted) return;
         await _loadData();
@@ -560,7 +590,9 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
           _maxOccupants = 2;
           _amenities.clear();
           _imageObjectKey = null;
-          _imageUrl = null;
+          _currentImageUrls.clear();
+          _newImageObjectKeys.clear();
+          _newImagePreviewUrls.clear();
           _goTo(ListingFlowMode.create);
         }),
       ],
@@ -722,46 +754,126 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
           'Hình ảnh rõ ràng giúp tin đăng đáng tin cậy hơn.',
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Ảnh bìa',
-          style: TextStyle(
-            color: _ink,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _busy ? null : _pickImage,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            height: 164,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: _soft,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _border),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Hình ảnh phòng (${_currentImageUrls.length + _newImageObjectKeys.length}/4)',
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-            child: _imageUrl == null
-                ? const Center(
-                    child: Icon(
-                      Icons.add_photo_alternate_outlined,
-                      color: _primary,
-                      size: 52,
-                    ),
-                  )
-                : Image.network(
-                    _imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) =>
-                        const Center(child: Text('Không tải được ảnh')),
-                  ),
-          ),
+            if (_currentImageUrls.length + _newImageObjectKeys.length < 4)
+              TextButton.icon(
+                onPressed: _busy ? null : _pickImage,
+                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                label: const Text('Thêm ảnh'),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
-        Text(
-          '${_imageUrl == null ? 0 : 1} ảnh bìa · JPG, PNG · Tối đa 5 MB',
-          style: const TextStyle(color: _muted, fontSize: 13),
+        if (_currentImageUrls.isEmpty && _newImageObjectKeys.isEmpty)
+          InkWell(
+            onTap: _busy ? null : _pickImage,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              height: 140,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: _soft,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _border),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_photo_alternate_outlined, color: _primary, size: 44),
+                    SizedBox(height: 6),
+                    Text('Chưa có ảnh nào. Bấm để thêm ảnh.', style: TextStyle(color: _muted, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.3,
+            ),
+            itemCount: _currentImageUrls.length + _newImagePreviewUrls.length,
+            itemBuilder: (context, index) {
+              final isExisting = index < _currentImageUrls.length;
+              final imgUrl = isExisting
+                  ? _currentImageUrls[index]
+                  : _newImagePreviewUrls[index - _currentImageUrls.length];
+              final isCover = index == 0;
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      imgUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stack) =>
+                          const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: InkWell(
+                      onTap: _busy
+                          ? null
+                          : () {
+                              if (isExisting) {
+                                _removeExistingImage(index);
+                              } else {
+                                _removeNewImage(index - _currentImageUrls.length);
+                              }
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isCover ? _primary : Colors.black45,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isCover ? 'Ảnh bìa' : 'Ảnh ${index + 1}',
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        const SizedBox(height: 8),
+        const Text(
+          'Tối đa 4 ảnh · JPG, PNG, WebP · Mỗi ảnh không quá 5 MB',
+          style: TextStyle(color: _muted, fontSize: 13),
         ),
         const SizedBox(height: 20),
         const Text(

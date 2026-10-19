@@ -46,3 +46,6 @@ frontend/android/.kotlin/
 releases/
 *.apk
 *.aab
+*.zip
+file_name.txt
+mssv_search.txt

@@ -23,13 +23,12 @@ class EmailServiceImplTest {
     private JavaMailSender mailSender;
 
     @Test
-    @DisplayName("EmailServiceImpl ném SERVICE_UNAVAILABLE khi JavaMailSender chưa được cấu hình")
-    void sendOtp_WhenMailSenderMissing_ShouldThrowServiceUnavailable() {
+    @DisplayName("EmailServiceImpl chạy ở Dev Mode giả lập độ trễ khi JavaMailSender chưa được cấu hình")
+    void sendOtp_WhenMailSenderMissing_ShouldRunDevModeWithoutThrowing() {
         EmailServiceImpl serviceWithoutSender = new EmailServiceImpl(null);
 
-        assertThatThrownBy(() -> serviceWithoutSender.sendPasswordResetOtp("test@example.com", "123456"))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+        // Không ném lỗi văng 503 để luồng demo không bị sập
+        serviceWithoutSender.sendPasswordResetOtp("test@example.com", "123456");
     }
 
     @Test
@@ -54,12 +53,11 @@ class EmailServiceImplTest {
     }
 
     @Test
-    @DisplayName("simulateDeliveryDelay() ném SERVICE_UNAVAILABLE khi JavaMailSender chưa cấu hình")
-    void simulateDeliveryDelay_WhenMailSenderMissing_ShouldThrowServiceUnavailable() {
+    @DisplayName("simulateDeliveryDelay() hoàn tất an toàn khi JavaMailSender chưa cấu hình")
+    void simulateDeliveryDelay_WhenMailSenderMissing_ShouldNotThrow() {
         EmailServiceImpl serviceWithoutSender = new EmailServiceImpl(null);
 
-        assertThatThrownBy(serviceWithoutSender::simulateDeliveryDelay)
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+        // Không ném lỗi văng 503
+        serviceWithoutSender.simulateDeliveryDelay();
     }
 }
