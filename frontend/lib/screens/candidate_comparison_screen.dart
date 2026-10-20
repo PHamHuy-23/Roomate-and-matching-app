@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/match_recommendation.dart';
-import '../widgets/penpot_back_button.dart';
 
 class CandidateComparisonScreen extends StatelessWidget {
   final List<MatchRecommendation> candidates;
@@ -13,19 +12,23 @@ class CandidateComparisonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F6),
+      backgroundColor: const Color(0xFFF5F8F7),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const PenpotBackButton(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF142523)),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
-          'So sánh đối đầu bạn trọ',
+          'So sánh ứng viên',
           style: TextStyle(
-            color: Color(0xFF142523),
             fontSize: 18,
             fontWeight: FontWeight.w700,
+            color: Color(0xFF142523),
           ),
         ),
+        centerTitle: true,
       ),
       body: candidates.isEmpty
           ? const Center(
@@ -37,7 +40,7 @@ class CandidateComparisonScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Đang so sánh ( ứng viên)',
+                    'Đang so sánh (${candidates.length} ứng viên)',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -103,7 +106,7 @@ class CandidateComparisonScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '% Match',
+              '${c.totalScore.toStringAsFixed(0)}% Match',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -125,17 +128,26 @@ class CandidateComparisonScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildRow('Ngân sách tối đa', candidates.map((c) => c.budgetAmount > 0 ? ' tr' : 'Chưa rõ').toList()),
+          _buildRow(
+            'Ngân sách tối đa',
+            candidates.map((c) {
+              if (c.budgetAmount <= 0) return 'Chưa rõ';
+              if (c.budgetAmount >= 1000000) {
+                return '${(c.budgetAmount / 1000000).toStringAsFixed(1)} tr';
+              }
+              return '${c.budgetAmount.toStringAsFixed(0)} đ';
+            }).toList(),
+          ),
           const Divider(height: 1),
-          _buildRow('Khu vực quận', candidates.map((c) => c.targetDistrict).toList()),
+          _buildRow('Khu vực quận', candidates.map((c) => c.districtDisplay).toList()),
           const Divider(height: 1),
-          _buildRow('Độ sạch sẽ', candidates.map((c) => '%').toList()),
+          _buildRow('Độ sạch sẽ', candidates.map((c) => '${c.criteriaDetail.cleanlinessMatch.toStringAsFixed(0)}%').toList()),
           const Divider(height: 1),
-          _buildRow('Giờ giấc / Ngủ', candidates.map((c) => '%').toList()),
+          _buildRow('Giờ giấc / Ngủ', candidates.map((c) => '${c.criteriaDetail.sleepMatch.toStringAsFixed(0)}%').toList()),
           const Divider(height: 1),
-          _buildRow('Hút thuốc', candidates.map((c) => '%').toList()),
+          _buildRow('Hút thuốc', candidates.map((c) => '${c.criteriaDetail.smokingMatch.toStringAsFixed(0)}%').toList()),
           const Divider(height: 1),
-          _buildRow('Thú cưng', candidates.map((c) => '%').toList()),
+          _buildRow('Thú cưng', candidates.map((c) => '${c.criteriaDetail.petMatch.toStringAsFixed(0)}%').toList()),
         ],
       ),
     );
@@ -159,14 +171,16 @@ class CandidateComparisonScreen extends StatelessWidget {
           ),
           ...values.map(
             (v) => Expanded(
-              flex: 2,
-              child: Text(
-                v,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF142523),
+              flex: 3,
+              child: Center(
+                child: Text(
+                  v,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF142523),
+                  ),
                 ),
               ),
             ),
