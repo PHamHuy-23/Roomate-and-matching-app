@@ -2,9 +2,12 @@ package com.roommate.hub.service;
 
 import com.roommate.hub.dto.BlockedUserDTO;
 import com.roommate.hub.entity.BlockedUser;
+import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.BlockedUserRepository;
+import com.roommate.hub.repository.ContactPermissionRepository;
+import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -21,6 +24,8 @@ public class BlockService {
 
     private final BlockedUserRepository blockedUserRepository;
     private final UserRepository userRepository;
+    private final MatchRequestRepository matchRequestRepository;
+    private final ContactPermissionRepository contactPermissionRepository;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -36,6 +41,22 @@ public class BlockService {
         }
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng cần chặn không tồn tại!"));
+
+        // 1. Tự động xóa/hủy toàn bộ yêu cầu kết nối đang chờ (PENDING) hoặc đang tồn tại giữa 2 người
+        List<MatchRequest> requests = matchRequestRepository.findAllBetweenUsers(currentUser.getId(), targetUserId);
+        for (MatchRequest mr : requests) {
+            if (mr.getStatus() == MatchRequest.MatchStatus.PENDING) {
+                matchRequestRepository.delete(mr);
+            } else if (mr.getStatus() == MatchRequest.MatchStatus.ACCEPTED) {
+                mr.setStatus(MatchRequest.MatchStatus.REJECTED);
+                matchRequestRepository.save(mr);
+            }
+        }
+
+        // 2. Thu hồi toàn bộ quyền xem danh bạ liên lạc 2 chiều giữa 2 người
+        if (contactPermissionRepository != null) {
+            contactPermissionRepository.deleteBetweenUsers(currentUser.getId(), targetUserId);
+        }
 
         if (blockedUserRepository.existsByUserIdAndBlockedUserId(currentUser.getId(), targetUserId)) {
             BlockedUser existing = blockedUserRepository.findByUserIdAndBlockedUserId(currentUser.getId(), targetUserId).orElseThrow();
