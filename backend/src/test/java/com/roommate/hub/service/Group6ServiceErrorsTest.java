@@ -54,7 +54,7 @@ class Group6ServiceErrorsTest {
             new AppointmentService(appointments, users, posts, matches, blocks);
     private final ChatService chatService =
             new ChatService(messages, users, blocks, matches, appointments, storage);
-    private final MatchRequestService matchService = new MatchRequestService(matches, users, matching, blocks, contactPermissions);
+    private final MatchRequestService matchService = new MatchRequestService(matches, users, matching, blocks, contactPermissions, appointments);
     private final ProfileService profileService = new ProfileService(preferences, users, blocks);
     private final RoomPostService roomService = new RoomPostService(posts, users, storage);
     private final User actor = User.builder().id(1L).email("actor@example.com").status("ACTIVE").build();

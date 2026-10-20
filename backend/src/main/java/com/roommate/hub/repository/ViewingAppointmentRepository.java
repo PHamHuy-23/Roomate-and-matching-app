@@ -18,6 +18,9 @@ public interface ViewingAppointmentRepository extends JpaRepository<ViewingAppoi
     @Query("SELECT a FROM ViewingAppointment a WHERE a.id = :id")
     Optional<ViewingAppointment> findByIdForStatusUpdate(@Param("id") Long id);
 
+    @Query("SELECT a FROM ViewingAppointment a WHERE ((a.requester.id = :u1 AND a.host.id = :u2) OR (a.requester.id = :u2 AND a.host.id = :u1)) AND a.status IN ('PENDING', 'CONFIRMED') AND a.appointmentTime > :now")
+    List<ViewingAppointment> findActiveUpcomingBetweenUsers(@Param("u1") Long u1, @Param("u2") Long u2, @Param("now") java.time.OffsetDateTime now);
+
     @Query("SELECT a FROM ViewingAppointment a WHERE a.requester.id = :userId OR a.host.id = :userId ORDER BY a.appointmentTime DESC")
     List<ViewingAppointment> findAllByUserId(@Param("userId") Long userId);
 

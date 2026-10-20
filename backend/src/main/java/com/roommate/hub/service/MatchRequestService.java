@@ -9,6 +9,7 @@ import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.ContactPermissionRepository;
 import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.UserRepository;
+import com.roommate.hub.repository.ViewingAppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class MatchRequestService {
     private final MatchingService matchingService;
     private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
     private final ContactPermissionRepository contactPermissionRepository;
+    private final ViewingAppointmentRepository viewingAppointmentRepository;
 
     @Transactional
     public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
@@ -197,7 +199,23 @@ public class MatchRequestService {
 
     @Transactional
     public void cancelConnection(Long currentUserId, Long partnerId) {
+        // 1. Xóa toàn bộ match requests giữa 2 người
         matchRequestRepository.deleteAll(matchRequestRepository.findAllBetweenUsers(currentUserId, partnerId));
+        // 2. Thu hồi quyền xem thông tin liên lạc 2 chiều
+        contactPermissionRepository.deleteBetweenUsers(currentUserId, partnerId);
+        // 3. Tự động hủy toàn bộ lịch hẹn xem phòng chưa diễn ra giữa hai bên
+        List<com.roommate.hub.entity.ViewingAppointment> upcomingAppointments = 
+                viewingAppointmentRepository.findActiveUpcomingBetweenUsers(currentUserId, partnerId, java.time.OffsetDateTime.now());
+        for (com.roommate.hub.entity.ViewingAppointment app : upcomingAppointments) {
+            app.setStatus(com.roommate.hub.entity.ViewingAppointment.AppointmentStatus.CANCELLED);
+            String cancelNote = "[Hệ thống] Lịch hẹn tự động hủy do hai bên đã chấm dứt kết nối.";
+            if (app.getNote() == null || app.getNote().isBlank()) {
+                app.setNote(cancelNote);
+            } else {
+                app.setNote(app.getNote() + " | " + cancelNote);
+            }
+        }
+        viewingAppointmentRepository.saveAll(upcomingAppointments);
     }
 
     @Transactional
