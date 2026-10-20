@@ -138,6 +138,19 @@ public class AppointmentService {
         }
 
         appointment.setStatus(targetStatus);
+        // Khi ca hai xac nhan hoan tat o ghep (COMPLETED), tu dong cong so nguoi o va tru so cho trong
+        if (targetStatus == AppointmentStatus.COMPLETED && appointment.getRoomPost() != null) {
+            RoomPost post = appointment.getRoomPost();
+            int currentOcc = post.getCurrentOccupants() != null ? post.getCurrentOccupants() : 0;
+            int maxOcc = post.getMaxOccupants() != null ? post.getMaxOccupants() : 1;
+            if (currentOcc < maxOcc) {
+                post.setCurrentOccupants(currentOcc + 1);
+            }
+            if (post.getCurrentOccupants() >= maxOcc) {
+                post.setStatus(RoomPost.PostStatus.CLOSED);
+            }
+            roomPostRepository.save(post);
+        }
         return toResponse(appointmentRepository.save(appointment));
     }
 
