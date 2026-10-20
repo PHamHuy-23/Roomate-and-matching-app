@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -58,9 +58,35 @@ class ApiService {
   }
 
   final Set<int> savedPostIds = <int>{};
+  final Set<int> savedCandidateIds = <int>{};
   final Set<int> reportedUserIds = <int>{};
   bool isSearchActive = true;
   int _searchStatusRevision = 0;
+
+  bool isCandidateSaved(int userId) => savedCandidateIds.contains(userId);
+
+  Future<bool> toggleSaveCandidate(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = !savedCandidateIds.contains(userId);
+    if (saved) {
+      savedCandidateIds.add(userId);
+    } else {
+      savedCandidateIds.remove(userId);
+    }
+    await prefs.setStringList(
+      'saved_candidates',
+      savedCandidateIds.map((id) => id.toString()).toList(),
+    );
+    return saved;
+  }
+
+  Future<void> loadSavedCandidates() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_candidates') ?? [];
+    savedCandidateIds
+      ..clear()
+      ..addAll(list.map((s) => int.tryParse(s)).whereType<int>());
+  }
 
   bool isPostSaved(int postId) => savedPostIds.contains(postId);
 
@@ -204,6 +230,7 @@ class ApiService {
   void clearAuthToken() {
     _sessionGeneration++;
     savedPostIds.clear();
+    savedCandidateIds.clear();
     reportedUserIds.clear();
     isSearchActive = true;
     _searchStatusRevision++;
