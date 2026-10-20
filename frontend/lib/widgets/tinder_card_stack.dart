@@ -219,8 +219,8 @@ class _TinderCardStackState extends State<TinderCardStack> {
                                   child: Text(
                                     'KẾT NỐI',
                                     style: TextStyle(
-                                      color: const Color(0xFF087E6B).withOpacity(
-                                        (_dragOffset.dx / 100).clamp(0.2, 1.0),
+                                      color: const Color(0xFF087E6B).withValues(
+                                        alpha: (_dragOffset.dx / 100).clamp(0.2, 1.0),
                                       ),
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
@@ -252,8 +252,8 @@ class _TinderCardStackState extends State<TinderCardStack> {
                                   child: Text(
                                     'BỎ QUA',
                                     style: TextStyle(
-                                      color: const Color(0xFFE53935).withOpacity(
-                                        (-_dragOffset.dx / 100).clamp(0.2, 1.0),
+                                      color: const Color(0xFFE53935).withValues(
+                                        alpha: (-_dragOffset.dx / 100).clamp(0.2, 1.0),
                                       ),
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
@@ -409,10 +409,10 @@ class _SwipeCardContent extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.05),
+                    Colors.black.withValues(alpha: 0.05),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.55),
-                    Colors.black.withOpacity(0.85),
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.85),
                   ],
                   stops: const [0.0, 0.45, 0.72, 1.0],
                 ),
@@ -639,7 +639,7 @@ class _SwipeCardContent extends StatelessWidget {
     return Image.network(
       item.avatarUrl!.trim(),
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (_, error, stackTrace) => fallback,
     );
   }
 }

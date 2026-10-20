@@ -861,18 +861,19 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                         ? null
                                         : () async {
                                             final reportId = _selectedReport.rawId;
+                                            final messenger = ScaffoldMessenger.of(context);
                                             setState(() => _isResolving = true);
                                             try {
                                               await _api.moderateAdminReport(reportId, status: 'DISMISSED', note: 'Bác bỏ tố cáo');
                                               if (!mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              messenger.showSnackBar(
                                                 const SnackBar(content: Text('Đã bác bỏ tố cáo (DISMISSED)!')),
                                               );
                                               await _loadReports();
                                             } catch (e) {
                                               if (!mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('Lỗi: ' + e.toString())),
+                                              messenger.showSnackBar(
+                                                SnackBar(content: Text('Lỗi: $e')),
                                               );
                                             } finally {
                                               if (mounted) setState(() => _isResolving = false);
