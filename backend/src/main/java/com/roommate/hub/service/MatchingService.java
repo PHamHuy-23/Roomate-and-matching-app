@@ -91,6 +91,7 @@ public class MatchingService {
                             .build();
                 })
                 .sorted(Comparator.comparingDouble(MatchRecommendationDTO::getTotalScore).reversed())
+                .limit(50)
                 .collect(Collectors.toList());
     }
 

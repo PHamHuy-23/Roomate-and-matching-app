@@ -31,9 +31,18 @@ public class RoomPostService {
 
     @Transactional(readOnly = true)
     public List<RoomPostResponseDTO> getAllAvailablePosts() {
+        return getAllAvailablePosts(0, 50);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoomPostResponseDTO> getAllAvailablePosts(int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
         return roomPostRepository.findByStatusInAndAuthorStatus(
                 List.of(RoomPost.PostStatus.APPROVED, RoomPost.PostStatus.AVAILABLE), "ACTIVE")
                 .stream()
+                .skip((long) safePage * safeSize)
+                .limit(safeSize)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

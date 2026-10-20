@@ -92,6 +92,36 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
       return;
     }
 
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.report_problem, color: Color(0xFFD32F2F)),
+            SizedBox(width: 8),
+            Text('Xác nhận gửi báo cáo'),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn gửi báo cáo vi phạm này đến Ban quản trị không? '
+          'Hành vi khai báo sai sự thật có thể ảnh hưởng đến tài khoản của bạn.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD32F2F)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xác nhận gửi', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() => _isSubmitting = true);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -372,6 +402,33 @@ class _ReportViolationScreenState extends State<ReportViolationScreen> {
                             _isSubmitting) {
                           return;
                         }
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Xác nhận chặn người dùng'),
+                            content: const Text(
+                              'Sau khi chặn, người này sẽ không thể nhắn tin hoặc nhìn thấy hồ sơ của bạn nữa. '
+                              'Bạn có chắc chắn muốn chặn?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Hủy'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD32F2F),
+                                ),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text(
+                                  'Chặn người dùng',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true) return;
                         setState(() => _isSubmitting = true);
                         try {
                           await _api.blockUser(targetId);

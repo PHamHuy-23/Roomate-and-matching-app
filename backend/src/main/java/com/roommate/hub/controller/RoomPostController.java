@@ -19,8 +19,10 @@ public class RoomPostController {
     private final RoomPostService roomPostService;
 
     @GetMapping
-    public ResponseEntity<List<RoomPostResponseDTO>> getAllPosts() {
-        return ResponseEntity.ok(roomPostService.getAllAvailablePosts());
+    public ResponseEntity<List<RoomPostResponseDTO>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ResponseEntity.ok(roomPostService.getAllAvailablePosts(page, size));
     }
 
     @GetMapping("/my")
