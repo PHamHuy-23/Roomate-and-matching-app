@@ -6,6 +6,7 @@ class MatchRequestItem {
   final double matchScore;
   String status; // PENDING, ACCEPTED, REJECTED
   final String? createdAt;
+  final String? message;
   final String? contactPhone;
   final String? contactEmail;
 
@@ -17,6 +18,7 @@ class MatchRequestItem {
     required this.matchScore,
     required this.status,
     this.createdAt,
+    this.message,
     this.contactPhone,
     this.contactEmail,
   });
@@ -30,6 +32,7 @@ class MatchRequestItem {
       matchScore: (json['matchScore'] as num).toDouble(),
       status: json['status'] as String,
       createdAt: json['createdAt'] as String?,
+      message: json['message'] as String?,
       contactPhone: json['contactPhone'] as String?,
       contactEmail: json['contactEmail'] as String?,
     );

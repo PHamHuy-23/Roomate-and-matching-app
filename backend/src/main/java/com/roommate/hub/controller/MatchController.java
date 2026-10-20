@@ -47,9 +47,8 @@ public class MatchController {
 
     // Gửi yêu cầu kết nối[cite: 1]
     @PostMapping("/requests")
-    public ResponseEntity<MatchRequestResponseDTO> sendRequest(
-            @RequestParam Long receiverId) {
-        return ResponseEntity.ok(matchRequestService.sendRequest(currentUserId(), receiverId));
+    public ResponseEntity<MatchRequestResponseDTO> sendRequest(@RequestParam Long receiverId, @RequestParam(required = false) String message) {
+        return ResponseEntity.ok(matchRequestService.sendRequest(currentUserId(), receiverId, message));
     }
 
     // Phản hồi yêu cầu (Chấp nhận / Từ chối)[cite: 1]

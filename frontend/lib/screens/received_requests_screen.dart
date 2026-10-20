@@ -233,6 +233,36 @@ class _ReceivedRequestsScreenState extends State<ReceivedRequestsScreen> {
             ],
           ),
         ),
+        if (request.message != null && request.message!.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.chat_bubble_outline, size: 16, color: Color(0xFF087E6B)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    request.message!.trim(),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'SourceSansPro',
+                      color: Color(0xFF142523),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         if (request.contactEmail != null || request.contactPhone != null) ...[
           const SizedBox(height: 12),
           Text(

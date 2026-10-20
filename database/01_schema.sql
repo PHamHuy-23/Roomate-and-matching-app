@@ -89,6 +89,7 @@ CREATE TABLE match_requests (
     match_score DOUBLE PRECISION NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED')),
+    message VARCHAR(250),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (sender_id, receiver_id),
     CHECK (sender_id <> receiver_id)

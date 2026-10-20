@@ -32,7 +32,25 @@ public class MatchRequestService {
     private final ViewingAppointmentRepository viewingAppointmentRepository;
 
     @Transactional
-    public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
+        public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
+        return sendRequest(senderId, receiverId, null);
+    }
+
+    @Transactional
+    public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId, String rawMessage) {
+        String sanitizedMessage = null;
+        if (rawMessage != null && !rawMessage.isBlank()) {
+            sanitizedMessage = rawMessage.trim();
+            // Sanitize anti-XSS: strip HTML tags
+            sanitizedMessage = sanitizedMessage.replaceAll("<[^>]*>", "");
+ if (sanitizedMessage.length() > 250) {
+ sanitizedMessage = sanitizedMessage.substring(0, 250);
+ }
+ if (sanitizedMessage.isBlank()) {
+ sanitizedMessage = null;
+ }
+ }
+ final String finalMessage = sanitizedMessage;
         if (senderId.equals(receiverId)) {
             throw new IllegalArgumentException("Không thể tự ghép đôi với chính mình!");
         }

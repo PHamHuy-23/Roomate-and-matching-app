@@ -36,6 +36,9 @@ public class MatchRequest {
     @Column(nullable = false, length = 20)
     private MatchStatus status; // PENDING, ACCEPTED, REJECTED
 
+    @Column(length = 250)
+    private String message;
+
     @CreationTimestamp
     @Column
     private LocalDateTime createdAt;

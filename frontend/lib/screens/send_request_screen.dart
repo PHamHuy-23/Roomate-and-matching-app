@@ -29,6 +29,13 @@ class SendRequestScreen extends StatefulWidget {
 class _SendRequestScreenState extends State<SendRequestScreen> {
   late final ApiService _api = widget.apiService ?? ApiService();
   bool _isSending = false;
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
 
   Future<void> _sendRequest() async {
     final partnerId = widget.partnerId;
@@ -43,7 +50,7 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
 
     setState(() => _isSending = true);
     try {
-      final request = await _api.sendMatchRequest(partnerId);
+      final request = await _api.sendMatchRequest(partnerId, message: _messageController.text);
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context, true);
@@ -194,11 +201,12 @@ class _SendRequestScreenState extends State<SendRequestScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: TextField(
-                      enabled: false,
+                      controller: _messageController,
+                      enabled: !_isSending,
+                      maxLength: 250,
                       maxLines: 4,
                       decoration: const InputDecoration(
-                        hintText:
-                            'Lời nhắn chưa được hỗ trợ.\nBạn có thể trò chuyện sau khi kết nối.',
+                        hintText: 'Hãy viết đôi dòng giới thiệu bản thân hoặc thói quen sinh hoạt...',
                         hintStyle: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,

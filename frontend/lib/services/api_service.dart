@@ -441,11 +441,15 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách gợi ý');
   }
 
-  Future<MatchRequestItem> sendMatchRequest(int receiverId) async {
+  Future<MatchRequestItem> sendMatchRequest(int receiverId, {String? message}) async {
+    final queryParams = <String, String>{'receiverId': '$receiverId'};
+    if (message != null && message.trim().isNotEmpty) {
+      queryParams['message'] = message.trim();
+    }
     final response = await _request(
       'POST',
       '/matches/requests',
-      queryParameters: {'receiverId': '$receiverId'},
+      queryParameters: queryParams,
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       try {
