@@ -973,6 +973,29 @@ class ApiService {
     throw _errorFrom(response, 'Không thể cập nhật trạng thái lịch hẹn');
   }
 
+  Future<Map<String, dynamic>> rescheduleAppointment(
+    int appointmentId,
+    DateTime newTime, {
+    String? note,
+  }) async {
+    final response = await _request(
+      'PUT',
+      '/appointments/$appointmentId/reschedule',
+      body: {
+        'newAppointmentTime': newTime.toIso8601String(),
+        'note': note,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = _decodeData(response);
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      return <String, dynamic>{};
+    }
+    throw _errorFrom(response, 'Không thể đề xuất giờ hẹn mới');
+  }
+
   // --- TIN NHẮN TRÒ CHUYỆN (REALTIME CHAT) ---
   Future<ChatMessage> sendChatMessage({
     required int receiverId,
