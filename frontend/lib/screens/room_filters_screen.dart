@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/district_names.dart';
 import '../models/room_amenities.dart';
 
@@ -10,6 +10,7 @@ class RoomFilterSelection {
     required this.district,
     required this.minArea,
     required this.amenities,
+    this.minAvailableSlots = 0,
   });
 
   final double minPrice;
@@ -17,6 +18,7 @@ class RoomFilterSelection {
   final String district;
   final double minArea;
   final Set<String> amenities;
+  final int minAvailableSlots;
 }
 
 class RoomFiltersScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class RoomFiltersScreen extends StatefulWidget {
     this.initialDistrict = 'Tất cả khu vực',
     this.initialMinArea = 0,
     this.initialAmenities = const <String>{},
+    this.initialMinAvailableSlots = 0,
   });
 
   final double initialMinPrice;
@@ -34,6 +37,7 @@ class RoomFiltersScreen extends StatefulWidget {
   final String initialDistrict;
   final double initialMinArea;
   final Set<String> initialAmenities;
+  final int initialMinAvailableSlots;
 
   @override
   State<RoomFiltersScreen> createState() => _RoomFiltersScreenState();
@@ -51,6 +55,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
   late double _minArea;
   late String _district;
   late Set<String> _amenities;
+  late int _minSlots;
 
   static final _districts = <String>[
     'Bình Thạnh, TP.HCM',
@@ -64,10 +69,12 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
     'Tất cả khu vực',
   ];
   static const _amenityOptions = <String>[
-    'Nội thất',
     'Máy lạnh',
+    'Máy giặt',
     'Bếp riêng',
     RoomAmenities.parking,
+    'Nội thất',
+    'Ban công',
   ];
 
   @override
@@ -80,6 +87,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
     _minArea = widget.initialMinArea.clamp(0, double.infinity).toDouble();
     _district = widget.initialDistrict;
     _amenities = RoomAmenities.normalize(widget.initialAmenities).toSet();
+    _minSlots = widget.initialMinAvailableSlots;
   }
 
   @override
@@ -165,6 +173,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
                 district: _district,
                 minArea: _minArea,
                 amenities: Set<String>.of(_amenities),
+                minAvailableSlots: _minSlots,
               ),
             ),
             style: FilledButton.styleFrom(
@@ -221,6 +230,7 @@ class _RoomFiltersScreenState extends State<RoomFiltersScreen> {
       _district = 'Tất cả khu vực';
       _minArea = 0;
       _amenities = <String>{};
+      _minSlots = 0;
     });
   }
 

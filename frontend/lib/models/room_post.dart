@@ -42,6 +42,7 @@ class RoomPost {
   }) : amenities = RoomAmenities.normalize(amenities);
 
   bool get hasKnownArea => areaM2 != null && areaM2!.isFinite && areaM2! > 0;
+  int get availableSlots => (maxOccupants - currentOccupants).clamp(0, maxOccupants);
 
   List<String> get images {
     final raw = imageUrl?.trim();

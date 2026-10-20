@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/match_request_item.dart';
 import '../models/viewing_appointment.dart';
 import '../services/api_service.dart';
@@ -28,6 +28,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   // 0: Đã kết nối, 1: Lịch xem phòng, 2: Đã nhận, 3: Đã gửi
   int _selectedTabIndex = 0;
+  String _statusSubFilter = 'ALL';
 
   @override
   void initState() {
@@ -74,6 +75,31 @@ class _RequestsScreenState extends State<RequestsScreen> {
         _error = 'Không thể tải kết nối, vui lòng thử lại.';
       });
     }
+  }
+
+  Widget _buildSubFilterChip(String status, String label) {
+    final isSelected = _statusSubFilter == status;
+    return GestureDetector(
+      onTap: () => setState(() => _statusSubFilter = status),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF087E6B).withValues(alpha: 0.12) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF087E6B) : const Color(0xFFE0E0E0),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? const Color(0xFF087E6B) : const Color(0xFF65746F),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildFilterChip(int index, String label) {
@@ -136,7 +162,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                     ? Image.network(
                         avatarUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.person,
                           color: Color(0xFF087E6B),
                         ),
@@ -293,7 +319,24 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            if (_selectedTabIndex == 2 || _selectedTabIndex == 3) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    _buildSubFilterChip('ALL', 'Tất cả'),
+                    const SizedBox(width: 8),
+                    _buildSubFilterChip('PENDING', 'Đang chờ'),
+                    const SizedBox(width: 8),
+                    _buildSubFilterChip('ACCEPTED', 'Đã đồng ý'),
+                    const SizedBox(width: 8),
+                    _buildSubFilterChip('REJECTED', 'Đã từ chối'),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
 
             // List
             Expanded(

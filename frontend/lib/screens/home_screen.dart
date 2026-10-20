@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
@@ -56,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _minPriceFilter = 0;
   double _maxPriceFilter = double.infinity;
   double _minAreaFilter = 0;
+  int _minSlotsFilter = 0;
   String _roomDistrictFilter = 'Tất cả khu vực';
   final Set<String> _roomAmenitiesFilter = <String>{};
   int _selectedPriceTier = 0; // 0: Tất cả giá, 1: < 3tr, 2: 3-5tr, 3: > 5tr
@@ -71,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Set<int> get _savedPostIds => _api.savedPostIds;
   int _unreadNotificationCount = 0;
   bool _isSwipeViewMode = false;
+  String _matchSortOrder = 'MATCH_DESC'; // MATCH_DESC, PRICE_ASC, CLEAN_DESC
 
   @override
   void initState() {
@@ -145,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final matchArea =
           _minAreaFilter == 0 ||
           (p.hasKnownArea && p.areaM2! >= _minAreaFilter);
+      final matchSlots = _minSlotsFilter == 0 || p.availableSlots >= _minSlotsFilter;
       final postAmenities = p.amenities.map(RoomAmenities.key).toSet();
       final matchAmenities =
           _roomAmenitiesFilter.isEmpty ||
@@ -156,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
           matchPrice &&
           matchDistrict &&
           matchArea &&
+          matchSlots &&
           matchAmenities;
     }).toList();
   }
@@ -284,7 +288,18 @@ class _HomeScreenState extends State<HomeScreen> {
           _districtFilter == 'Tất cả' ||
           DistrictNames.same(item.targetDistrict, _districtFilter);
       return matchesSearch && matchesScore && matchesDistrict;
-    }).toList()..sort((a, b) => b.totalScore.compareTo(a.totalScore));
+    }).toList()..sort((a, b) {
+      if (_matchSortOrder == 'PRICE_ASC') {
+        final priceA = a.budgetAmount > 0 ? a.budgetAmount : double.infinity;
+        final priceB = b.budgetAmount > 0 ? b.budgetAmount : double.infinity;
+        return priceA.compareTo(priceB);
+      } else if (_matchSortOrder == 'CLEAN_DESC') {
+        final cleanA = a.criteriaDetail.cleanlinessMatch;
+        final cleanB = b.criteriaDetail.cleanlinessMatch;
+        return cleanB.compareTo(cleanA);
+      }
+      return b.totalScore.compareTo(a.totalScore);
+    });
     return filtered;
   }
 
@@ -361,6 +376,68 @@ class _HomeScreenState extends State<HomeScreen> {
                         }.contains(widget.currentUser.role.trim().toUpperCase())
                         ? () => Navigator.pushNamed(context, AppRoutes.admin)
                         : null,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Sắp xếp:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF65746F),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('Độ tương thích ↓'),
+                            selected: _matchSortOrder == 'MATCH_DESC',
+                            onSelected: (val) {
+                              if (val) setState(() => _matchSortOrder = 'MATCH_DESC');
+                            },
+                            selectedColor: _discoveryPrimary.withValues(alpha: 0.15),
+                            side: BorderSide(
+                              color: _matchSortOrder == 'MATCH_DESC'
+                                  ? _discoveryPrimary
+                                  : const Color(0xFFDCE5E2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('Giá phòng thấp nhất ↑'),
+                            selected: _matchSortOrder == 'PRICE_ASC',
+                            onSelected: (val) {
+                              if (val) setState(() => _matchSortOrder = 'PRICE_ASC');
+                            },
+                            selectedColor: _discoveryPrimary.withValues(alpha: 0.15),
+                            side: BorderSide(
+                              color: _matchSortOrder == 'PRICE_ASC'
+                                  ? _discoveryPrimary
+                                  : const Color(0xFFDCE5E2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('Sạch sẽ nhất ↓'),
+                            selected: _matchSortOrder == 'CLEAN_DESC',
+                            onSelected: (val) {
+                              if (val) setState(() => _matchSortOrder = 'CLEAN_DESC');
+                            },
+                            selectedColor: _discoveryPrimary.withValues(alpha: 0.15),
+                            side: BorderSide(
+                              color: _matchSortOrder == 'CLEAN_DESC'
+                                  ? _discoveryPrimary
+                                  : const Color(0xFFDCE5E2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 if (matches.isEmpty)
@@ -645,6 +722,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _minPriceFilter = 0;
                     _maxPriceFilter = double.infinity;
                     _minAreaFilter = 0;
+                    _minSlotsFilter = 0;
                     _roomDistrictFilter = 'Tất cả khu vực';
                     _selectedPriceTier = 0;
                     _quickNearbyActive = false;
@@ -889,6 +967,7 @@ class _HomeScreenState extends State<HomeScreen> {
           initialDistrict: _roomDistrictFilter,
           initialMinArea: _minAreaFilter,
           initialAmenities: _roomAmenitiesFilter,
+          initialMinAvailableSlots: _minSlotsFilter,
         ),
       ),
     );
@@ -898,6 +977,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _maxPriceFilter = selection.maxPrice;
       _minAreaFilter = selection.minArea;
       _roomDistrictFilter = selection.district;
+      _minSlotsFilter = selection.minAvailableSlots;
       if (selection.minPrice == 0 && selection.maxPrice <= 3000000) {
         _selectedPriceTier = 1;
       } else if (selection.minPrice >= 3000000 && selection.maxPrice <= 5000000) {
