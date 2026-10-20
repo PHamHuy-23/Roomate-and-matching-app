@@ -44,6 +44,13 @@ public class ViewingAppointment {
     @Builder.Default
     private AppointmentStatus status = AppointmentStatus.PENDING;
 
+    @Column(name = "rescheduled_once", nullable = false)
+    @Builder.Default
+    private boolean rescheduledOnce = false;
+
+    @Column(name = "reschedule_reason")
+    private String rescheduleReason;
+
     @Column(name = "reminder_sent", nullable = false)
     @Builder.Default
     private boolean reminderSent = false;
@@ -75,6 +82,7 @@ public class ViewingAppointment {
         PENDING,
         CONFIRMED,
         COMPLETED,
-        CANCELLED
+        CANCELLED,
+        RESCHEDULED
     }
 }

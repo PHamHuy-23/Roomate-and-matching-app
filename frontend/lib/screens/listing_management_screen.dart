@@ -1203,7 +1203,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Lỗi khi hoàn tất lịch: ' + e.toString().replaceAll('Exception: ', ''))),
+                                    SnackBar(content: Text('Lỗi khi hoàn tất lịch: ${e.toString().replaceAll('Exception: ', '')}')),
                                   );
                                 }
                               }

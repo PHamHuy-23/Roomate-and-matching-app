@@ -100,6 +100,48 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void sendAppointmentRescheduledNotification(String toEmail, String recipientName, String hostName, String roomTitle, Instant newAppointmentTime, String reason) {
+        log.info("[EMAIL SERVICE] Gửi email thông báo đề xuất đổi giờ hẹn tới {}", maskEmail(toEmail));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy")
+                .withZone(ZoneId.of("Asia/Ho_Chi_Minh"));
+        String formattedTime = newAppointmentTime != null ? formatter.format(newAppointmentTime) : "Không xác định";
+
+        String subject = "[Roommate Hub] Chủ phòng đề xuất thay đổi giờ hẹn xem phòng";
+        String body = String.format(
+                "Xin chào %s,\n\n"
+                        + "Chủ phòng (%s) đã đề xuất thời gian hẹn xem phòng mới cho tin đăng: %s\n"
+                        + "- Thời gian mới đề xuất: %s (Giờ Việt Nam - GMT+7)\n"
+                        + "- Lý do / Ghi chú: %s\n\n"
+                        + "Vui lòng đăng nhập vào Roommate Hub để Xác nhận hoặc Từ chối lịch hẹn mới này.\n\n"
+                        + "Trân trọng,\n"
+                        + "Đội ngũ Roommate Hub",
+                recipientName != null ? recipientName : "bạn",
+                hostName != null ? hostName : "Chủ phòng",
+                roomTitle != null ? roomTitle : "Tin đăng phòng",
+                formattedTime,
+                reason != null && !reason.isBlank() ? reason : "Không có ghi chú thêm"
+        );
+
+        if (mailSender.isEmpty()) {
+            log.warn("[EMAIL SERVICE DEV MODE] JavaMailSender chưa được cấu hình. Ghi nhận log đề xuất đổi giờ hẹn cho {} (Người nhận: {}, Chủ phòng: {}, Thời gian mới: {}): \n{}",
+                    maskEmail(toEmail), recipientName, hostName, formattedTime, body);
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.get().send(message);
+            log.info("[EMAIL SERVICE] Đã gửi email thông báo đề xuất đổi giờ hẹn thành công tới {}", maskEmail(toEmail));
+        } catch (Exception e) {
+            log.error("[EMAIL SERVICE] Lỗi khi gửi email thông báo đề xuất đổi giờ hẹn tới {}: {}", maskEmail(toEmail), e.getMessage());
+        }
+    }
+
+    @Override
     public void simulateDeliveryDelay() {
         // Sử dụng cùng kiểm tra mailSender và cùng mã lỗi với sendEmail()
         // để đảm bảo phản hồi HTTP hoàn toàn đối xứng giữa email tồn tại và không tồn tại

@@ -32,6 +32,8 @@ public class AppointmentResponseDTO {
     private java.time.OffsetDateTime appointmentTime;
     private String status;
     private String note;
+    private boolean rescheduledOnce;
+    private String rescheduleReason;
     private LocalDateTime createdAt;
 
     public static AppointmentResponseDTO from(ViewingAppointment appointment) {
@@ -51,6 +53,8 @@ public class AppointmentResponseDTO {
                 .appointmentTime(appointment.getAppointmentTime())
                 .status(appointment.getStatus().name())
                 .note(appointment.getNote())
+                .rescheduledOnce(appointment.isRescheduledOnce())
+                .rescheduleReason(appointment.getRescheduleReason())
                 .createdAt(appointment.getCreatedAt())
                 .build();
     }

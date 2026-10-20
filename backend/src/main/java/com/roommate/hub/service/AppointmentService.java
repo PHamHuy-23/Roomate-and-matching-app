@@ -2,6 +2,7 @@ package com.roommate.hub.service;
 
 import com.roommate.hub.dto.AppointmentResponseDTO;
 import com.roommate.hub.dto.CreateAppointmentDTO;
+import com.roommate.hub.dto.RescheduleAppointmentDTO;
 import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
@@ -79,6 +80,66 @@ public class AppointmentService {
     }
 
     @Transactional
+    public AppointmentResponseDTO rescheduleAppointment(Long appointmentId, RescheduleAppointmentDTO dto) {
+        User user = currentUser();
+        ViewingAppointment appointment = appointmentRepository.findByIdForStatusUpdate(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch hẹn không tồn tại!"));
+
+        boolean isHost = appointment.getHost().getId().equals(user.getId());
+        if (!isHost) {
+            throw new ForbiddenException("Chỉ chủ nhà mới có quyền đề xuất đổi giờ hẹn!");
+        }
+
+        if (appointment.getStatus() != AppointmentStatus.PENDING) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Chỉ có thể đề xuất đổi giờ khi lịch hẹn đang ở trạng thái chờ duyệt (PENDING)!");
+        }
+
+        if (appointment.isRescheduledOnce()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Cuộc hẹn này đã được đề xuất đổi giờ một lần. Không thể đổi thêm!");
+        }
+
+        if (dto.getNewAppointmentTime() == null || !dto.getNewAppointmentTime().isAfter(Instant.now())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Thời gian đề xuất mới phải ở tương lai!");
+        }
+
+        assertCanArrangeViewing(appointment.getRequester(), appointment.getHost(), appointment.getRoomPost());
+
+        OffsetDateTime newOffsetTime = dto.getNewAppointmentTime().atOffset(ZoneOffset.UTC);
+        appointment.setAppointmentTime(newOffsetTime);
+        appointment.setRescheduleReason(dto.getNote());
+        appointment.setStatus(AppointmentStatus.RESCHEDULED);
+        appointment.setRescheduledOnce(true);
+        appointment.setReminderSent(false);
+
+        ViewingAppointment saved = appointmentRepository.save(appointment);
+
+        try {
+            User requester = saved.getRequester();
+            if (requester != null && requester.getEmail() != null) {
+                String roomTitle = saved.getRoomPost() != null ? saved.getRoomPost().getTitle() : "Tin đăng phòng";
+                emailService.sendAppointmentRescheduledNotification(
+                        requester.getEmail(),
+                        requester.getFullName(),
+                        saved.getHost().getFullName(),
+                        roomTitle,
+                        dto.getNewAppointmentTime(),
+                        dto.getNote()
+                );
+            }
+        } catch (Exception e) {
+            log.error("[APPOINTMENT RESCHEDULE] Lỗi khi gửi email thông báo đề xuất đổi giờ cho requester: {}", e.getMessage());
+        }
+
+        return toResponse(saved);
+    }
+
+    @Transactional
     public AppointmentResponseDTO updateStatus(Long appointmentId, String statusStr) {
         User user = currentUser();
         ViewingAppointment appointment = appointmentRepository.findByIdForStatusUpdate(appointmentId)
@@ -118,8 +179,21 @@ public class AppointmentService {
                     "Lịch hẹn đã hoàn tất, không thể thay đổi trạng thái!");
         }
 
+        if (current == AppointmentStatus.RESCHEDULED) {
+            // Khi lịch hẹn đang ở trạng thái RESCHEDULED:
+            // Chỉ requester mới có quyền phản hồi: Chấp nhận (CONFIRMED) hoặc Từ chối (CANCELLED)
+            if (!isRequester) {
+                throw new ForbiddenException("Chỉ người đặt lịch mới có quyền phản hồi đề xuất đổi giờ hẹn!");
+            }
+            if (targetStatus != AppointmentStatus.CONFIRMED && targetStatus != AppointmentStatus.CANCELLED) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Đối với lịch hẹn được đề xuất đổi giờ, chỉ có thể xác nhận (CONFIRMED) hoặc hủy (CANCELLED)!");
+            }
+        }
+
         // Repeated confirmations must not bypass role, blocks, locks or room eligibility.
-        if (targetStatus == AppointmentStatus.CONFIRMED && !isHost) {
+        if (targetStatus == AppointmentStatus.CONFIRMED && !isHost && current != AppointmentStatus.RESCHEDULED) {
             throw new ForbiddenException("Chỉ chủ nhà mới có quyền xác nhận lịch hẹn!");
         }
         if (targetStatus == AppointmentStatus.COMPLETED && !isHost) {
@@ -137,6 +211,11 @@ public class AppointmentService {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.BAD_REQUEST,
                     "Không thể chuyển trạng thái lịch hẹn về trạng thái chờ duyệt!");
+        }
+        if (targetStatus == AppointmentStatus.RESCHEDULED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Vui lòng sử dụng tính năng đề xuất đổi giờ hẹn riêng biệt!");
         }
 
         if (current == AppointmentStatus.PENDING && targetStatus == AppointmentStatus.COMPLETED) {

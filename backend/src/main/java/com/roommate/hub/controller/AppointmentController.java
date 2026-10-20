@@ -2,6 +2,7 @@ package com.roommate.hub.controller;
 
 import com.roommate.hub.dto.AppointmentResponseDTO;
 import com.roommate.hub.dto.CreateAppointmentDTO;
+import com.roommate.hub.dto.RescheduleAppointmentDTO;
 import com.roommate.hub.service.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,12 @@ public class AppointmentController {
             @PathVariable Long id,
             @RequestParam String status) {
         return ResponseEntity.ok(appointmentService.updateStatus(id, status));
+    }
+
+    @PutMapping("/{id}/reschedule")
+    public ResponseEntity<AppointmentResponseDTO> rescheduleAppointment(
+            @PathVariable Long id,
+            @Valid @RequestBody RescheduleAppointmentDTO dto) {
+        return ResponseEntity.ok(appointmentService.rescheduleAppointment(id, dto));
     }
 }

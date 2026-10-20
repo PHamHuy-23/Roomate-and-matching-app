@@ -530,7 +530,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: images.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, index) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final isSelected = _currentPhotoIndex == index;
                 return GestureDetector(
@@ -555,7 +555,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: _primary.withOpacity(0.25),
+                                color: _primary.withValues(alpha: 0.25),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -569,7 +569,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
                         width: 68,
                         height: 68,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, error, stackTrace) => Container(
                           width: 68,
                           height: 68,
                           color: _soft,
@@ -931,7 +931,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.65),
+                    color: Colors.black.withValues(alpha: 0.65),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -950,7 +950,7 @@ class _RoomFlowScreenState extends State<RoomFlowScreen> {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
+                  color: Colors.black.withValues(alpha: 0.45),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1160,7 +1160,7 @@ class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
                       child: Image.network(
                         widget.images[index],
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Center(
+                        errorBuilder: (_, error, stackTrace) => const Center(
                           child: Icon(
                             Icons.broken_image,
                             color: Colors.white54,

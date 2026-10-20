@@ -7,4 +7,5 @@ public interface EmailService {
     void sendVerificationOtp(String toEmail, String otp);
     void simulateDeliveryDelay();
     void sendAppointmentReminder(String toEmail, String recipientName, String partnerName, String roomTitle, Instant appointmentTime, String address);
+    void sendAppointmentRescheduledNotification(String toEmail, String recipientName, String hostName, String roomTitle, Instant newAppointmentTime, String reason);
 }

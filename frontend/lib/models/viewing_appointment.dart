@@ -18,6 +18,8 @@ class ViewingAppointment {
   final DateTime appointmentTime;
   final String status;
   final String? note;
+  final bool rescheduledOnce;
+  final String? rescheduleReason;
   final DateTime createdAt;
 
   const ViewingAppointment({
@@ -37,6 +39,8 @@ class ViewingAppointment {
     required this.appointmentTime,
     required this.status,
     this.note,
+    this.rescheduledOnce = false,
+    this.rescheduleReason,
     required this.createdAt,
   });
 
@@ -58,6 +62,8 @@ class ViewingAppointment {
       appointmentTime: DateTime.parse(json['appointmentTime'] as String).toLocal(),
       status: (json['status'] as String?) ?? 'PENDING',
       note: json['note'] as String?,
+      rescheduledOnce: json['rescheduledOnce'] == true,
+      rescheduleReason: json['rescheduleReason'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String).toLocal()
           : DateTime.now(),

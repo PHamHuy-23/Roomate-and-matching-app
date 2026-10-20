@@ -106,7 +106,9 @@ CREATE TABLE viewing_appointments (
     room_post_id BIGINT NOT NULL REFERENCES room_posts(id) ON DELETE CASCADE,
     appointment_time TIMESTAMPTZ NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-        CHECK (status IN ('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),
+        CHECK (status IN ('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'RESCHEDULED')),
+    rescheduled_once BOOLEAN NOT NULL DEFAULT FALSE,
+    reschedule_reason TEXT,
     reminder_sent BOOLEAN NOT NULL DEFAULT FALSE,
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
