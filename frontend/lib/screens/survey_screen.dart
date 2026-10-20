@@ -745,7 +745,40 @@ class _SurveyScreenState extends State<SurveyScreen> {
           Row(
             children: [
               PenpotBackButton(
-                onPressed: _currentStep == 0 ? null : _onStepCancel,
+                onPressed: _currentStep == 0
+                    ? () {
+                        if (widget.redirectToHomeOnComplete) {
+                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                        } else {
+                          Navigator.maybePop(context);
+                        }
+                      }
+                    : _onStepCancel,
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _isSaving
+                    ? null
+                    : () {
+                        if (widget.redirectToHomeOnComplete) {
+                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                        } else {
+                          Navigator.maybePop(context);
+                        }
+                      },
+                style: TextButton.styleFrom(
+                  foregroundColor: _penpotMuted,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  'Để sau',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               const Spacer(),
               Text(

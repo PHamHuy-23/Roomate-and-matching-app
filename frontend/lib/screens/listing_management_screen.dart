@@ -376,7 +376,11 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
         'district': _districtCtrl.text.trim(),
         'deposit': _money(_depositCtrl),
         'electricityWaterCost': _money(_utilityCtrl),
-        if (_imageObjectKey != null) 'imageObjectKey': _imageObjectKey,
+        if (_newImageObjectKeys.isNotEmpty) 'imageObjectKeys': _newImageObjectKeys,
+        if (_imageObjectKey != null)
+          'imageObjectKey': _imageObjectKey
+        else if (_newImageObjectKeys.isNotEmpty)
+          'imageObjectKey': _newImageObjectKeys.first,
         'area': _area,
         'maxOccupants': _maxOccupants,
         'currentOccupants': 0,

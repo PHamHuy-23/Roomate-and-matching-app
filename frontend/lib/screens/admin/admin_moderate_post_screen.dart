@@ -166,23 +166,83 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
   }
 
   Widget _buildPostImage(Map<String, dynamic> post) {
-    final imageUrl = post['imageUrl']?.toString();
-    final hasImage = imageUrl != null && imageUrl.trim().isNotEmpty;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: double.infinity,
-        height: 267,
-        color: Colors.grey.shade300,
-        child: hasImage
-            ? Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const Icon(Icons.image, size: 64, color: Colors.grey),
-              )
-            : const Icon(Icons.image, size: 64, color: Colors.grey),
-      ),
+    final rawImageUrl = post['imageUrl']?.toString()?.trim();
+    final images = (rawImageUrl == null || rawImageUrl.isEmpty)
+        ? const <String>[]
+        : rawImageUrl.split(',').map((u) => u.trim()).where((u) => u.isNotEmpty).toList();
+
+    if (images.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: 267,
+          color: Colors.grey.shade300,
+          child: const Icon(Icons.image, size: 64, color: Colors.grey),
+        ),
+      );
+    }
+
+    if (images.length == 1) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: 267,
+          color: Colors.grey.shade300,
+          child: Image.network(
+            images.first,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) =>
+                const Icon(Icons.image, size: 64, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            height: 267,
+            color: Colors.grey.shade300,
+            child: Image.network(
+              images.first,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  const Icon(Icons.image, size: 64, color: Colors.grey),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, idx) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey.shade200,
+                  child: Image.network(
+                    images[idx],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) =>
+                        const Icon(Icons.broken_image, size: 28, color: Colors.grey),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -363,7 +423,8 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -401,7 +462,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
               style: const TextStyle(fontSize: 15, fontFamily: 'SourceSansPro', color: Color(0xFF142523)),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -439,6 +500,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -511,7 +573,7 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
                 _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
                 _buildSidebarItem(context, 'Nhật ký hệ thống', route: AppRoutes.adminAuditLogs),
                 _buildSidebarItem(context, 'Sao lưu & Khôi phục', route: AppRoutes.adminBackup),
-                const Spacer(),
+                const SizedBox(height: 24),
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                   child: Text('Không gian quản trị', style: TextStyle(color: Color(0xFF8FB8AC), fontSize: 13, fontWeight: FontWeight.w400, fontFamily: 'SourceSansPro')),

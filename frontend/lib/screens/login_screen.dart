@@ -189,18 +189,33 @@ class _LoginScreenState extends State<LoginScreen> {
       final hasPreferences = isLogin && !isAdmin
           ? await session.hasPreferences()
           : null;
-      if (mounted && session.isAuthenticated) {
-        final needsSurvey = isLogin && hasPreferences != true;
-        final destination = isAdmin
-            ? AppRoutes.adminDashboard
-            : (needsSurvey || !isLogin ? AppRoutes.survey : AppRoutes.home);
-        Navigator.pushReplacementNamed(
-          context,
-          destination,
-          arguments: !isAdmin && (needsSurvey || !isLogin)
-              ? const {'fromRegistration': true}
-              : null,
-        );
+      if (mounted) {
+        if (!isLogin) {
+          // Sau khi đăng ký thành công, yêu cầu người dùng xác minh OTP được gửi qua email
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng ký thành công! Vui lòng nhập mã xác minh đã được gửi đến email của bạn.'),
+              backgroundColor: _primary,
+            ),
+          );
+          Navigator.pushNamed(
+            context,
+            AppRoutes.verifyEmail,
+            arguments: email,
+          );
+        } else if (session.isAuthenticated) {
+          final needsSurvey = hasPreferences != true;
+          final destination = isAdmin
+              ? AppRoutes.adminDashboard
+              : (needsSurvey ? AppRoutes.survey : AppRoutes.home);
+          Navigator.pushReplacementNamed(
+            context,
+            destination,
+            arguments: !isAdmin && needsSurvey
+                ? const {'fromRegistration': true}
+                : null,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

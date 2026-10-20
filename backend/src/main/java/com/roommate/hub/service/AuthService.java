@@ -79,9 +79,28 @@ public class AuthService {
                 .birthDate(req.getBirthDate())
                 .university(req.getUniversity())
                 .role(User.Role.ROLE_USER)
+                .status("PENDING_VERIFICATION")
                 .build();
 
         userRepository.save(user);
+
+        // Sinh mã OTP 6 số và gửi email xác minh kích hoạt tài khoản
+        try {
+            String rawOtp = generateOtp();
+            String hashedOtp = passwordEncoder.encode(rawOtp);
+            AuthOtp otpEntity = AuthOtp.builder()
+                    .email(normalizedEmail)
+                    .otpCode(hashedOtp)
+                    .type(AuthOtp.OtpType.EMAIL_VERIFICATION)
+                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .used(false)
+                    .failedAttempts(0)
+                    .build();
+            authOtpRepository.save(otpEntity);
+            emailService.sendVerificationOtp(normalizedEmail, rawOtp);
+        } catch (Exception e) {
+            log.warn("[REGISTER] Lỗi khi gửi OTP xác thực email cho {}: {}", maskEmail(normalizedEmail), e.getMessage());
+        }
 
         Map<String, Object> rtData = createRefreshToken(user);
         String rawRefreshToken = (String) rtData.get("rawToken");
