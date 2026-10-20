@@ -83,6 +83,7 @@ public class MatchRequestService {
                         existing.setStatus(MatchRequest.MatchStatus.PENDING);
                         existing.setMatchScore(score);
                         existing.setCreatedAt(LocalDateTime.now());
+                        existing.setMessage(finalMessage);
                         return matchRequestRepository.save(existing);
                     }
                     if (existing.getStatus() == MatchRequest.MatchStatus.PENDING
@@ -102,6 +103,7 @@ public class MatchRequestService {
                         .receiver(receiver)
                         .matchScore(score)
                         .status(MatchRequest.MatchStatus.PENDING)
+                        .message(finalMessage)
                         .build()));
 
         boolean isAccepted = request.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
@@ -117,6 +119,7 @@ public class MatchRequestService {
                 .matchScore(request.getMatchScore())
                 .status(request.getStatus().name())
                 .createdAt(request.getCreatedAt())
+                .message(request.getMessage())
                 .contactPhone(isAccepted ? partner.getPhone() : null)
                 .contactEmail(isAccepted ? partner.getEmail() : null)
                 .build();
@@ -189,6 +192,7 @@ public class MatchRequestService {
                     .matchScore(req.getMatchScore())
                     .status(req.getStatus().name())
                     .createdAt(req.getCreatedAt())
+                    .message(req.getMessage())
                     .contactPhone(isAccepted ? req.getSender().getPhone() : null)
                     .contactEmail(isAccepted ? req.getSender().getEmail() : null)
                     .build();
@@ -209,6 +213,7 @@ public class MatchRequestService {
                     .matchScore(req.getMatchScore())
                     .status(req.getStatus().name())
                     .createdAt(req.getCreatedAt())
+                    .message(req.getMessage())
                     .contactPhone(isAccepted ? req.getReceiver().getPhone() : null)
                     .contactEmail(isAccepted ? req.getReceiver().getEmail() : null)
                     .build();
