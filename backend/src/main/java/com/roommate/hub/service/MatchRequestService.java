@@ -246,6 +246,14 @@ public class MatchRequestService {
                 });
     }
 
+    // Tu dong chuyen cac yeu cau cho (PENDING) sang EXPIRED sau 7 ngay
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 2 * * ?") // 2:00 AM hang ngay
+    @Transactional
+    public int autoExpireOldPendingRequests() {
+        java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+        return matchRequestRepository.expirePendingRequestsOlderThan(sevenDaysAgo);
+    }
+
     private boolean canConnect(User sender, User receiver) {
         return "ACTIVE".equalsIgnoreCase(sender.getStatus()) && "ACTIVE".equalsIgnoreCase(receiver.getStatus())
                 && !blockedUserRepository.existsByUserIdAndBlockedUserId(sender.getId(), receiver.getId())

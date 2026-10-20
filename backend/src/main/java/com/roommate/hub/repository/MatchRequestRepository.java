@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MatchRequestRepository extends JpaRepository<MatchRequest, Long> {
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE MatchRequest m SET m.status = com.roommate.hub.entity.MatchRequest.MatchStatus.EXPIRED WHERE m.status = com.roommate.hub.entity.MatchRequest.MatchStatus.PENDING AND m.createdAt < :cutoff")
+    int expirePendingRequestsOlderThan(@org.springframework.data.repository.query.Param("cutoff") java.time.LocalDateTime cutoff);
     Optional<MatchRequest> findBySenderIdAndReceiverId(Long senderId, Long receiverId);
     List<MatchRequest> findByReceiverId(Long receiverId);
     List<MatchRequest> findBySenderId(Long senderId);

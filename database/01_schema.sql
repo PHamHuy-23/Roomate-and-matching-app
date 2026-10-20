@@ -1,4 +1,4 @@
--- Roommate Hub schema for PostgreSQL 15+ / Supabase.
+﻿-- Roommate Hub schema for PostgreSQL 15+ / Supabase.
 -- Run this file in Supabase Dashboard -> SQL Editor.
 
 BEGIN;
@@ -88,7 +88,7 @@ CREATE TABLE match_requests (
     receiver_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     match_score DOUBLE PRECISION NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-        CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED')),
+        CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED')),
     message VARCHAR(250),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (sender_id, receiver_id),
