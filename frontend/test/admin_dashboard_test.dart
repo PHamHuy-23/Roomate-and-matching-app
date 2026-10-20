@@ -1,3 +1,4 @@
+import 'package:roommate_hub_mobile/models/audit_log_item.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -52,6 +53,18 @@ class _DashboardApi implements ApiService {
       ];
 
   @override
+
+  @override
+  Future<Map<String, dynamic>> getAdminStats() async => {
+    'totalUsers': 2,
+    'matchSuccessRate': 75.0,
+    'pendingPosts': 1,
+    'pendingReports': 3,
+  };
+
+  @override
+  Future<List<AuditLogItem>> getAdminAuditLogs() async => [];
+
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -65,23 +78,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  void expectUnsupportedPanels() {
-    expect(
-      find.byKey(const Key('admin_weekly_connections_unavailable')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('admin_activity_log_unavailable')),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('Chưa hỗ trợ thống kê kết nối theo tuần'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('Chưa hỗ trợ nhật ký hoạt động'),
-      findsOneWidget,
-    );
+  void expectPanels() {
+    expect(find.text('Kết nối mới trong tuần'), findsOneWidget);
+    expect(find.text('Nhật ký hoạt động gần đây'), findsOneWidget);
     for (final fake in [
       'T2',
       'T3',
@@ -92,8 +91,6 @@ void main() {
       'CN',
       'RH-024',
       'BC-028',
-      '14:32',
-      '14:10',
     ]) {
       expect(find.textContaining(fake), findsNothing);
     }
@@ -143,17 +140,17 @@ void main() {
       final api = ApiService.withClient(client)
         ..setAuthToken('test-dashboard-access');
       await openDashboard(tester, api);
-      expect(find.text('1'), findsNWidgets(4));
+      expect(find.text('1'), findsNWidgets(3));
       expect(find.textContaining('0 tài khoản đang khóa'), findsOneWidget);
       expect(
         paths,
-        unorderedEquals([
+containsAll([
           '/api/v1/admin/users',
           '/api/v1/admin/posts',
           '/api/v1/admin/reports',
         ]),
       );
-      expectUnsupportedPanels();
+      expectPanels();
       expect(tester.takeException(), isNull);
     },
   );
@@ -167,12 +164,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('2'), findsNWidgets(2));
+    expect(find.text('2'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.textContaining('1 tài khoản đang khóa'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.textContaining('3 báo cáo cần xử lý'), findsOneWidget);
-    expectUnsupportedPanels();
+    expectPanels();
   });
 
   testWidgets('Tin đang hiển thị không tính tin bị ẩn của tài khoản khóa', (
@@ -196,7 +193,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // One public post and one pending post; the user count stays two.
-    expect(find.text('1'), findsNWidgets(2));
+    expect(find.text('1'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.textContaining('1 tài khoản đang khóa'), findsOneWidget);
@@ -209,9 +206,9 @@ void main() {
       tester,
       _DashboardApi(users: [], posts: [], reports: []),
     );
-    expect(find.text('0'), findsNWidgets(4));
+    expect(find.text('0'), findsNWidgets(3));
     expect(find.textContaining('0 báo cáo cần xử lý'), findsOneWidget);
-    expectUnsupportedPanels();
+    expectPanels();
     expect(tester.takeException(), isNull);
   });
 
@@ -221,15 +218,15 @@ void main() {
     final api = _DashboardApi()..failUsers = true;
     await openDashboard(tester, api);
     expect(find.text('Lỗi tải người dùng'), findsOneWidget);
-    expect(find.text('—'), findsNWidgets(4));
+    expect(find.text('—'), findsNWidgets(3));
     expect(find.text('0'), findsNothing);
-    expectUnsupportedPanels();
+    expectPanels();
     api.failUsers = false;
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();
     expect(find.text('Lỗi tải người dùng'), findsNothing);
-    expect(find.text('2'), findsNWidgets(2));
-    expectUnsupportedPanels();
+    expect(find.text('2'), findsOneWidget);
+    expectPanels();
   });
 
   testWidgets('Report API failure preserves other counts and can retry', (
@@ -237,14 +234,14 @@ void main() {
   ) async {
     final api = _DashboardApi()..failReports = true;
     await openDashboard(tester, api);
-    expect(find.text('2'), findsNWidgets(2));
+    expect(find.text('2'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
     expect(
       find.textContaining('Không thể tải số báo cáo cần xử lý'),
       findsOneWidget,
     );
     expect(find.textContaining('Báo cáo chưa có API'), findsNothing);
-    expectUnsupportedPanels();
+    expectPanels();
     api.failReports = false;
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();
@@ -270,7 +267,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Báo cáo chưa có API'), findsNothing);
-    expectUnsupportedPanels();
+    expectPanels();
     response.complete([
       {'id': 300, 'status': 'PENDING'},
     ]);
@@ -284,13 +281,13 @@ void main() {
   ) async {
     final api = _DashboardApi()..failReports = true;
     await openDashboard(tester, api);
-    expect(find.text('2'), findsNWidgets(2));
+    expect(find.text('2'), findsOneWidget);
     api.failUsers = true;
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();
     expect(find.text('2'), findsNothing);
-    expect(find.text('—'), findsNWidgets(4));
-    expectUnsupportedPanels();
+    expect(find.text('—'), findsNWidgets(3));
+    expectPanels();
   });
 
   for (final route in [

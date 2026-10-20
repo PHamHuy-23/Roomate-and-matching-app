@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../navigation/app_routes.dart';
+import '../../models/audit_log_item.dart';
 import '../../services/api_service.dart';
 import '../../utils/file_download_helper.dart';
 import '../../widgets/admin_profile_avatar.dart';
@@ -26,6 +27,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int? _pendingPostCount;
   int? _lockedUserCount;
   int? _pendingReportCount;
+  List<AuditLogItem> _recentLogs = [];
+  bool _isLoadingLogs = true;
 
   String get _currentFormattedDate {
     final now = DateTime.now();
@@ -66,6 +69,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _api.getAdminUsers(),
         _api.getAdminPosts(),
       ]);
+
+      // Fetch admin stats for matchSuccessRate
+      try {
+        final stats = await _api.getAdminStats();
+        if (mounted && stats['matchSuccessRate'] != null) {
+          setState(() {
+            _matchSuccessRate = (stats['matchSuccessRate'] as num).toDouble();
+          });
+        }
+      } catch (_) {}
+
+      // Fetch recent audit logs
+      try {
+        final logs = await _api.getAdminAuditLogs();
+        if (mounted) {
+          setState(() {
+            _recentLogs = logs.take(4).toList();
+            _isLoadingLogs = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _isLoadingLogs = false;
+          });
+        }
+      }
       if (!mounted) return;
       final users = responses[0];
       final posts = responses[1];
@@ -112,6 +142,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _isLoading = false;
         _isLoadingReports = false;
+        _isLoadingLogs = false;
         _error = error.message;
       });
     } catch (_) {
@@ -119,6 +150,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _isLoading = false;
         _isLoadingReports = false;
+        _isLoadingLogs = false;
         _error = 'Không thể tải số liệu quản trị, vui lòng thử lại.';
       });
     }
@@ -131,6 +163,101 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   String get _reportValue =>
       _isLoadingReports ? '…' : _pendingReportCount?.toString() ?? '—';
+
+  
+  Color _getActionBadgeColor(String action) {
+    final act = action.toUpperCase();
+    if (act.contains('LOCK') || act.contains('DELETE') || act.contains('BLOCK')) {
+      return const Color(0xFFD32F2F);
+    }
+    if (act.contains('USER') || act.contains('SET_USER_STATUS')) {
+      return const Color(0xFFE65100);
+    }
+    if (act.contains('POST') || act.contains('MODERATE_POST')) {
+      return const Color(0xFF1565C0);
+    }
+    if (act.contains('REPORT') || act.contains('MODERATE_REPORT')) {
+      return const Color(0xFF6A1B9A);
+    }
+    if (act.contains('BACKUP') || act.contains('RESTORE')) {
+      return const Color(0xFF087E6B);
+    }
+    return const Color(0xFF455A64);
+  }
+
+  String _formatActionLabel(String action) {
+    switch (action.toUpperCase()) {
+      case 'MODERATE_POST':
+        return 'Duyệt bài đăng';
+      case 'SET_USER_STATUS':
+        return 'Khóa/Mở người dùng';
+      case 'MODERATE_REPORT':
+        return 'Xử lý báo cáo';
+      case 'CREATE_BACKUP':
+        return 'Tạo sao lưu';
+      case 'RESTORE_BACKUP':
+        return 'Khôi phục dữ liệu';
+      default:
+        return action;
+    }
+  }
+
+  String _formatLogTime(DateTime dt) {
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    return '$hour:$minute $day/$month';
+  }
+
+  Widget _buildMetricTile(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F8F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0EAE6)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF65746F),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF142523),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSidebarItem(
     BuildContext context,
@@ -716,7 +843,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   // Middle Row
                   Row(
                     children: [
-                      // Chart
+                      // Chart / Thống kê kết nối
                       Expanded(
                         flex: 6,
                         child: Container(
@@ -729,29 +856,59 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Kết nối mới trong tuần',
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'SourceSansPro',
-                                  color: Color(0xFF142523),
-                                ),
-                              ),
-                              const Expanded(
-                                child: Center(
-                                  child: Text(
-                                    'Chưa hỗ trợ thống kê kết nối theo tuần.\n'
-                                    'Hệ thống chưa cung cấp dữ liệu thời điểm kết nối thành công.',
-                                    key: Key(
-                                      'admin_weekly_connections_unavailable',
-                                    ),
-                                    textAlign: TextAlign.center,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Kết nối mới trong tuần',
                                     style: TextStyle(
-                                      color: Color(0xFF65746F),
-                                      height: 1.5,
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'SourceSansPro',
+                                      color: Color(0xFF142523),
                                     ),
                                   ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF087E6B).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'Tỷ lệ: ${_matchSuccessRate != null ? "${_matchSuccessRate!.toStringAsFixed(1)}%" : (_isLoading ? "…" : "0%")}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF087E6B),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _buildMetricTile(
+                                      'Tổng thành viên hệ thống',
+                                      '${_statValue(_userCount)} người dùng',
+                                      Icons.group_outlined,
+                                      const Color(0xFF087E6B),
+                                    ),
+                                    _buildMetricTile(
+                                      'Tỷ lệ ghép đôi thành công (Double Opt-in)',
+                                      _matchSuccessRate != null ? '${_matchSuccessRate!.toStringAsFixed(1)}%' : (_isLoading ? '…' : '0.0%'),
+                                      Icons.favorite_outline,
+                                      const Color(0xFFE65100),
+                                    ),
+                                    _buildMetricTile(
+                                      'Hoạt động tương tác kết nối',
+                                      'Hệ thống ghi nhận thực tế theo thời gian thực',
+                                      Icons.insights_outlined,
+                                      const Color(0xFF1565C0),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -760,7 +917,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(width: 24),
 
-                      // Alerts
+// Alerts
                       Expanded(
                         flex: 4,
                         child: Container(
@@ -770,7 +927,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Column(
+                          child: SingleChildScrollView(
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
@@ -814,14 +972,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                       ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
 
-                  // Bottom Row
+                  // Bottom Row - Nhật ký hoạt động gần đây
                   Container(
                     width: double.infinity,
-                    height: 145,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -829,27 +987,111 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Nhật ký hoạt động gần đây',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'SourceSansPro',
-                            color: Color(0xFF142523),
-                          ),
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Nhật ký hoạt động gần đây',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'SourceSansPro',
+                                color: Color(0xFF142523),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => Navigator.pushNamed(context, AppRoutes.adminAuditLogs),
+                              icon: const Icon(Icons.arrow_forward, size: 16, color: Color(0xFF087E6B)),
+                              label: const Text(
+                                'Xem tất cả',
+                                style: TextStyle(
+                                  color: Color(0xFF087E6B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Chưa hỗ trợ nhật ký hoạt động. Hệ thống chưa cung cấp lịch sử thao tác quản trị.',
-                          key: Key('admin_activity_log_unavailable'),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: 'SourceSansPro',
-                            color: Color(0xFF65746F),
+                        const SizedBox(height: 12),
+                        if (_isLoadingLogs)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF087E6B)),
+                              ),
+                            ),
+                          )
+                        else if (_recentLogs.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Chưa có thao tác quản trị nào được ghi nhận trong hệ thống.',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF65746F),
+                              ),
+                            ),
+                          )
+                        else
+                          Column(
+                            children: _recentLogs.map((log) {
+                              final badgeColor = _getActionBadgeColor(log.action);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF9FBFA),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFE8EFEB)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: badgeColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _formatActionLabel(log.action),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: badgeColor,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        log.details != null && log.details!.isNotEmpty
+                                            ? '${log.actorEmail.isNotEmpty ? log.actorEmail : "Hệ thống"}: ${log.details}'
+                                            : '${log.actorEmail} thực hiện trên ${log.targetType} #${log.targetId ?? ""}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF142523),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      _formatLogTime(log.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF8B9B96),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ),
-                        ),
                       ],
                     ),
                   ),
