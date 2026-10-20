@@ -69,6 +69,8 @@ class _MockListingApi implements ApiService {
     int? currentOccupants,
     required List<String> amenities,
     String? imageObjectKey,
+    List<String>? imageObjectKeys,
+    List<String>? imageUrls,
   }) async {
     updatedId = postId;
     expect(area, 35);

@@ -1190,6 +1190,29 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                           ),
                         if (apt.status == 'CONFIRMED')
                           FilledButton.icon(
+                            onPressed: () async {
+                              if (!_api.hasAuthToken) return;
+                              try {
+                                await _api.updateAppointmentStatus(apt.id, 'COMPLETED');
+                                if (!context.mounted) return;
+                                await _loadData();
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Đã hoàn tất lịch xem phòng!')),
+                                );
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Lỗi khi hoàn tất lịch: ' + e.toString().replaceAll('Exception: ', ''))),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.check_circle_outline, size: 18),
+                            label: const Text('Hoàn tất xem phòng'),
+                            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+                          ),
+                          FilledButton.icon(
                             onPressed: () => Navigator.pushNamed(
                               context,
                               AppRoutes.chat,

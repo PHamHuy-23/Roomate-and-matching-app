@@ -209,15 +209,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 children: [
                   TextFormField(
                     controller: _titleCtrl,
+                    maxLength: 200,
                     decoration: const InputDecoration(
                       labelText: 'Tiêu đề bài đăng',
                       hintText: 'Ví dụ: Tìm 1 bạn nam ở ghép phòng gần ĐH SPKT',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.title),
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty
-                        ? 'Vui lòng nhập tiêu đề'
-                        : null,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Vui lòng nhập tiêu đề';
+                      if (v.trim().length > 200) return 'Tiêu đề tối đa 200 ký tự';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 14),
                   TextFormField(
