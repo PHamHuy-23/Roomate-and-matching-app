@@ -58,8 +58,25 @@ class CompatibilityBottomSheet extends StatelessWidget {
     return 'Cần trao đổi thêm';
   }
 
-  Color _scoreColor(double score) =>
-      score >= 70 ? DiscoveryPalette.primary : DiscoveryPalette.warning;
+  Color _scoreColor(double score) {
+    if (score >= 70.0) {
+      return DiscoveryPalette.primary;
+    }
+    if (score >= 50.0) {
+      return DiscoveryPalette.warning;
+    }
+    return const Color(0xFFD32F2F);
+  }
+
+  String _scoreStatusLabel(double score) {
+    if (score >= 70.0) {
+      return 'Trùng khớp';
+    }
+    if (score >= 50.0) {
+      return 'Lệch nhẹ';
+    }
+    return 'Khác biệt';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +160,7 @@ class CompatibilityBottomSheet extends StatelessWidget {
                       label: criterion.label,
                       score: criterion.score,
                       color: _scoreColor(criterion.score),
+                      statusLabel: _scoreStatusLabel(criterion.score),
                     ),
                   if (_highlights.isNotEmpty) ...[
                     _InsightPanel(
@@ -210,11 +228,13 @@ class _CriterionProgress extends StatelessWidget {
     required this.label,
     required this.score,
     required this.color,
+    required this.statusLabel,
   });
 
   final String label;
   final double score;
   final Color color;
+  final String statusLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +250,22 @@ class _CriterionProgress extends StatelessWidget {
                   style: const TextStyle(
                     color: DiscoveryPalette.text,
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
