@@ -486,6 +486,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               ),
                               Expanded(
                                 flex: 2,
+                                child: _buildTableHeader('ĐĂNG NHẬP SAI'),
+                              ),
+                              Expanded(
+                                flex: 2,
                                 child: _buildTableHeader('NGÀY TẠO'),
                               ),
                               Expanded(flex: 1, child: _buildTableHeader('')),

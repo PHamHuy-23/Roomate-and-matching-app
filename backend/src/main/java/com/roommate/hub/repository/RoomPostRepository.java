@@ -22,4 +22,6 @@ public interface RoomPostRepository extends JpaRepository<RoomPost, Long> {
     List<RoomPost> findByStatusInAndAuthorStatus(List<RoomPost.PostStatus> statuses, String authorStatus);
     Optional<RoomPost> findByIdAndStatusInAndAuthorStatus(Long id, List<RoomPost.PostStatus> statuses, String authorStatus);
     List<RoomPost> findByAuthorId(Long authorId);
+
+    long countByStatus(RoomPost.PostStatus status);
 }

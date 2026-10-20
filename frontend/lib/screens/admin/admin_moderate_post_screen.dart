@@ -288,6 +288,23 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
     }
   }
 
+  Future<void> _closePost() async {
+    final postId = _selectedPost?['id'];
+    final version = _selectedPost?['version'];
+    if (postId is! int || version is! int) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await _api.moderatePost(postId, 'CLOSED', expectedVersion: version, reason: 'Quản trị viên đóng tin');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã đóng tin đăng thành công!')));
+      await _loadPosts();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Không thể đóng tin: $e')));
+    }
+  }
+
   Widget _buildContent() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {

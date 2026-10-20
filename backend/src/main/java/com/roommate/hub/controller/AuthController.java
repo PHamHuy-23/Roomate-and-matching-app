@@ -7,6 +7,7 @@ import com.roommate.hub.dto.RegisterRequest;
 import com.roommate.hub.dto.ResetPasswordRequest;
 import com.roommate.hub.service.AuthService;
 import com.roommate.hub.service.IpRateLimitService;
+import com.roommate.hub.service.LoginAttemptService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final IpRateLimitService ipRateLimitService;
+    private final LoginAttemptService loginAttemptService;
 
     /** Trích xuất IP thực của client, ưu tiên X-Forwarded-For khi đứng sau reverse proxy. */
     private String extractClientIp(HttpServletRequest request) {

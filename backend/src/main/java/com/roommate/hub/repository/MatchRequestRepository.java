@@ -34,4 +34,6 @@ public interface MatchRequestRepository extends JpaRepository<MatchRequest, Long
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT m FROM MatchRequest m WHERE m.id = :id")
     Optional<MatchRequest> findByIdForUpdate(@Param("id") Long id);
+
+    long countByStatus(MatchRequest.MatchStatus status);
 }

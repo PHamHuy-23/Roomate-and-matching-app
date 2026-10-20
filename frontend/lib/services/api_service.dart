@@ -832,6 +832,12 @@ class ApiService {
     throw _errorFrom(response, 'Không thể duyệt bài đăng');
   }
 
+  Future<Map<String, dynamic>> getAdminStats() async {
+    final response = await _request('GET', '/admin/stats');
+    if (response.statusCode == 200) return _decodeData(response) as Map<String, dynamic>;
+    throw _errorFrom(response, 'Không tải được số liệu thống kê quản trị');
+  }
+
   Future<List<dynamic>> getAdminUsers() async {
     final response = await _request('GET', '/admin/users');
     if (response.statusCode == 200) return _decodeList(response);
@@ -1306,3 +1312,4 @@ class ApiService {
     return active;
   }
 }
+

@@ -9,6 +9,10 @@ import com.roommate.hub.entity.User;
 import com.roommate.hub.exception.ForbiddenException;
 import com.roommate.hub.exception.ResourceNotFoundException;
 import com.roommate.hub.repository.ReportRepository;
+import com.roommate.hub.repository.MatchRequestRepository;
+import com.roommate.hub.service.LoginAttemptService;
+import com.roommate.hub.dto.AdminDashboardStatsDTO;
+import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +34,27 @@ public class AdminService {
     private final RoomPostRepository roomPostRepository;
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final MatchRequestRepository matchRequestRepository;
+    private final LoginAttemptService loginAttemptService;
     private final ObjectProvider<R2StorageService> storageServiceProvider;
+
+
+    @Transactional(readOnly = true)
+    public AdminDashboardStatsDTO getDashboardStats() {
+        long totalUsers = userRepository.count();
+        long totalMatches = matchRequestRepository.count();
+        long acceptedMatches = matchRequestRepository.countByStatus(MatchRequest.MatchStatus.ACCEPTED);
+        double rateMatch = totalMatches == 0 ? 0.0 : ((double) acceptedMatches / totalMatches) * 100.0;
+        long pendingPosts = roomPostRepository.countByStatus(RoomPost.PostStatus.PENDING);
+        long pendingReports = reportRepository.countByStatus("PENDING");
+
+        return AdminDashboardStatsDTO.builder()
+                .totalUsers(totalUsers)
+                .matchSuccessRate(Math.round(rateMatch * 10.0) / 10.0)
+                .pendingPosts(pendingPosts)
+                .pendingReports(pendingReports)
+                .build();
+    }
 
     // Lấy toàn bộ bài đăng kèm trạng thái để kiểm duyệt
     @Transactional(readOnly = true)
@@ -54,6 +78,9 @@ public class AdminService {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.CONFLICT,
                     "Tin đăng đã thay đổi. Vui lòng tải lại và xem nội dung mới trước khi kiểm duyệt.");
+        }
+        if ("REJECTED".equalsIgnoreCase(status) && (reason == null || reason.trim().isEmpty())) {
+            throw new IllegalArgumentException("Bắt buộc nhập lý do khi từ chối duyệt bài đăng!");
         }
         post.setStatus(RoomPost.PostStatus.valueOf(status.toUpperCase()));
         post.setModerationReason(reason == null || reason.isBlank() ? null : reason.trim());

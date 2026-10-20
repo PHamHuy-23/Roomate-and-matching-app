@@ -70,6 +70,23 @@ public class LoginAttemptService {
         attempts.remove(key.trim().toLowerCase());
     }
 
+
+    public int getFailedAttempts(String key) {
+        if (key == null || key.isBlank()) return 0;
+        Attempt attempt = attempts.get(key.trim().toLowerCase());
+        if (attempt == null) return 0;
+        Instant now = Instant.now();
+        if (attempt.lockedUntil != null && now.isAfter(attempt.lockedUntil)) {
+            attempts.remove(key.trim().toLowerCase());
+            return 0;
+        }
+        if (now.isAfter(attempt.firstFailedTime.plusSeconds(LOCK_DURATION_SECONDS))) {
+            attempts.remove(key.trim().toLowerCase());
+            return 0;
+        }
+        return attempt.count;
+    }
+
     public void reset() {
         attempts.clear();
     }

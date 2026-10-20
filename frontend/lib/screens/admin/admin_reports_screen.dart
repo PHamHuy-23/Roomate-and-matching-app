@@ -615,12 +615,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                     height: 1.6,
                                   ),
                                 ),
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 16),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     width: 224,
-                                    height: 147,
+                                    height: 110,
                                     color: Colors.grey.shade300,
                                     child: _buildEvidence(),
                                   ),
@@ -842,6 +842,39 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                           ),
                                   ),
                                 ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 42,
+                                  child: OutlinedButton(
+                                    onPressed: _isResolving || _selectedReport.rawId <= 0 || _selectedReport.status != 'PENDING'
+                                        ? null
+                                        : () async {
+                                            final reportId = _selectedReport.rawId;
+                                            setState(() => _isResolving = true);
+                                            try {
+                                              await _api.moderateAdminReport(reportId, status: 'DISMISSED', note: 'Bác bỏ tố cáo');
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Đã bác bỏ tố cáo (DISMISSED)!')),
+                                              );
+                                              await _loadReports();
+                                            } catch (e) {
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Lỗi: ' + e.toString())),
+                                              );
+                                            } finally {
+                                              if (mounted) setState(() => _isResolving = false);
+                                            }
+                                          },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF65746F),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    ),
+                                    child: const Text('Bác bỏ tố cáo (DISMISSED)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: 'SourceSansPro')),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -858,3 +891,4 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
     );
   }
 }
+

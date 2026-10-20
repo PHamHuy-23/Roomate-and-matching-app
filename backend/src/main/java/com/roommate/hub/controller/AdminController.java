@@ -4,6 +4,7 @@ import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.dto.AdminReportResponseDTO;
 import com.roommate.hub.dto.UserResponseDTO;
+import com.roommate.hub.dto.AdminDashboardStatsDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
 import com.roommate.hub.dto.UpdateUserStatusDTO;
 import com.roommate.hub.service.AdminService;
@@ -22,6 +23,12 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+
+
+    @GetMapping("/stats")
+    public ResponseEntity<AdminDashboardStatsDTO> getDashboardStats() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(adminService.getDashboardStats());
+    }
 
     @GetMapping("/posts")
     public ResponseEntity<List<AdminPostResponseDTO>> getAllPosts() {

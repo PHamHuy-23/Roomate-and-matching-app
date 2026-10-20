@@ -21,6 +21,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String? _reportError;
   int? _userCount;
   int? _visiblePostCount;
+  double? _matchSuccessRate;
   int? _pendingPostCount;
   int? _lockedUserCount;
   int? _pendingReportCount;
