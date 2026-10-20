@@ -43,6 +43,7 @@ class Group6ServiceErrorsTest {
     private final ViewingAppointmentRepository appointments = mock(ViewingAppointmentRepository.class);
     private final MatchRequestRepository matches = mock(MatchRequestRepository.class);
     private final BlockedUserRepository blocks = mock(BlockedUserRepository.class);
+    private final com.roommate.hub.repository.ContactPermissionRepository contactPermissions = mock(com.roommate.hub.repository.ContactPermissionRepository.class);
     private final ChatMessageRepository messages = mock(ChatMessageRepository.class);
     private final UserPreferenceRepository preferences = mock(UserPreferenceRepository.class);
     private final MatchingService matching = mock(MatchingService.class);
@@ -53,7 +54,7 @@ class Group6ServiceErrorsTest {
             new AppointmentService(appointments, users, posts, matches, blocks);
     private final ChatService chatService =
             new ChatService(messages, users, blocks, matches, appointments, storage);
-    private final MatchRequestService matchService = new MatchRequestService(matches, users, matching, blocks);
+    private final MatchRequestService matchService = new MatchRequestService(matches, users, matching, blocks, contactPermissions);
     private final ProfileService profileService = new ProfileService(preferences, users, blocks);
     private final RoomPostService roomService = new RoomPostService(posts, users, storage);
     private final User actor = User.builder().id(1L).email("actor@example.com").status("ACTIVE").build();

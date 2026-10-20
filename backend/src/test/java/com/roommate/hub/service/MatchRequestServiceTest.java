@@ -3,6 +3,7 @@ package com.roommate.hub.service;
 import com.roommate.hub.dto.MatchRequestResponseDTO;
 import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.repository.ContactPermissionRepository;
 import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,9 @@ class MatchRequestServiceTest {
 
     @Mock
     private com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
+
+    @Mock
+    private ContactPermissionRepository contactPermissionRepository;
 
     @InjectMocks
     private MatchRequestService matchRequestService;
@@ -77,6 +81,7 @@ class MatchRequestServiceTest {
         assertThat(result.getContactPhone()).isEqualTo(userB.getPhone());
         assertThat(result.getContactEmail()).isEqualTo(userB.getEmail());
         verify(matchRequestRepository, times(1)).save(reverseRequest);
+        verify(contactPermissionRepository, times(2)).save(any());
     }
 
     @Test

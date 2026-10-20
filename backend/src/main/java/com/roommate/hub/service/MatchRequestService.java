@@ -1,24 +1,22 @@
 package com.roommate.hub.service;
 
 import com.roommate.hub.dto.MatchRequestResponseDTO;
+import com.roommate.hub.entity.ContactPermission;
 import com.roommate.hub.entity.MatchRequest;
 import com.roommate.hub.entity.User;
+import com.roommate.hub.exception.ForbiddenException;
+import com.roommate.hub.exception.ResourceNotFoundException;
+import com.roommate.hub.repository.ContactPermissionRepository;
 import com.roommate.hub.repository.MatchRequestRepository;
 import com.roommate.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.roommate.hub.exception.ForbiddenException;
-
-import com.roommate.hub.exception.ResourceNotFoundException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +27,7 @@ public class MatchRequestService {
     private final UserRepository userRepository;
     private final MatchingService matchingService;
     private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository;
+    private final ContactPermissionRepository contactPermissionRepository;
 
     @Transactional
     public MatchRequestResponseDTO sendRequest(Long senderId, Long receiverId) {
@@ -72,7 +71,9 @@ public class MatchRequestService {
                         if (existing.getMatchScore() == null || existing.getMatchScore() == 0.0) {
                             existing.setMatchScore(score);
                         }
-                        return matchRequestRepository.save(existing);
+                        MatchRequest saved = matchRequestRepository.save(existing);
+                        grantBidirectionalContactPermissions(saved);
+                        return saved;
                     }
                     return existing;
                 })
@@ -121,6 +122,7 @@ public class MatchRequestService {
         response.put("status", request.getStatus().name());
 
         if (isAccepted) {
+            grantBidirectionalContactPermissions(request);
             response.put("message", "Kết nối thành công! Đã mở khóa thông tin liên hệ.");
             response.put("partnerName", request.getSender().getFullName());
             response.put("partnerPhone", request.getSender().getPhone());
@@ -132,7 +134,26 @@ public class MatchRequestService {
         return response;
     }
 
+    private void grantBidirectionalContactPermissions(MatchRequest request) {
+        User sender = request.getSender();
+        User receiver = request.getReceiver();
 
+        if (!contactPermissionRepository.existsByUserIdAndGrantedToId(sender.getId(), receiver.getId())) {
+            contactPermissionRepository.save(ContactPermission.builder()
+                    .user(sender)
+                    .grantedTo(receiver)
+                    .matchRequest(request)
+                    .build());
+        }
+
+        if (!contactPermissionRepository.existsByUserIdAndGrantedToId(receiver.getId(), sender.getId())) {
+            contactPermissionRepository.save(ContactPermission.builder()
+                    .user(receiver)
+                    .grantedTo(sender)
+                    .matchRequest(request)
+                    .build());
+        }
+    }
 
     // Danh sách nhận được (mình là receiver)
     @Transactional(readOnly = true)
@@ -199,4 +220,3 @@ public class MatchRequestService {
         if (!canConnect(sender, receiver)) throw new ForbiddenException("Không thể kết nối với người dùng này");
     }
 }
-

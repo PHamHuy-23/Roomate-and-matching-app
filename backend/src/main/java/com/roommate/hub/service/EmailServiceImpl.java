@@ -33,7 +33,7 @@ public class EmailServiceImpl implements EmailService {
                 "[Roommate Hub] Mã xác nhận khôi phục mật khẩu",
                 "Chào bạn,\n\n"
                         + "Mã xác nhận khôi phục mật khẩu của bạn là: " + otp + "\n"
-                        + "Mã có hiệu lực trong vòng 15 phút. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.\n\n"
+                        + "Mã có hiệu lực trong vòng 5 phút. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.\n\n"
                         + "Trân trọng,\nĐội ngũ Roommate Hub"
         );
     }
@@ -47,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
                 "[Roommate Hub] Mã xác minh tài khoản",
                 "Chào bạn,\n\n"
                         + "Mã xác minh tài khoản Roommate Hub của bạn là: " + otp + "\n"
-                        + "Mã có hiệu lực trong vòng 15 phút. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.\n\n"
+                        + "Mã có hiệu lực trong vòng 5 phút. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.\n\n"
                         + "Trân trọng,\nĐội ngũ Roommate Hub"
         );
     }
@@ -116,3 +116,4 @@ public class EmailServiceImpl implements EmailService {
         return email.substring(0, 2) + "***@" + email.substring(atIndex + 1);
     }
 }
+

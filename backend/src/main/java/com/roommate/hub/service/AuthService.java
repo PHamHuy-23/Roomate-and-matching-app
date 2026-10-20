@@ -409,7 +409,7 @@ public class AuthService {
                             .email(normalizedEmail)
                             .otpCode(hashedOtp)
                             .type(AuthOtp.OtpType.PASSWORD_RESET)
-                            .expiresAt(LocalDateTime.now().plusMinutes(15))
+                            .expiresAt(LocalDateTime.now().plusMinutes(5))
                             .used(false)
                             .failedAttempts(0)
                             .build();
@@ -483,7 +483,7 @@ public class AuthService {
                             .email(normalizedEmail)
                             .otpCode(hashedOtp)
                             .type(AuthOtp.OtpType.EMAIL_VERIFICATION)
-                            .expiresAt(LocalDateTime.now().plusMinutes(15))
+                            .expiresAt(LocalDateTime.now().plusMinutes(5))
                             .used(false)
                             .failedAttempts(0)
                             .build();
@@ -574,3 +574,4 @@ public class AuthService {
         return email.substring(0, 2) + "***@" + email.substring(atIndex + 1);
     }
 }
+
