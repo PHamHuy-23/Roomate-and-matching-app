@@ -433,6 +433,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                   route: '/admin/moderate-post',
                 ),
                 _buildSidebarItem(context, 'Báo cáo vi phạm', isActive: true),
+                _buildSidebarItem(
+                  context,
+                  'Nhật ký hệ thống',
+                  route: AppRoutes.adminAuditLogs,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Sao lưu & Khôi phục',
+                  route: AppRoutes.adminBackup,
+                ),
 
                 const Spacer(),
 

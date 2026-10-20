@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -15,6 +15,7 @@ import '../models/chat_message.dart';
 import '../models/viewing_appointment.dart';
 import '../models/blocked_user.dart';
 import '../models/report_receipt.dart';
+import '../models/audit_log_item.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -1376,6 +1377,19 @@ class ApiService {
       return _decodeData(response) as Map<String, dynamic>;
     }
     throw _errorFrom(response, 'Khong the khoi phuc tu ban sao luu nay');
+  }
+
+  // --- NHAT KY HE THONG (AUDIT LOGS) ---
+  Future<List<AuditLogItem>> getAdminAuditLogs() async {
+    final response = await _request('GET', '/admin/audit-logs');
+    if (response.statusCode == 200) {
+      final list = _decodeList(response);
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map((item) => AuditLogItem.fromJson(item))
+          .toList();
+    }
+    throw _errorFrom(response, 'Khong tai duoc nhat ky he thong');
   }
 }
 

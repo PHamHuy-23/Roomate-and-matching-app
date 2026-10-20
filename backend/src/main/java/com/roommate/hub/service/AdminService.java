@@ -2,6 +2,7 @@ package com.roommate.hub.service;
 
 import com.roommate.hub.dto.AdminReportResponseDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
+import com.roommate.hub.dto.AuditLogResponseDTO;
 import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.entity.Report;
 import com.roommate.hub.entity.RoomPost;
@@ -37,7 +38,7 @@ public class AdminService {
     private final MatchRequestRepository matchRequestRepository;
     private final LoginAttemptService loginAttemptService;
     private final ObjectProvider<R2StorageService> storageServiceProvider;
-
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public AdminDashboardStatsDTO getDashboardStats() {
@@ -85,7 +86,12 @@ public class AdminService {
         post.setStatus(RoomPost.PostStatus.valueOf(status.toUpperCase()));
         post.setModerationReason(reason == null || reason.isBlank() ? null : reason.trim());
         // Reject changes committed after the version check; return the new version.
-        return roomPostRepository.saveAndFlush(post);
+        RoomPost savedPost = roomPostRepository.saveAndFlush(post);
+
+        String details = "Status: " + status.toUpperCase() + (reason != null && !reason.isBlank() ? ", Lý do: " + reason.trim() : "");
+        auditLogService.logAction("MODERATE_POST", "ROOM_POST", postId, details);
+
+        return savedPost;
     }
 
     // Lấy danh sách toàn bộ người dùng
@@ -121,6 +127,8 @@ public class AdminService {
             userRepository.save(user);
         }
 
+        auditLogService.logAction("SET_USER_STATUS", "USER", userId, "Status: " + status);
+
         Map<String, Object> res = new HashMap<>();
         res.put("userId", user.getId());
         res.put("status", user.getStatus());
@@ -148,7 +156,17 @@ public class AdminService {
         if (note != null && !note.isBlank()) {
             report.setActionNote(note.trim());
         }
-        return reportResponse(reportRepository.save(report));
+        AdminReportResponseDTO response = reportResponse(reportRepository.save(report));
+
+        String details = "Status: " + status.toUpperCase() + (note != null && !note.isBlank() ? ", Ghi chú: " + note.trim() : "");
+        auditLogService.logAction("MODERATE_REPORT", "REPORT", reportId, details);
+
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditLogResponseDTO> getAuditLogs() {
+        return auditLogService.getAuditLogs();
     }
 
     private AdminReportResponseDTO reportResponse(Report report) {

@@ -263,6 +263,12 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                 ),
                 _buildSidebarItem(
                   context,
+                  'Nhật ký hệ thống',
+                  icon: Icons.receipt_long_outlined,
+                  route: AppRoutes.adminAuditLogs,
+                ),
+                _buildSidebarItem(
+                  context,
                   'Sao lưu & Khôi phục',
                   icon: Icons.cloud_sync_outlined,
                   isActive: true,

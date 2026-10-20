@@ -309,6 +309,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _buildSidebarItem(
                   context,
+                  'Nhật ký hệ thống',
+                  route: AppRoutes.adminAuditLogs,
+                  icon: Icons.receipt_long_outlined,
+                ),
+                _buildSidebarItem(
+                  context,
                   'Sao lưu & Khôi phục',
                   route: AppRoutes.adminBackup,
                   icon: Icons.cloud_sync_outlined,

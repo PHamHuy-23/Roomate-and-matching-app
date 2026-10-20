@@ -344,6 +344,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   'Báo cáo vi phạm',
                   route: AppRoutes.adminReports,
                 ),
+                _buildSidebarItem(
+                  context,
+                  'Nhật ký hệ thống',
+                  route: AppRoutes.adminAuditLogs,
+                ),
+                _buildSidebarItem(
+                  context,
+                  'Sao lưu & Khôi phục',
+                  route: AppRoutes.adminBackup,
+                ),
 
                 const Spacer(),
 

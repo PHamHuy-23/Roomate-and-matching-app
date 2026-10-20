@@ -3,6 +3,7 @@ package com.roommate.hub.controller;
 import com.roommate.hub.entity.RoomPost;
 import com.roommate.hub.entity.User;
 import com.roommate.hub.dto.AdminReportResponseDTO;
+import com.roommate.hub.dto.AuditLogResponseDTO;
 import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.AdminDashboardStatsDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
@@ -76,6 +77,11 @@ public class AdminController {
             @RequestParam(required = false) String note) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .body(adminService.moderateReport(reportId, status, note));
+    }
+
+    @GetMapping("/audit-logs")
+    public ResponseEntity<List<AuditLogResponseDTO>> getAuditLogs() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(adminService.getAuditLogs());
     }
 
     // --- CÁC API QUẢN LÝ SAO LƯU & KHÔI PHỤC (BACKUP & RESTORE) ---

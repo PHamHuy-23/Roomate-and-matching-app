@@ -37,6 +37,7 @@ import '../screens/admin/admin_post_needs_edit_screen.dart';
 import '../screens/admin/admin_reports_screen.dart';
 import '../screens/admin/admin_report_resolved_screen.dart';
 import '../screens/admin/admin_backup_screen.dart';
+import '../screens/admin/admin_audit_logs_screen.dart';
 import '../screens/survey_screen.dart';
 import '../state/auth_session.dart';
 import '../models/report_receipt.dart';
@@ -100,6 +101,7 @@ class AppRoutes {
   static const adminReports = '/admin/reports';
   static const adminReportResolved = '/admin/report-resolved';
   static const adminBackup = '/admin/backup';
+  static const adminAuditLogs = '/admin/audit-logs';
 
   static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
     return MaterialPageRoute<dynamic>(
@@ -160,6 +162,8 @@ class AppRoutes {
           adminPostNeedsEdit,
           adminReports,
           adminReportResolved,
+          adminBackup,
+          adminAuditLogs,
         };
         final isAdmin = {
           'ADMIN',
@@ -419,6 +423,14 @@ class AppRoutes {
               'ROLE_ADMIN',
             }.contains(user.role.trim().toUpperCase())) {
               return const AdminBackupScreen();
+            }
+            return HomeScreen(currentUser: user);
+          case adminAuditLogs:
+            if ({
+              'ADMIN',
+              'ROLE_ADMIN',
+            }.contains(user.role.trim().toUpperCase())) {
+              return const AdminAuditLogsScreen();
             }
             return HomeScreen(currentUser: user);
           case adminReportResolved:

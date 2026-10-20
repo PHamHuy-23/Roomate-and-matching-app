@@ -423,6 +423,20 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
               child: const Text('Từ chối tin đăng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'SourceSansPro')),
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton(
+              onPressed: _isSubmitting ? null : _closePost,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF65746F),
+                side: const BorderSide(color: Color(0xFFD3E0DC)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Đóng tin đăng', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, fontFamily: 'SourceSansPro')),
+            ),
+          ),
         ],
       ),
     );
@@ -495,6 +509,8 @@ class _AdminModeratePostScreenState extends State<AdminModeratePostScreen> {
                 _buildSidebarItem(context, 'Người dùng', route: '/admin/users'),
                 _buildSidebarItem(context, 'Duyệt tin đăng', isActive: true),
                 _buildSidebarItem(context, 'Báo cáo vi phạm', route: AppRoutes.adminReports),
+                _buildSidebarItem(context, 'Nhật ký hệ thống', route: AppRoutes.adminAuditLogs),
+                _buildSidebarItem(context, 'Sao lưu & Khôi phục', route: AppRoutes.adminBackup),
                 const Spacer(),
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
