@@ -307,6 +307,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   route: AppRoutes.adminReports,
                   icon: Icons.report_outlined,
                 ),
+                _buildSidebarItem(
+                  context,
+                  'Sao lưu & Khôi phục',
+                  route: AppRoutes.adminBackup,
+                  icon: Icons.cloud_sync_outlined,
+                ),
 
                 const Spacer(),
 
@@ -417,8 +423,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       _buildStatCard(_statValue(_userCount), 'Người dùng'),
                       _buildStatCard(
-                        _statValue(_visiblePostCount),
-                        'Tin đang hiển thị',
+                        _matchSuccessRate != null ? '${_matchSuccessRate!.toStringAsFixed(1)}%' : (_isLoading ? '…' : '0%'),
+                        'Tỷ lệ ghép đôi',
                       ),
                       _buildStatCard(
                         _statValue(_pendingPostCount),
@@ -519,6 +525,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 context,
                                 '${_statValue(_lockedUserCount)} tài khoản đang khóa',
                                 AppRoutes.adminUsers,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildAlertAction(
+                                context,
+                                '${_statValue(_visiblePostCount)} tin đăng đang hiển thị',
+                                AppRoutes.adminModeratePost,
                               ),
                             ],
                           ),

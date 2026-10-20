@@ -1311,5 +1311,40 @@ class ApiService {
     if (revision == _searchStatusRevision) isSearchActive = active;
     return active;
   }
+
+  // --- SAO LUU & KHOI PHUC DU LIEU (DATABASE BACKUP & RESTORE) ---
+  Future<List<dynamic>> getAdminBackups() async {
+    final response = await _request('GET', '/admin/backups');
+    if (response.statusCode == 200) return _decodeList(response);
+    throw _errorFrom(response, 'Khong tai duoc danh sach sao luu he thong');
+  }
+
+  Future<Map<String, dynamic>> triggerAdminBackup({String type = 'MANUAL'}) async {
+    final response = await _request(
+      'POST',
+      '/admin/backups/create',
+      queryParameters: {'type': type},
+    );
+    if (response.statusCode == 200) {
+      return _decodeData(response) as Map<String, dynamic>;
+    }
+    throw _errorFrom(response, 'Khong the tao ban sao luu du lieu');
+  }
+
+  Future<Map<String, dynamic>> resetDemoState() async {
+    final response = await _request('POST', '/admin/backups/reset-demo');
+    if (response.statusCode == 200) {
+      return _decodeData(response) as Map<String, dynamic>;
+    }
+    throw _errorFrom(response, 'Khong the khoi phuc du lieu Demo ban dau');
+  }
+
+  Future<Map<String, dynamic>> restoreAdminBackup(String backupId) async {
+    final response = await _request('POST', '/admin/backups/$backupId/restore');
+    if (response.statusCode == 200) {
+      return _decodeData(response) as Map<String, dynamic>;
+    }
+    throw _errorFrom(response, 'Khong the khoi phuc tu ban sao luu nay');
+  }
 }
 

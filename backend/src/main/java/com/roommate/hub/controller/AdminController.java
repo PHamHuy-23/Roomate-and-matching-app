@@ -7,7 +7,9 @@ import com.roommate.hub.dto.UserResponseDTO;
 import com.roommate.hub.dto.AdminDashboardStatsDTO;
 import com.roommate.hub.dto.AdminPostResponseDTO;
 import com.roommate.hub.dto.UpdateUserStatusDTO;
+import com.roommate.hub.dto.BackupRecordDTO;
 import com.roommate.hub.service.AdminService;
+import com.roommate.hub.service.DatabaseBackupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
@@ -23,7 +25,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
-
+    private final DatabaseBackupService databaseBackupService;
 
     @GetMapping("/stats")
     public ResponseEntity<AdminDashboardStatsDTO> getDashboardStats() {
@@ -74,5 +76,27 @@ public class AdminController {
             @RequestParam(required = false) String note) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .body(adminService.moderateReport(reportId, status, note));
+    }
+
+    // --- CÁC API QUẢN LÝ SAO LƯU & KHÔI PHỤC (BACKUP & RESTORE) ---
+
+    @GetMapping("/backups")
+    public ResponseEntity<List<BackupRecordDTO>> getAllBackups() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(databaseBackupService.getAllBackups());
+    }
+
+    @PostMapping("/backups/create")
+    public ResponseEntity<BackupRecordDTO> triggerBackup(@RequestParam(defaultValue = "MANUAL") String type) {
+        return ResponseEntity.ok(databaseBackupService.triggerBackup(type));
+    }
+
+    @PostMapping("/backups/reset-demo")
+    public ResponseEntity<Map<String, Object>> resetDemoState() {
+        return ResponseEntity.ok(databaseBackupService.rollbackDemoState());
+    }
+
+    @PostMapping("/backups/{backupId}/restore")
+    public ResponseEntity<Map<String, Object>> restoreFromBackup(@PathVariable String backupId) {
+        return ResponseEntity.ok(databaseBackupService.restoreFromBackup(backupId));
     }
 }
