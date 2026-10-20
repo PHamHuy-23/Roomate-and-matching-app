@@ -20,4 +20,5 @@ public class MatchRequestResponseDTO {
     // Các trường chỉ hiển thị khi ACCEPTED (QĐ 2)
     private String contactPhone;
     private String contactEmail;
+    private String contactZalo;
 }

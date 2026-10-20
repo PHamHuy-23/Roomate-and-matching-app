@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/match_request_item.dart';
 import '../models/viewing_appointment.dart';
 import '../services/api_service.dart';
@@ -458,6 +458,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                         'phone': item.contactPhone,
                                         'email': item.contactEmail,
                                         'avatarUrl': item.partnerAvatar,
+                                        'shareZalo': item.shareZalo,
                                       },
                                     );
                                     if (res == true && mounted) {

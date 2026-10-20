@@ -9,6 +9,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -50,6 +53,50 @@ public class EmailServiceImpl implements EmailService {
                         + "Mã có hiệu lực trong vòng 5 phút. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.\n\n"
                         + "Trân trọng,\nĐội ngũ Roommate Hub"
         );
+    }
+
+    @Override
+    public void sendAppointmentReminder(String toEmail, String recipientName, String partnerName, String roomTitle, Instant appointmentTime, String address) {
+        log.info("[EMAIL SERVICE] Gửi email nhắc hẹn xem phòng tới {}", maskEmail(toEmail));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy")
+                .withZone(ZoneId.of("Asia/Ho_Chi_Minh"));
+        String formattedTime = appointmentTime != null ? formatter.format(appointmentTime) : "Không xác định";
+
+        String subject = "[Roommate Hub] Nhắc nhở cuộc hẹn xem phòng sắp diễn ra (còn 24 giờ)";
+        String body = String.format(
+                "Xin chào %s,\n\n"
+                        + "Bạn có một cuộc hẹn xem phòng sắp diễn ra trong vòng 24 giờ tới:\n"
+                        + "- Phòng xem: %s\n"
+                        + "- Địa chỉ: %s\n"
+                        + "- Người hẹn cùng bạn: %s\n"
+                        + "- Thời gian xem phòng: %s (Giờ Việt Nam - GMT+7)\n\n"
+                        + "Vui lòng sắp xếp thời gian và giữ liên lạc để buổi xem phòng diễn ra thuận lợi.\n\n"
+                        + "Trân trọng,\n"
+                        + "Đội ngũ Roommate Hub",
+                recipientName != null ? recipientName : "bạn",
+                roomTitle != null ? roomTitle : "Tin đăng phòng",
+                address != null ? address : "Chưa cập nhật địa chỉ",
+                partnerName != null ? partnerName : "Người dùng",
+                formattedTime
+        );
+
+        if (mailSender.isEmpty()) {
+            log.warn("[EMAIL SERVICE DEV MODE] JavaMailSender chưa được cấu hình. Ghi nhận log nhắc hẹn xem phòng cho {} (Người nhận: {}, Bạn hẹn: {}, Phòng: {}, Thời gian: {}): \n{}",
+                    maskEmail(toEmail), recipientName, partnerName, roomTitle, formattedTime, body);
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.get().send(message);
+            log.info("[EMAIL SERVICE] Đã gửi email nhắc hẹn thành công tới {}", maskEmail(toEmail));
+        } catch (Exception e) {
+            log.error("[EMAIL SERVICE] Lỗi khi gửi email nhắc hẹn tới {}: {}", maskEmail(toEmail), e.getMessage());
+        }
     }
 
     @Override

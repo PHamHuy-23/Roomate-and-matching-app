@@ -44,6 +44,10 @@ public class ViewingAppointment {
     @Builder.Default
     private AppointmentStatus status = AppointmentStatus.PENDING;
 
+    @Column(name = "reminder_sent", nullable = false)
+    @Builder.Default
+    private boolean reminderSent = false;
+
     @Column(columnDefinition = "TEXT")
     private String note;
 

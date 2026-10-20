@@ -31,6 +31,9 @@ CREATE TABLE users (
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
         CHECK (status IN ('ACTIVE', 'LOCKED')),
     search_active BOOLEAN NOT NULL DEFAULT TRUE,
+    share_phone BOOLEAN NOT NULL DEFAULT TRUE,
+    share_email BOOLEAN NOT NULL DEFAULT TRUE,
+    share_zalo BOOLEAN NOT NULL DEFAULT TRUE,
     password_changed_at TIMESTAMPTZ,
     logged_out_at TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
@@ -104,6 +107,7 @@ CREATE TABLE viewing_appointments (
     appointment_time TIMESTAMPTZ NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),
+    reminder_sent BOOLEAN NOT NULL DEFAULT FALSE,
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -180,6 +184,7 @@ CREATE INDEX idx_room_posts_district ON room_posts(district);
 CREATE INDEX idx_room_posts_status_created ON room_posts(status, created_at DESC);
 CREATE INDEX idx_match_requests_receiver ON match_requests(receiver_id);
 CREATE INDEX idx_appointments_host_time ON viewing_appointments(host_id, appointment_time);
+CREATE INDEX idx_appointments_reminder ON viewing_appointments(status, reminder_sent, appointment_time);
 CREATE INDEX idx_chat_messages_sender_receiver ON chat_messages(sender_id, receiver_id, created_at);
 CREATE INDEX idx_auth_otps_email_type ON auth_otps(email, type);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);

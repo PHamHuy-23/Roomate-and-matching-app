@@ -29,4 +29,16 @@ public interface ViewingAppointmentRepository extends JpaRepository<ViewingAppoi
     List<ViewingAppointment> findByHostIdOrderByAppointmentTimeDesc(Long hostId);
 
     List<ViewingAppointment> findByRoomPostId(Long roomPostId);
+
+    List<ViewingAppointment> findByStatusAndReminderSentFalseAndAppointmentTimeBetween(
+        ViewingAppointment.AppointmentStatus status,
+        java.time.Instant start,
+        java.time.Instant end
+    );
+
+    List<ViewingAppointment> findByStatusAndReminderSentFalseAndAppointmentTimeBetween(
+        ViewingAppointment.AppointmentStatus status,
+        java.time.OffsetDateTime start,
+        java.time.OffsetDateTime end
+    );
 }

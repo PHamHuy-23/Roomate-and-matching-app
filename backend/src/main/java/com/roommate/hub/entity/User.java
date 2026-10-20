@@ -60,6 +60,18 @@ public class User {
     @Builder.Default
     private boolean searchActive = true;
 
+    @Column(name = "share_phone", nullable = false)
+    @Builder.Default
+    private boolean sharePhone = true;
+
+    @Column(name = "share_email", nullable = false)
+    @Builder.Default
+    private boolean shareEmail = true;
+
+    @Column(name = "share_zalo", nullable = false)
+    @Builder.Default
+    private boolean shareZalo = true;
+
     @ElementCollection
     @CollectionTable(name = "user_saved_posts", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "post_id")

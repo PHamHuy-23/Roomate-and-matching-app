@@ -9,6 +9,7 @@ class MatchRequestItem {
   final String? message;
   final String? contactPhone;
   final String? contactEmail;
+  final bool? shareZalo;
 
   MatchRequestItem({
     required this.requestId,
@@ -21,6 +22,7 @@ class MatchRequestItem {
     this.message,
     this.contactPhone,
     this.contactEmail,
+    this.shareZalo,
   });
 
   factory MatchRequestItem.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class MatchRequestItem {
       message: json['message'] as String?,
       contactPhone: json['contactPhone'] as String?,
       contactEmail: json['contactEmail'] as String?,
+      shareZalo: json['shareZalo'] as bool? ?? (json['contactZalo'] as bool?),
     );
   }
 }

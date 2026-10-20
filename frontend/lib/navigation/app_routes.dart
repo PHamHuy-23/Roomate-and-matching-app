@@ -247,12 +247,18 @@ class AppRoutes {
                 arguments is Map && arguments['avatarUrl'] is String
                 ? arguments['avatarUrl'] as String
                 : null;
+            final shareZalo = arguments is Map && arguments['shareZalo'] is bool
+                ? arguments['shareZalo'] as bool
+                : (arguments is Map && arguments['shareZalo'] != null
+                    ? arguments['shareZalo'] == true
+                    : null);
             return ContactDetailsScreen(
               contactId: contactId,
               contactName: contactName,
               phone: phone,
               email: email,
               avatarUrl: avatarUrl,
+              shareZalo: shareZalo,
             );
           case chat:
             final arguments = routeSettings.arguments;

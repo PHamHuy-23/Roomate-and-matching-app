@@ -68,6 +68,36 @@ public class ProfileController {
         return java.util.Map.of("searchActive", value);
     }
 
+    @GetMapping("/contact-privacy")
+    public java.util.Map<String, Boolean> getContactPrivacy() {
+        User user = currentUser();
+        return java.util.Map.of(
+                "sharePhone", user.isSharePhone(),
+                "shareEmail", user.isShareEmail(),
+                "shareZalo", user.isShareZalo()
+        );
+    }
+
+    @PutMapping("/contact-privacy")
+    public java.util.Map<String, Boolean> updateContactPrivacy(@RequestBody java.util.Map<String, Boolean> body) {
+        User user = currentUser();
+        if (body.containsKey("sharePhone") && body.get("sharePhone") != null) {
+            user.setSharePhone(body.get("sharePhone"));
+        }
+        if (body.containsKey("shareEmail") && body.get("shareEmail") != null) {
+            user.setShareEmail(body.get("shareEmail"));
+        }
+        if (body.containsKey("shareZalo") && body.get("shareZalo") != null) {
+            user.setShareZalo(body.get("shareZalo"));
+        }
+        userRepository.save(user);
+        return java.util.Map.of(
+                "sharePhone", user.isSharePhone(),
+                "shareEmail", user.isShareEmail(),
+                "shareZalo", user.isShareZalo()
+        );
+    }
+
     private User currentUser() {
         return userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));

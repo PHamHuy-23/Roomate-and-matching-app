@@ -1348,6 +1348,78 @@ class ApiService {
     return active;
   }
 
+  // --- QUYEN RIENG TU LIEN LAC (CONTACT PRIVACY - FR-45) ---
+  Future<Map<String, bool>> getContactPrivacySettings() async {
+    final generation = _sessionGeneration;
+    final response = await _request('GET', '/profile/contact-privacy');
+    if (response.statusCode != 200) {
+      throw _errorFrom(
+        response,
+        'Không tải được cài đặt quyền riêng tư liên lạc',
+      );
+    }
+    _ensureCurrentSession(generation);
+    final data = _decodeData(response);
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Dữ liệu cài đặt quyền riêng tư liên lạc từ máy chủ không hợp lệ',
+      );
+    }
+    return {
+      'sharePhone': data['sharePhone'] is bool
+          ? data['sharePhone'] as bool
+          : true,
+      'shareEmail': data['shareEmail'] is bool
+          ? data['shareEmail'] as bool
+          : true,
+      'shareZalo': data['shareZalo'] is bool
+          ? data['shareZalo'] as bool
+          : true,
+    };
+  }
+
+  Future<Map<String, bool>> updateContactPrivacySettings({
+    bool? sharePhone,
+    bool? shareEmail,
+    bool? shareZalo,
+  }) async {
+    final generation = _sessionGeneration;
+    final body = <String, dynamic>{};
+    if (sharePhone != null) body['sharePhone'] = sharePhone;
+    if (shareEmail != null) body['shareEmail'] = shareEmail;
+    if (shareZalo != null) body['shareZalo'] = shareZalo;
+
+    final response = await _request(
+      'PUT',
+      '/profile/contact-privacy',
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      throw _errorFrom(
+        response,
+        'Không cập nhật được cài đặt quyền riêng tư liên lạc',
+      );
+    }
+    _ensureCurrentSession(generation);
+    final data = _decodeData(response);
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Dữ liệu phản hồi quyền riêng tư từ máy chủ không hợp lệ',
+      );
+    }
+    return {
+      'sharePhone': data['sharePhone'] is bool
+          ? data['sharePhone'] as bool
+          : (sharePhone ?? true),
+      'shareEmail': data['shareEmail'] is bool
+          ? data['shareEmail'] as bool
+          : (shareEmail ?? true),
+      'shareZalo': data['shareZalo'] is bool
+          ? data['shareZalo'] as bool
+          : (shareZalo ?? true),
+    };
+  }
+
   // --- SAO LUU & KHOI PHUC DU LIEU (DATABASE BACKUP & RESTORE) ---
   Future<List<dynamic>> getAdminBackups() async {
     final response = await _request('GET', '/admin/backups');

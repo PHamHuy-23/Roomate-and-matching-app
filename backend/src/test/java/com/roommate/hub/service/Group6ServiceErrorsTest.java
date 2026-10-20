@@ -50,8 +50,9 @@ class Group6ServiceErrorsTest {
     @SuppressWarnings("unchecked")
     private final ObjectProvider<R2StorageService> storage = mock(ObjectProvider.class);
 
+    private final EmailService emailService = mock(EmailService.class);
     private final AppointmentService appointmentService =
-            new AppointmentService(appointments, users, posts, matches, blocks);
+            new AppointmentService(appointments, users, posts, matches, blocks, emailService);
     private final ChatService chatService =
             new ChatService(messages, users, blocks, matches, appointments, storage);
     private final MatchRequestService matchService = new MatchRequestService(matches, users, matching, blocks, contactPermissions, appointments);

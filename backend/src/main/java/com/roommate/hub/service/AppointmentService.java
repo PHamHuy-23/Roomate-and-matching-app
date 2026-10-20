@@ -15,16 +15,23 @@ import com.roommate.hub.repository.RoomPostRepository;
 import com.roommate.hub.repository.UserRepository;
 import com.roommate.hub.repository.ViewingAppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AppointmentService {
 
     private final ViewingAppointmentRepository appointmentRepository;
@@ -32,6 +39,7 @@ public class AppointmentService {
     private final RoomPostRepository roomPostRepository;
     private final MatchRequestRepository matchRequestRepository;
     private final BlockedUserRepository blockedUserRepository;
+    private final EmailService emailService;
 
     @Transactional
     public AppointmentResponseDTO createAppointment(CreateAppointmentDTO dto) {
@@ -200,5 +208,65 @@ public class AppointmentService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại!"));
+    }
+
+    @Scheduled(cron = "0 */15 * * * ?")
+    @Transactional
+    public void sendUpcomingAppointmentReminders() {
+        Instant now = Instant.now();
+        Instant reminderWindowEnd = now.plus(24, ChronoUnit.HOURS);
+        OffsetDateTime startOffset = now.atOffset(ZoneOffset.UTC);
+        OffsetDateTime endOffset = reminderWindowEnd.atOffset(ZoneOffset.UTC);
+
+        List<ViewingAppointment> upcomingAppointments = appointmentRepository
+                .findByStatusAndReminderSentFalseAndAppointmentTimeBetween(
+                        AppointmentStatus.CONFIRMED,
+                        startOffset,
+                        endOffset
+                );
+
+        for (ViewingAppointment appointment : upcomingAppointments) {
+            try {
+                User requester = appointment.getRequester();
+                User host = appointment.getHost();
+                RoomPost post = appointment.getRoomPost();
+
+                String roomTitle = post != null ? post.getTitle() : "Phòng cho thuê";
+                String address = post != null ? post.getAddress() : "Chưa cập nhật địa chỉ";
+                Instant appointmentInstant = appointment.getAppointmentTime() != null
+                        ? appointment.getAppointmentTime().toInstant()
+                        : null;
+
+                // Gửi email nhắc nhở cho requester
+                if (requester != null && requester.getEmail() != null) {
+                    emailService.sendAppointmentReminder(
+                            requester.getEmail(),
+                            requester.getFullName(),
+                            host != null ? host.getFullName() : "Chủ phòng",
+                            roomTitle,
+                            appointmentInstant,
+                            address
+                    );
+                }
+
+                // Gửi email nhắc nhở cho host
+                if (host != null && host.getEmail() != null) {
+                    emailService.sendAppointmentReminder(
+                            host.getEmail(),
+                            host.getFullName(),
+                            requester != null ? requester.getFullName() : "Người xem phòng",
+                            roomTitle,
+                            appointmentInstant,
+                            address
+                    );
+                }
+
+                appointment.setReminderSent(true);
+                appointmentRepository.save(appointment);
+                log.info("[APPOINTMENT REMINDER] Đã gửi nhắc hẹn 24h cho cuộc hẹn ID {}", appointment.getId());
+            } catch (Exception e) {
+                log.error("[APPOINTMENT REMINDER] Lỗi khi gửi nhắc hẹn cho cuộc hẹn ID {}: {}", appointment.getId(), e.getMessage(), e);
+            }
+        }
     }
 }

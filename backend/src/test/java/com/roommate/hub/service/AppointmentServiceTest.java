@@ -49,6 +49,9 @@ class AppointmentServiceTest {
     @Mock
     private BlockedUserRepository blockedUserRepository;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private AppointmentService appointmentService;
 
@@ -228,5 +231,48 @@ class AppointmentServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(200L);
         assertThat(result.getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
+    @DisplayName("sendUpcomingAppointmentReminders() gửi email nhắc nhở cho cả 2 bên và đánh dấu reminderSent=true")
+    void sendUpcomingAppointmentReminders_ShouldSendEmailsAndMarkReminderSent() {
+        ViewingAppointment appt = ViewingAppointment.builder()
+                .id(100L)
+                .requester(requesterUser)
+                .host(hostUser)
+                .roomPost(samplePost)
+                .appointmentTime(java.time.OffsetDateTime.now().plusHours(12))
+                .status(AppointmentStatus.CONFIRMED)
+                .reminderSent(false)
+                .build();
+
+        when(appointmentRepository.findByStatusAndReminderSentFalseAndAppointmentTimeBetween(
+                eq(AppointmentStatus.CONFIRMED),
+                any(java.time.OffsetDateTime.class),
+                any(java.time.OffsetDateTime.class)
+        )).thenReturn(List.of(appt));
+
+        appointmentService.sendUpcomingAppointmentReminders();
+
+        verify(emailService, times(1)).sendAppointmentReminder(
+                eq(requesterUser.getEmail()),
+                eq(requesterUser.getFullName()),
+                eq(hostUser.getFullName()),
+                eq(samplePost.getTitle()),
+                any(java.time.Instant.class),
+                eq(samplePost.getAddress())
+        );
+
+        verify(emailService, times(1)).sendAppointmentReminder(
+                eq(hostUser.getEmail()),
+                eq(hostUser.getFullName()),
+                eq(requesterUser.getFullName()),
+                eq(samplePost.getTitle()),
+                any(java.time.Instant.class),
+                eq(samplePost.getAddress())
+        );
+
+        assertThat(appt.isReminderSent()).isTrue();
+        verify(appointmentRepository, times(1)).save(appt);
     }
 }

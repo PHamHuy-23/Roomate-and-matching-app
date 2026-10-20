@@ -20,6 +20,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   int? _userId;
   bool _isSearchActive = false;
   bool? _confirmedStatus;
+  bool _sharePhone = true;
+  bool _shareEmail = true;
+  bool _shareZalo = true;
+  bool _syncingContactPrivacy = false;
   bool _busy = true;
   String? _loadError;
 
@@ -46,10 +50,21 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     });
     try {
       final value = await _api.getSearchStatus();
+      Map<String, bool>? contactPrivacy;
+      try {
+        contactPrivacy = await _api.getContactPrivacySettings();
+      } catch (_) {
+        // Default to true if contact privacy endpoint is unavailable
+      }
       if (mounted && _currentSession) {
         setState(() {
           _isSearchActive = value;
           _confirmedStatus = value;
+          if (contactPrivacy != null) {
+            _sharePhone = contactPrivacy['sharePhone'] ?? true;
+            _shareEmail = contactPrivacy['shareEmail'] ?? true;
+            _shareZalo = contactPrivacy['shareZalo'] ?? true;
+          }
         });
       }
     } catch (e) {
@@ -60,6 +75,57 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       }
     } finally {
       if (mounted && _currentSession) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _updateContactPrivacySetting({
+    bool? sharePhone,
+    bool? shareEmail,
+    bool? shareZalo,
+  }) async {
+    if (_busy || !_currentSession) return;
+    final prevPhone = _sharePhone;
+    final prevEmail = _shareEmail;
+    final prevZalo = _shareZalo;
+
+    setState(() {
+      if (sharePhone != null) _sharePhone = sharePhone;
+      if (shareEmail != null) _shareEmail = shareEmail;
+      if (shareZalo != null) _shareZalo = shareZalo;
+      _syncingContactPrivacy = true;
+    });
+
+    try {
+      final res = await _api.updateContactPrivacySettings(
+        sharePhone: sharePhone,
+        shareEmail: shareEmail,
+        shareZalo: shareZalo,
+      );
+      if (mounted && _currentSession) {
+        setState(() {
+          _sharePhone = res['sharePhone'] ?? _sharePhone;
+          _shareEmail = res['shareEmail'] ?? _shareEmail;
+          _shareZalo = res['shareZalo'] ?? _shareZalo;
+        });
+      }
+    } catch (e) {
+      if (mounted && _currentSession) {
+        setState(() {
+          _sharePhone = prevPhone;
+          _shareEmail = prevEmail;
+          _shareZalo = prevZalo;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không cập nhật được quyền riêng tư: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted && _currentSession) {
+        setState(() => _syncingContactPrivacy = false);
+      }
     }
   }
 
@@ -81,6 +147,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           'Máy chủ chưa xác nhận trạng thái đã chọn. Vui lòng thử lại.',
         );
       }
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Đã lưu cài đặt.')));
@@ -277,6 +344,68 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
                   ],
 
+                  // Phần cài đặt: Chia sẻ thông tin liên lạc sau khi ghép đôi thành công
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Chia sẻ thông tin liên lạc sau khi ghép đôi thành công',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'SourceSansPro',
+                        color: Color(0xFF142523),
+                      ),
+                    ),
+                  ),
+
+                  _buildSettingItem(
+                    'Chia sẻ Số điện thoại',
+                    'Đối phương có thể gọi điện trực tiếp sau khi match',
+                    trailing: Switch(
+                      value: _sharePhone,
+                      onChanged:
+                          _busy || _loadError != null || _syncingContactPrivacy
+                          ? null
+                          : (value) => _updateContactPrivacySetting(
+                              sharePhone: value,
+                            ),
+                      activeTrackColor: const Color(0xFF087E6B),
+                    ),
+                  ),
+
+                  _buildSettingItem(
+                    'Chia sẻ Email',
+                    'Đối phương có thể gửi thư trao đổi sau khi match',
+                    trailing: Switch(
+                      value: _shareEmail,
+                      onChanged:
+                          _busy || _loadError != null || _syncingContactPrivacy
+                          ? null
+                          : (value) => _updateContactPrivacySetting(
+                              shareEmail: value,
+                            ),
+                      activeTrackColor: const Color(0xFF087E6B),
+                    ),
+                  ),
+
+                  _buildSettingItem(
+                    'Chia sẻ Zalo',
+                    'Cho phép tìm kiếm và kết bạn Zalo qua số điện thoại',
+                    trailing: Switch(
+                      value: _shareZalo,
+                      onChanged:
+                          _busy || _loadError != null || _syncingContactPrivacy
+                          ? null
+                          : (value) => _updateContactPrivacySetting(
+                              shareZalo: value,
+                            ),
+                      activeTrackColor: const Color(0xFF087E6B),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
                   _buildSettingItem(
                     'Thông tin liên hệ',
                     'Chỉ chia sẻ với người đã kết nối',
@@ -312,9 +441,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       color: const Color(0xFFEAF8F5),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Riêng tư ngay từ đầu',
                           style: TextStyle(

@@ -111,6 +111,9 @@ public class MatchRequestService {
     }
 
     private MatchRequestResponseDTO buildResponse(MatchRequest request, User partner, boolean isAccepted) {
+        String contactPhone = (isAccepted && partner.isSharePhone()) ? partner.getPhone() : null;
+        String contactEmail = (isAccepted && partner.isShareEmail()) ? partner.getEmail() : null;
+        String contactZalo = (isAccepted && partner.isShareZalo()) ? partner.getPhone() : null;
         return MatchRequestResponseDTO.builder()
                 .requestId(request.getId())
                 .partnerId(partner.getId())
@@ -120,8 +123,9 @@ public class MatchRequestService {
                 .status(request.getStatus().name())
                 .createdAt(request.getCreatedAt())
                 .message(request.getMessage())
-                .contactPhone(isAccepted ? partner.getPhone() : null)
-                .contactEmail(isAccepted ? partner.getEmail() : null)
+                .contactPhone(contactPhone)
+                .contactEmail(contactEmail)
+                .contactZalo(contactZalo)
                 .build();
     }
 
@@ -148,8 +152,9 @@ public class MatchRequestService {
             grantBidirectionalContactPermissions(request);
             response.put("message", "Kết nối thành công! Đã mở khóa thông tin liên hệ.");
             response.put("partnerName", request.getSender().getFullName());
-            response.put("partnerPhone", request.getSender().getPhone());
-            response.put("partnerEmail", request.getSender().getEmail());
+            response.put("partnerPhone", request.getSender().isSharePhone() ? request.getSender().getPhone() : null);
+            response.put("partnerEmail", request.getSender().isShareEmail() ? request.getSender().getEmail() : null);
+            response.put("partnerZalo", request.getSender().isShareZalo() ? request.getSender().getPhone() : null);
         } else {
             response.put("message", "Đã từ chối yêu cầu kết nối.");
         }
@@ -184,18 +189,7 @@ public class MatchRequestService {
         List<MatchRequest> list = matchRequestRepository.findByReceiverId(userId);
         return list.stream().filter(req -> canConnect(req.getSender(), req.getReceiver())).map(req -> {
             boolean isAccepted = req.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
-            return MatchRequestResponseDTO.builder()
-                    .requestId(req.getId())
-                    .partnerId(req.getSender().getId())
-                    .partnerName(req.getSender().getFullName())
-                    .partnerAvatar(req.getSender().getAvatarUrl())
-                    .matchScore(req.getMatchScore())
-                    .status(req.getStatus().name())
-                    .createdAt(req.getCreatedAt())
-                    .message(req.getMessage())
-                    .contactPhone(isAccepted ? req.getSender().getPhone() : null)
-                    .contactEmail(isAccepted ? req.getSender().getEmail() : null)
-                    .build();
+            return buildResponse(req, req.getSender(), isAccepted);
         }).collect(Collectors.toList());
     }
 
@@ -205,18 +199,7 @@ public class MatchRequestService {
         List<MatchRequest> list = matchRequestRepository.findBySenderId(userId);
         return list.stream().filter(req -> canConnect(req.getSender(), req.getReceiver())).map(req -> {
             boolean isAccepted = req.getStatus() == MatchRequest.MatchStatus.ACCEPTED;
-            return MatchRequestResponseDTO.builder()
-                    .requestId(req.getId())
-                    .partnerId(req.getReceiver().getId())
-                    .partnerName(req.getReceiver().getFullName())
-                    .partnerAvatar(req.getReceiver().getAvatarUrl())
-                    .matchScore(req.getMatchScore())
-                    .status(req.getStatus().name())
-                    .createdAt(req.getCreatedAt())
-                    .message(req.getMessage())
-                    .contactPhone(isAccepted ? req.getReceiver().getPhone() : null)
-                    .contactEmail(isAccepted ? req.getReceiver().getEmail() : null)
-                    .build();
+            return buildResponse(req, req.getReceiver(), isAccepted);
         }).collect(Collectors.toList());
     }
 

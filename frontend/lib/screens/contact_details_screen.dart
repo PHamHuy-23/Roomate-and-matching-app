@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../navigation/app_routes.dart';
 import '../widgets/penpot_back_button.dart';
 
@@ -8,6 +9,7 @@ class ContactDetailsScreen extends StatelessWidget {
   final String? phone;
   final String? email;
   final String? avatarUrl;
+  final bool? shareZalo;
 
   const ContactDetailsScreen({
     super.key,
@@ -16,16 +18,26 @@ class ContactDetailsScreen extends StatelessWidget {
     this.phone,
     this.email,
     this.avatarUrl,
+    this.shareZalo,
   });
 
-  Widget _buildInfoCard(String title, String subtitle, IconData icon) {
+  Widget _buildInfoCard(
+    String title,
+    String subtitle,
+    IconData icon, {
+    bool isShared = true,
+    VoidCallback? onAction,
+    IconData? actionIcon,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isShared ? Colors.white : const Color(0xFFF9FBFA),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EBE8)),
+        border: Border.all(
+          color: isShared ? const Color(0xFFE2EBE8) : const Color(0xFFE5EBEA),
+        ),
       ),
       child: Row(
         children: [
@@ -33,10 +45,13 @@ class ContactDetailsScreen extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF8F5),
+              color: isShared ? const Color(0xFFEAF8F5) : const Color(0xFFF0F4F3),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFF087E6B)),
+            child: Icon(
+              icon,
+              color: isShared ? const Color(0xFF087E6B) : const Color(0xFF9AA8A4),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -55,16 +70,22 @@ class ContactDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: isShared ? FontWeight.w700 : FontWeight.w500,
+                    fontStyle: isShared ? FontStyle.normal : FontStyle.italic,
                     fontFamily: 'SourceSansPro',
-                    color: Color(0xFF142523),
+                    color: isShared ? const Color(0xFF142523) : const Color(0xFF8A9A95),
                   ),
                 ),
               ],
             ),
           ),
+          if (isShared && onAction != null && actionIcon != null)
+            IconButton(
+              icon: Icon(actionIcon, color: const Color(0xFF087E6B)),
+              onPressed: onAction,
+            ),
         ],
       ),
     );
@@ -72,9 +93,11 @@ class ContactDetailsScreen extends StatelessWidget {
 
   Widget _buildActionButton(
     String label,
-    VoidCallback onPressed, {
+    VoidCallback? onPressed, {
     bool isPrimary = false,
+    IconData? icon,
   }) {
+    final isEnabled = onPressed != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: SizedBox(
@@ -85,24 +108,54 @@ class ContactDetailsScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: isPrimary
                 ? const Color(0xFF087E6B)
-                : const Color(0xFFEAF8F5),
-            foregroundColor: isPrimary ? Colors.white : const Color(0xFF087E6B),
+                : (isEnabled ? const Color(0xFFEAF8F5) : const Color(0xFFF0F4F3)),
+            foregroundColor: isPrimary
+                ? Colors.white
+                : (isEnabled ? const Color(0xFF087E6B) : const Color(0xFF9AA8A4)),
+            disabledBackgroundColor: const Color(0xFFF0F4F3),
+            disabledForegroundColor: const Color(0xFF9AA8A4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             elevation: 0,
           ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'SourceSansPro',
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'SourceSansPro',
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _launchExternal(BuildContext context, String urlString) async {
+    final uri = Uri.parse(urlString);
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể mở liên kết')),
+        );
+      }
+    }
   }
 
   @override
@@ -110,12 +163,16 @@ class ContactDetailsScreen extends StatelessWidget {
     final name = contactName ?? 'Người dùng Roommate Hub';
     final actualPhone = phone?.trim();
     final actualEmail = email?.trim();
-    final displayPhone = actualPhone?.isNotEmpty == true
-        ? actualPhone!
-        : 'Chưa cập nhật số điện thoại';
-    final displayEmail = actualEmail?.isNotEmpty == true
-        ? actualEmail!
-        : 'Chưa cập nhật email';
+    final hasPhone = actualPhone != null && actualPhone.isNotEmpty;
+    final hasEmail = actualEmail != null && actualEmail.isNotEmpty;
+    final isZaloShared = (shareZalo ?? true) && hasPhone;
+
+    final displayPhone = hasPhone
+        ? actualPhone
+        : 'Người dùng không chia sẻ số điện thoại';
+    final displayEmail = hasEmail
+        ? actualEmail
+        : 'Người dùng không chia sẻ email';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F7),
@@ -222,16 +279,36 @@ class ContactDetailsScreen extends StatelessWidget {
                     'Số điện thoại',
                     displayPhone,
                     Icons.phone_outlined,
+                    isShared: hasPhone,
+                    actionIcon: Icons.call,
+                    onAction: hasPhone
+                        ? () => _launchExternal(context, 'tel:$actualPhone')
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   _buildInfoCard(
                     'Email liên hệ',
                     displayEmail,
                     Icons.email_outlined,
+                    isShared: hasEmail,
+                    actionIcon: Icons.mail_outline,
+                    onAction: hasEmail
+                        ? () => _launchExternal(context, 'mailto:$actualEmail')
+                        : null,
                   ),
                   const SizedBox(height: 28),
 
                   // Action Buttons
+                  _buildActionButton(
+                    'Mở Zalo',
+                    isZaloShared
+                        ? () {
+                            final cleanPhone = actualPhone.replaceAll(RegExp(r'\D'), '');
+                            _launchExternal(context, 'https://zalo.me/$cleanPhone');
+                          }
+                        : null,
+                    icon: Icons.chat_bubble_outline,
+                  ),
                   _buildActionButton('Nhắn tin', () {
                     Navigator.pushNamed(
                       context,
