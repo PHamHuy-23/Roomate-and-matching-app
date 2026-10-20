@@ -1040,6 +1040,179 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
     );
   }
 
+
+  Future<void> _showRescheduleDialog(ViewingAppointment apt) async {
+    if (!_api.hasAuthToken) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng đăng nhập để đề xuất giờ hẹn.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    final initialDate = apt.appointmentTime.isAfter(DateTime.now())
+        ? apt.appointmentTime
+        : DateTime.now().add(const Duration(days: 1));
+    DateTime selectedDate = initialDate;
+    TimeOfDay selectedTime = TimeOfDay.fromDateTime(initialDate);
+    final noteCtrl = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Đề xuất giờ hẹn khác',
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Lưu ý: Bạn chỉ có thể đề xuất lại lịch hẹn 1 lần duy nhất cho khách thuê.',
+                      style: TextStyle(color: _muted, fontSize: 13, height: 1.4),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today, color: _primary),
+                      title: const Text('Ngày hẹn mới', style: TextStyle(fontSize: 13, color: _muted)),
+                      subtitle: Text(
+                        DateFormat('dd/MM/yyyy').format(selectedDate),
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: _ink),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: dialogCtx,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 60)),
+                          );
+                          if (picked != null) {
+                            setDialogState(() {
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                        child: const Text('Chọn ngày'),
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.access_time, color: _primary),
+                      title: const Text('Giờ hẹn mới', style: TextStyle(fontSize: 13, color: _muted)),
+                      subtitle: Text(
+                        selectedTime.format(dialogCtx),
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: _ink),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: dialogCtx,
+                            initialTime: selectedTime,
+                          );
+                          if (picked != null) {
+                            setDialogState(() {
+                              selectedTime = picked;
+                            });
+                          }
+                        },
+                        child: const Text('Chọn giờ'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: noteCtrl,
+                      maxLines: 2,
+                      decoration: _fieldDecoration(
+                        'Lý do / Lời nhắn cho khách',
+                        hint: 'VD: Khung giờ đó mình bận họp, chuyển sang...',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text('Đóng'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogCtx, true),
+                  style: FilledButton.styleFrom(backgroundColor: _primary),
+                  child: const Text('Gửi đề xuất'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final finalDateTime = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        selectedTime.hour,
+        selectedTime.minute,
+      );
+
+      if (finalDateTime.isBefore(DateTime.now())) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thời gian đề xuất phải ở tương lai.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      try {
+        await _api.rescheduleAppointment(
+          apt.id,
+          finalDateTime,
+          note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+        );
+        if (!mounted) return;
+        await _loadData();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã gửi đề xuất giờ hẹn mới cho khách thuê!'),
+          ),
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Lỗi khi đề xuất giờ hẹn: ',
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Widget _viewingRequest(BuildContext context) {
     if (_loadingData) return const Center(child: CircularProgressIndicator());
     if (_loadError != null) {
@@ -1093,8 +1266,35 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                     ),
                     const SizedBox(height: 8),
                     _statusBadge(
-                      '${apt.status == 'PENDING' ? 'Chờ xác nhận' : apt.status} · ${apt.roomTitle}',
+                      '${apt.status == 'PENDING' ? 'Chờ xác nhận' : apt.status == 'RESCHEDULED' ? 'Đã đề xuất giờ mới' : apt.status} · ${apt.roomTitle}',
                     ),
+                    if (apt.status == 'RESCHEDULED') ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFB74D)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.schedule_send, size: 18, color: Color(0xFFE65100)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Đang đợi khách thuê xác nhận giờ mới: ${DateFormat("dd/MM/yyyy · HH:mm").format(apt.appointmentTime)}',
+                                style: const TextStyle(
+                                  color: Color(0xFFE65100),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (apt.note != null && apt.note!.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
@@ -1107,7 +1307,7 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: <Widget>[
-                        if (apt.status == 'PENDING')
+                        if (apt.status == 'PENDING') ...[
                           FilledButton(
                             onPressed: () async {
                               if (!_api.hasAuthToken) {
@@ -1149,6 +1349,17 @@ class _ListingManagementScreenState extends State<ListingManagementScreen> {
                             ),
                             child: const Text('Xác nhận lịch hẹn'),
                           ),
+                          if (!apt.rescheduledOnce)
+                            OutlinedButton.icon(
+                              onPressed: () => _showRescheduleDialog(apt),
+                              icon: const Icon(Icons.edit_calendar, size: 18),
+                              label: const Text('Đề xuất giờ khác'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFE65100),
+                                side: const BorderSide(color: Color(0xFFFFB74D)),
+                              ),
+                            ),
+                        ],
                         if (apt.status == 'PENDING' ||
                             apt.status == 'CONFIRMED')
                           OutlinedButton(
