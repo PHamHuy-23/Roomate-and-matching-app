@@ -11,12 +11,18 @@ import com.roommate.hub.dto.UpdateUserStatusDTO;
 import com.roommate.hub.dto.BackupRecordDTO;
 import com.roommate.hub.service.AdminService;
 import com.roommate.hub.service.DatabaseBackupService;
+import com.roommate.hub.service.ReportExportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +33,9 @@ public class AdminController {
 
     private final AdminService adminService;
     private final DatabaseBackupService databaseBackupService;
+    private final ReportExportService reportExportService;
+
+    private static final DateTimeFormatter FILE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @GetMapping("/stats")
     public ResponseEntity<AdminDashboardStatsDTO> getDashboardStats() {
@@ -104,5 +113,47 @@ public class AdminController {
     @PostMapping("/backups/{backupId}/restore")
     public ResponseEntity<Map<String, Object>> restoreFromBackup(@PathVariable String backupId) {
         return ResponseEntity.ok(databaseBackupService.restoreFromBackup(backupId));
+    }
+
+    // --- CÁC API XUẤT BÁO CÁO DỮ LIỆU (CSV / EXCEL COMPATIBLE) ---
+
+    @GetMapping("/export/audit-logs")
+    public ResponseEntity<byte[]> exportAuditLogs() {
+        String filename = "audit_logs_" + LocalDate.now().format(FILE_DATE_FORMATTER) + ".csv";
+        byte[] csvData = reportExportService.exportAuditLogsCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csvData);
+    }
+
+    @GetMapping("/export/users")
+    public ResponseEntity<byte[]> exportUsers() {
+        String filename = "users_" + LocalDate.now().format(FILE_DATE_FORMATTER) + ".csv";
+        byte[] csvData = reportExportService.exportUsersCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csvData);
+    }
+
+    @GetMapping("/export/posts")
+    public ResponseEntity<byte[]> exportPosts() {
+        String filename = "posts_" + LocalDate.now().format(FILE_DATE_FORMATTER) + ".csv";
+        byte[] csvData = reportExportService.exportPostsCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csvData);
+    }
+
+    @GetMapping("/export/overview")
+    public ResponseEntity<byte[]> exportSystemOverview() {
+        String filename = "system_overview_" + LocalDate.now().format(FILE_DATE_FORMATTER) + ".csv";
+        byte[] csvData = reportExportService.exportSystemOverviewCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csvData);
     }
 }

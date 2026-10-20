@@ -209,10 +209,9 @@ class ApiService {
       final decoded = jsonDecode(userJsonStr);
       if (decoded is Map<String, dynamic>) {
         final refreshToken = prefs.getString(_prefRefreshTokenKey);
-        final user = AuthUser.fromJson(decoded).copyWith(
-          token: accessToken,
-          refreshToken: refreshToken,
-        );
+        final user = AuthUser.fromJson(
+          decoded,
+        ).copyWith(token: accessToken, refreshToken: refreshToken);
         return user;
       }
     } catch (_) {}
@@ -469,7 +468,10 @@ class ApiService {
     throw _errorFrom(response, 'Không tải được danh sách gợi ý');
   }
 
-  Future<MatchRequestItem> sendMatchRequest(int receiverId, {String? message}) async {
+  Future<MatchRequestItem> sendMatchRequest(
+    int receiverId, {
+    String? message,
+  }) async {
     final queryParams = <String, String>{'receiverId': '$receiverId'};
     if (message != null && message.trim().isNotEmpty) {
       queryParams['message'] = message.trim();
@@ -866,7 +868,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAdminStats() async {
     final response = await _request('GET', '/admin/stats');
-    if (response.statusCode == 200) return _decodeData(response) as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      return _decodeData(response) as Map<String, dynamic>;
+    }
     throw _errorFrom(response, 'Không tải được số liệu thống kê quản trị');
   }
 
@@ -1351,7 +1355,9 @@ class ApiService {
     throw _errorFrom(response, 'Khong tai duoc danh sach sao luu he thong');
   }
 
-  Future<Map<String, dynamic>> triggerAdminBackup({String type = 'MANUAL'}) async {
+  Future<Map<String, dynamic>> triggerAdminBackup({
+    String type = 'MANUAL',
+  }) async {
     final response = await _request(
       'POST',
       '/admin/backups/create',
@@ -1391,5 +1397,22 @@ class ApiService {
     }
     throw _errorFrom(response, 'Khong tai duoc nhat ky he thong');
   }
-}
 
+  // --- XUAT BAO CAO HE THONG (EXPORT REPORTS CSV) ---
+  Future<String> exportAdminReport(String reportType) async {
+    final cleanType = reportType.trim().toLowerCase();
+    final path = switch (cleanType) {
+      'overview' => '/admin/export/overview',
+      'users' => '/admin/export/users',
+      'posts' => '/admin/export/posts',
+      'audit-logs' || 'audit_logs' || 'auditlogs' => '/admin/export/audit-logs',
+      _ => '/admin/export/$cleanType',
+    };
+
+    final response = await _request('GET', path);
+    if (response.statusCode == 200) {
+      return utf8.decode(response.bodyBytes);
+    }
+    throw _errorFrom(response, 'Không thể xuất dữ liệu báo cáo $reportType');
+  }
+}

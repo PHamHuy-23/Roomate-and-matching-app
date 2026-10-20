@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../navigation/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../utils/file_download_helper.dart';
 import '../../widgets/admin_profile_avatar.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -242,6 +243,243 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  void _showExportReportsDialog() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD3DFDC),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE6F3F0),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.file_download_outlined,
+                      color: Color(0xFF087E6B),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Xuất báo cáo hệ thống',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'SourceSansPro',
+                            color: Color(0xFF142523),
+                          ),
+                        ),
+                        Text(
+                          'Tải dữ liệu dưới dạng tệp CSV / Excel',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF65746F),
+                            fontFamily: 'SourceSansPro',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(color: Color(0xFFECEFF1), height: 1),
+              const SizedBox(height: 12),
+              _buildExportOption(
+                title: '1. Báo cáo Tổng quan hệ thống',
+                subtitle: 'Số liệu người dùng, bài đăng, tương tác tổng hợp',
+                icon: Icons.dashboard_outlined,
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _handleExportReport(
+                    reportType: 'overview',
+                    fileName: 'BaoCao_TongQuan_$_fileTimestamp.csv',
+                  );
+                },
+              ),
+              _buildExportOption(
+                title: '2. Danh sách Thành viên & Trạng thái tài khoản',
+                subtitle: 'Toàn bộ danh sách người dùng, trạng thái và vai trò',
+                icon: Icons.people_outline,
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _handleExportReport(
+                    reportType: 'users',
+                    fileName: 'DanhSach_ThanhVien_$_fileTimestamp.csv',
+                  );
+                },
+              ),
+              _buildExportOption(
+                title: '3. Danh sách Bài đăng & Kiểm duyệt',
+                subtitle:
+                    'Tin tìm phòng, giá thuê, địa chỉ và trạng thái duyệt',
+                icon: Icons.apartment_outlined,
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _handleExportReport(
+                    reportType: 'posts',
+                    fileName: 'DanhSach_BaiDang_$_fileTimestamp.csv',
+                  );
+                },
+              ),
+              _buildExportOption(
+                title: '4. Toàn bộ Nhật ký hệ thống (Audit Logs)',
+                subtitle: 'Lịch sử thao tác của ban quản trị và hệ thống',
+                icon: Icons.receipt_long_outlined,
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _handleExportReport(
+                    reportType: 'audit-logs',
+                    fileName: 'NhatKy_HeThong_$_fileTimestamp.csv',
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExportOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FBFA),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE8EFEB)),
+      ),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDCE6E3)),
+          ),
+          child: Icon(icon, color: const Color(0xFF087E6B), size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'SourceSansPro',
+            color: Color(0xFF142523),
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12,
+            fontFamily: 'SourceSansPro',
+            color: Color(0xFF65746F),
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 14,
+          color: Color(0xFF8FA09B),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  String get _fileTimestamp {
+    final now = DateTime.now();
+    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _handleExportReport({
+    required String reportType,
+    required String fileName,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text('Đang tạo báo cáo $fileName...')),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    try {
+      final csvString = await _api.exportAdminReport(reportType);
+      if (!mounted) return;
+      await FileDownloadHelper.downloadCsv(
+        context: context,
+        fileName: fileName,
+        csvContent: csvString,
+      );
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Xuất báo cáo thành công ($fileName)'),
+          backgroundColor: const Color(0xFF087E6B),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi xuất báo cáo: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -393,7 +631,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ],
                       ),
-                      const AdminProfileAvatar(),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _showExportReportsDialog,
+                            icon: const Icon(
+                              Icons.file_download_outlined,
+                              size: 20,
+                            ),
+                            label: const Text('Xuất báo cáo'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF087E6B),
+                              side: const BorderSide(
+                                color: Color(0xFF087E6B),
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'SourceSansPro',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const AdminProfileAvatar(),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -429,7 +699,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       _buildStatCard(_statValue(_userCount), 'Người dùng'),
                       _buildStatCard(
-                        _matchSuccessRate != null ? '${_matchSuccessRate!.toStringAsFixed(1)}%' : (_isLoading ? '…' : '0%'),
+                        _matchSuccessRate != null
+                            ? '${_matchSuccessRate!.toStringAsFixed(1)}%'
+                            : (_isLoading ? '…' : '0%'),
                         'Tỷ lệ ghép đôi',
                       ),
                       _buildStatCard(

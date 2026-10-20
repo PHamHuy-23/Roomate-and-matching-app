@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/audit_log_item.dart';
 import '../../navigation/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../utils/file_download_helper.dart';
 
 class AdminAuditLogsScreen extends StatefulWidget {
   const AdminAuditLogsScreen({super.key, this.apiService});
@@ -52,6 +53,8 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
     super.dispose();
   }
 
+  bool _isExporting = false;
+
   Future<void> _loadAuditLogs() async {
     setState(() {
       _isLoading = true;
@@ -70,6 +73,69 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
         _isLoading = false;
         _error = e.toString();
       });
+    }
+  }
+
+  String get _fileTimestamp {
+    final now = DateTime.now();
+    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _exportAuditLogsCsv() async {
+    setState(() => _isExporting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final fileName = 'NhatKy_HeThong_$_fileTimestamp.csv';
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text('Đang tải tệp $fileName...')),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    try {
+      final csvString = await _api.exportAdminReport('audit-logs');
+      if (!mounted) return;
+      await FileDownloadHelper.downloadCsv(
+        context: context,
+        fileName: fileName,
+        csvContent: csvString,
+      );
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Xuất báo cáo thành công ($fileName)'),
+          backgroundColor: const Color(0xFF087E6B),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi xuất CSV nhật ký: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
     }
   }
 
@@ -178,7 +244,9 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
 
   Color _getActionBadgeColor(String action) {
     final act = action.toUpperCase();
-    if (act.contains('LOCK') || act.contains('DELETE') || act.contains('BLOCK')) {
+    if (act.contains('LOCK') ||
+        act.contains('DELETE') ||
+        act.contains('BLOCK')) {
       return const Color(0xFFD32F2F);
     }
     if (act.contains('USER') || act.contains('SET_USER_STATUS')) {
@@ -230,7 +298,10 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -490,21 +561,59 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
                           ),
                         ],
                       ),
-                      ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _loadAuditLogs,
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('Làm mới'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF087E6B),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _isExporting
+                                ? null
+                                : _exportAuditLogsCsv,
+                            icon: _isExporting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF087E6B),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.file_download_outlined,
+                                    size: 18,
+                                  ),
+                            label: const Text('Xuất CSV'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF087E6B),
+                              side: const BorderSide(
+                                color: Color(0xFF087E6B),
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: _isLoading ? null : _loadAuditLogs,
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Làm mới'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF087E6B),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -517,7 +626,8 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Tìm theo Email admin hoặc nội dung nhật ký...',
+                            hintText:
+                                'Tìm theo Email admin hoặc nội dung nhật ký...',
                             prefixIcon: const Icon(
                               Icons.search,
                               color: Color(0xFF65746F),
@@ -575,9 +685,18 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
                     runSpacing: 8,
                     children: [
                       _buildFilterChip('Tất cả', 'ALL'),
-                      _buildFilterChip('Khóa/Mở User (SET_USER_STATUS)', 'SET_USER_STATUS'),
-                      _buildFilterChip('Duyệt bài đăng (MODERATE_POST)', 'MODERATE_POST'),
-                      _buildFilterChip('Xử lý báo cáo (MODERATE_REPORT)', 'MODERATE_REPORT'),
+                      _buildFilterChip(
+                        'Khóa/Mở User (SET_USER_STATUS)',
+                        'SET_USER_STATUS',
+                      ),
+                      _buildFilterChip(
+                        'Duyệt bài đăng (MODERATE_POST)',
+                        'MODERATE_POST',
+                      ),
+                      _buildFilterChip(
+                        'Xử lý báo cáo (MODERATE_REPORT)',
+                        'MODERATE_REPORT',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -591,64 +710,64 @@ class _AdminAuditLogsScreenState extends State<AdminAuditLogsScreen> {
                             ),
                           )
                         : _error != null
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      color: Colors.red,
-                                      size: 48,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      _error!,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF65746F),
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: _loadAuditLogs,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF087E6B),
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: const Text('Thử lại'),
-                                    ),
-                                  ],
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 48,
                                 ),
-                              )
-                            : filtered.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(
-                                          Icons.receipt_long_outlined,
-                                          size: 64,
-                                          color: Color(0xFFB0C4BE),
-                                        ),
-                                        SizedBox(height: 16),
-                                        Text(
-                                          'Không có bản ghi nhật ký hệ thống nào.',
-                                          style: TextStyle(
-                                            color: Color(0xFF65746F),
-                                            fontSize: 16,
-                                            fontFamily: 'SourceSansPro',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : ListView.builder(
-                                    itemCount: filtered.length,
-                                    itemBuilder: (context, index) {
-                                      return _buildAuditCard(filtered[index]);
-                                    },
+                                const SizedBox(height: 12),
+                                Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF65746F),
+                                    fontSize: 15,
                                   ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _loadAuditLogs,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF087E6B),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text('Thử lại'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : filtered.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 64,
+                                  color: Color(0xFFB0C4BE),
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Không có bản ghi nhật ký hệ thống nào.',
+                                  style: TextStyle(
+                                    color: Color(0xFF65746F),
+                                    fontSize: 16,
+                                    fontFamily: 'SourceSansPro',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              return _buildAuditCard(filtered[index]);
+                            },
+                          ),
                   ),
                 ],
               ),
