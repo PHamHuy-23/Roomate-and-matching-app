@@ -282,7 +282,7 @@ void main() {
         session,
         onReturn: (result) => returned = result,
       );
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.byType(Switch).first);
       await tester.pump();
       expect(writes, 0);
       expect(api.isSearchActive, isTrue);
@@ -293,7 +293,7 @@ void main() {
       expect(find.byType(PrivacyScreen), findsOneWidget);
       expect(returned, isNull);
       expect(find.text('Đã lưu cài đặt.'), findsNothing);
-      expect(tester.widget<Switch>(find.byType(Switch)).onChanged, isNull);
+      expect(tester.widget<Switch>(find.byType(Switch).first).onChanged, isNull);
       expect(
         tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
         isNull,
@@ -322,13 +322,13 @@ void main() {
         final session = AuthSession(apiService: api)..updateUser(original);
         addTearDown(session.dispose);
         await openPrivacy(tester, api, session);
-        await tester.tap(find.byType(Switch));
+        await tester.tap(find.byType(Switch).first);
         await tester.pump();
         await tester.tap(find.text('Lưu cài đặt'));
         await tester.pumpAndSettle();
         expect(find.byType(PrivacyScreen), findsOneWidget);
         expect(find.text('Đã lưu cài đặt.'), findsNothing);
-        expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+        expect(tester.widget<Switch>(find.byType(Switch).first).value, isFalse);
         expect(api.isSearchActive, isTrue);
         await tester.tap(find.text('Lưu cài đặt'));
         await tester.pumpAndSettle();
@@ -352,7 +352,7 @@ void main() {
     final session = AuthSession(apiService: api)..updateUser(original);
     addTearDown(session.dispose);
     await openPrivacy(tester, api, session);
-    expect(tester.widget<Switch>(find.byType(Switch)).onChanged, isNull);
+    expect(tester.widget<Switch>(find.byType(Switch).first).onChanged, isNull);
     expect(
       tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
       isNull,
@@ -360,8 +360,8 @@ void main() {
     expect(find.text('Đã tắt · Ẩn khỏi gợi ý'), findsNothing);
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
-    expect(tester.widget<Switch>(find.byType(Switch)).onChanged, isNotNull);
+    expect(tester.widget<Switch>(find.byType(Switch).first).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).first).onChanged, isNotNull);
     expect(writes, 0);
   });
   testWidgets('Cancel privacy discards draft without writing server/cache', (
@@ -375,7 +375,7 @@ void main() {
     final session = AuthSession(apiService: api)..updateUser(original);
     addTearDown(session.dispose);
     await openPrivacy(tester, api, session);
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(Switch).first);
     await tester.pump();
     await tester.tap(find.byTooltip('Quay lại'));
     await tester.pumpAndSettle();
@@ -503,7 +503,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Quyền riêng tư'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.byType(Switch).first);
       await tester.pump();
       await tester.tap(find.text('Lưu cài đặt'));
       await tester.pumpAndSettle();

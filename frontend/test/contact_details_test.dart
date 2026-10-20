@@ -17,12 +17,18 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Chưa cập nhật số điện thoại'), findsOneWidget);
-      expect(find.text('Chưa cập nhật email'), findsOneWidget);
+      expect(find.text('Người dùng không chia sẻ số điện thoại'), findsOneWidget);
+      expect(find.text('Người dùng không chia sẻ email'), findsOneWidget);
       expect(find.text('0903 333 444'), findsNothing);
       expect(find.text('nguoidung@roommatehub.vn'), findsNothing);
       // Contact fields may be absent even after a valid connection.
       expect(find.text('Nhắn tin'), findsOneWidget);
+      expect(find.text('Mở Zalo'), findsOneWidget);
+      // Khi không có số điện thoại, nút Zalo bị disable (onPressed null)
+      final zaloButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Mở Zalo'),
+      );
+      expect(zaloButton.onPressed, isNull);
     });
   }
 
@@ -35,12 +41,17 @@ void main() {
           contactId: 2,
           phone: ' 0000000000 ',
           email: '',
+          shareZalo: true,
         ),
       ),
     );
     expect(find.text('0000000000'), findsOneWidget);
-    expect(find.text('Chưa cập nhật email'), findsOneWidget);
-    expect(find.text('Chưa cập nhật số điện thoại'), findsNothing);
+    expect(find.text('Người dùng không chia sẻ email'), findsOneWidget);
+    expect(find.text('Người dùng không chia sẻ số điện thoại'), findsNothing);
+    final zaloButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Mở Zalo'),
+    );
+    expect(zaloButton.onPressed, isNotNull);
   });
 
   testWidgets('Có email nhưng thiếu số điện thoại thì không bịa số', (
@@ -56,11 +67,15 @@ void main() {
       ),
     );
     expect(find.text('partner@test.invalid'), findsOneWidget);
-    expect(find.text('Chưa cập nhật số điện thoại'), findsOneWidget);
-    expect(find.text('Chưa cập nhật email'), findsNothing);
+    expect(find.text('Người dùng không chia sẻ số điện thoại'), findsOneWidget);
+    expect(find.text('Người dùng không chia sẻ email'), findsNothing);
+    final zaloButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Mở Zalo'),
+    );
+    expect(zaloButton.onPressed, isNull);
   });
 
-  testWidgets('Dữ liệu liên hệ đầy đủ hiển thị đúng dữ liệu được cấp', (
+  testWidgets('Dữ liệu liên hệ đầy đủ hiển thị đúng dữ liệu được cấp và Zalo bật', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -69,11 +84,36 @@ void main() {
           contactId: 2,
           phone: '0000000000',
           email: 'partner@test.invalid',
+          shareZalo: true,
         ),
       ),
     );
     expect(find.text('0000000000'), findsOneWidget);
     expect(find.text('partner@test.invalid'), findsOneWidget);
-    expect(find.textContaining('Chưa cập nhật'), findsNothing);
+    expect(find.textContaining('không chia sẻ'), findsNothing);
+    final zaloButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Mở Zalo'),
+    );
+    expect(zaloButton.onPressed, isNotNull);
+  });
+
+  testWidgets('Có số điện thoại nhưng tắt shareZalo thì nút Zalo bị disable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ContactDetailsScreen(
+          contactId: 2,
+          phone: '0000000000',
+          email: 'partner@test.invalid',
+          shareZalo: false,
+        ),
+      ),
+    );
+    expect(find.text('0000000000'), findsOneWidget);
+    final zaloButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Mở Zalo'),
+    );
+    expect(zaloButton.onPressed, isNull);
   });
 }
