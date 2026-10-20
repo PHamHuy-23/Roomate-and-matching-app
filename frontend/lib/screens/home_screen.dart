@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'candidate_comparison_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/auth_user.dart';
 import '../models/match_recommendation.dart';
@@ -392,6 +393,27 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF65746F),
                             ),
+                          ),
+                          const SizedBox(width: 8),
+                          ActionChip(
+                            avatar: const Icon(Icons.compare_arrows, size: 16, color: Color(0xFF087E6B)),
+                            label: const Text('So sánh Top ?ng viên'),
+                            onPressed: () {
+                              if (matches.length < 2) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Cần ít nhất 2 ứng viên để so sánh.')),
+                                );
+                                return;
+                              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CandidateComparisonScreen(candidates: matches.take(3).toList()),
+                                ),
+                              );
+                            },
+                            backgroundColor: const Color(0xFFEAF8F5),
+                            side: const BorderSide(color: Color(0xFF087E6B)),
                           ),
                           const SizedBox(width: 8),
                           ChoiceChip(
