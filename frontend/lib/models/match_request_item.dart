@@ -26,18 +26,29 @@ class MatchRequestItem {
   });
 
   factory MatchRequestItem.fromJson(Map<String, dynamic> json) {
+    bool? parseShareZalo() {
+      final rawShare = json['shareZalo'];
+      if (rawShare is bool) return rawShare;
+      final rawZalo = json['contactZalo'];
+      if (rawZalo is bool) return rawZalo;
+      if (rawZalo is String) {
+        return rawZalo.trim().isNotEmpty;
+      }
+      return null;
+    }
+
     return MatchRequestItem(
-      requestId: json['requestId'] as int,
-      partnerId: json['partnerId'] as int,
-      partnerName: json['partnerName'] as String,
+      requestId: (json['requestId'] as num?)?.toInt() ?? 0,
+      partnerId: (json['partnerId'] as num?)?.toInt() ?? 0,
+      partnerName: (json['partnerName'] ?? '') as String,
       partnerAvatar: json['partnerAvatar'] as String?,
-      matchScore: (json['matchScore'] as num).toDouble(),
-      status: json['status'] as String,
-      createdAt: json['createdAt'] as String?,
+      matchScore: (json['matchScore'] as num?)?.toDouble() ?? 0.0,
+      status: (json['status'] ?? 'PENDING') as String,
+      createdAt: json['createdAt']?.toString(),
       message: json['message'] as String?,
       contactPhone: json['contactPhone'] as String?,
       contactEmail: json['contactEmail'] as String?,
-      shareZalo: json['shareZalo'] as bool? ?? (json['contactZalo'] as bool?),
+      shareZalo: parseShareZalo(),
     );
   }
 }
