@@ -1,11 +1,25 @@
-# Roommate Hub Project
+# Roommate Hub - Ứng dụng Tìm Bạn Ở Ghép & Phòng Trọ
 
-> ⚠️ **TRẠNG THÁI DỰ ÁN: PROTOTYPE (BẢN MẪU THỬ NGHIỆM - WORK IN PROGRESS)**
+> 🎓 **DỰ ÁN HỌC TẬP & DANH MỤC CÁ NHÂN (PORTFOLIO PROJECT)**
 >
-> Dự án hiện đang trong giai đoạn **Prototype / Thử nghiệm kỹ thuật**, phục vụ mục đích nghiên cứu và phát triển tính năng tìm bạn ở ghép phòng trọ. Các phân hệ Backend và Frontend đang tiếp tục được hoàn thiện và tích hợp.
+> ⏸️ **Trạng thái dự án: Tạm dừng phát triển (Paused / Archived)**  
+> Dự án được xây dựng và phát triển như một sản phẩm học tập / đồ án cá nhân nhằm áp dụng và thực nghiệm kiến trúc ứng dụng di động Fullstack (Flutter + Spring Boot 3 + PostgreSQL + Cloudflare R2). Hiện tại dự án đã hoàn thành các mục tiêu thử nghiệm tính năng chính và được đưa lên GitHub để lưu trữ mã nguồn, phục vụ mục đích học hỏi, tham khảo kỹ thuật và hoàn thiện portfolio cá nhân.
 
-Ứng dụng kết nối và tìm bạn ở ghép phòng trọ thông minh dành cho sinh viên và người đi làm.
-Hệ thống gồm **Frontend Flutter**, **Backend Spring Boot**, cơ sở dữ liệu **PostgreSQL trên Supabase** và lưu ảnh trên **Cloudflare R2**.
+Ứng dụng kết nối và tìm bạn ở ghép phòng trọ thông minh dành cho sinh viên và người đi làm, tích hợp thuật toán gợi ý độ tương thích lối sống, bản đồ phòng trọ trực quan, quy trình hẹn xem phòng tương tác và phân hệ quản trị viên (Admin Portal).
+
+---
+
+## ✨ Điểm nổi bật & Tính năng chính
+
+- 🎯 **Thuật toán Matching bạn trọ**: Phân tích độ tương thích lối sống theo 3 thang màu trực quan (xanh/vàng/đỏ) dựa trên khảo sát sinh hoạt (ngân sách, giờ giấc, độ sạch sẽ, hút thuốc, nuôi thú cưng...).
+- 🗂️ **So sánh ứng viên song song**: Đặt cạnh nhau 2–3 hồ sơ bạn trọ tiềm năng để đối sánh tiêu chí trước khi gửi lời mời kết nối.
+- 🗺️ **Bản đồ phòng trọ tương tác**: Tích hợp OpenStreetMap và chỉ đường Google Maps nhanh chóng, không bị phụ thuộc API key trả phí.
+- 📅 **Lịch hẹn xem phòng linh hoạt**: Đặt lịch, đề xuất dời lịch (reschedule proposal), nhắc hẹn tự động và tự động cập nhật số người khi chốt phòng thành công.
+- 🔒 **Quyền riêng tư & Bảo mật**: 
+  - Chỉ chia sẻ số điện thoại / Zalo khi cả hai bên đồng thuận kết nối.
+  - Ảnh tin nhắn & minh chứng báo cáo lưu trữ trên bucket **Cloudflare R2 private** với Presigned GET URL ngắn hạn (2 phút).
+  - Cơ chế phòng chống brute-force đăng nhập và bảo vệ tài khoản bằng OTP qua email.
+- 📊 **Cổng Quản trị (Admin Portal)**: Bảng thống kê kết nối thực tế, duyệt/từ chối bài đăng phòng, xử lý báo cáo vi phạm, khóa tài khoản và trích xuất Audit Logs ra Excel/CSV.
 
 ---
 
@@ -147,31 +161,29 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
      flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api/v1
      ```
 
-5. **Build APK demo**:
-   ```powershell
-   # APK dành cho Android Emulator
-   flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
+5. **Tải bản cài đặt sẵn (GitHub Releases) hoặc Build APK**:
+   - Tải file APK Android cài đặt sẵn tại mục [Releases](https://github.com/PHamHuy-23/Roomate-and-matching-app/releases) trên GitHub mà không cần cài đặt Flutter SDK.
+   - Hoặc tự build từ mã nguồn:
+     ```powershell
+     # APK dành cho Android Emulator
+     flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
 
-   # APK cài trên điện thoại thật; thay IP bằng IP LAN của máy chạy backend
-   flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.10:8080/api/v1
-   ```
-   APK được tạo tại `frontend/build/app/outputs/flutter-apk/app-release.apk`. Backend phải đang chạy, cổng `8080` phải truy cập được từ thiết bị và điện thoại phải cùng mạng với máy chủ.
+     # APK cài trên điện thoại thật; thay IP bằng IP LAN của máy chạy backend
+     flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.10:8080/api/v1
+     ```
+     APK được tạo tại `frontend/build/app/outputs/flutter-apk/app-release.apk`. Backend phải đang chạy, cổng `8080` phải truy cập được từ thiết bị và điện thoại phải cùng mạng với máy chủ.
 
 ---
 
-## 👥 Tổ chức Dự án & Phân công Nhiệm vụ (All-Dev Core Team)
+## 👥 Nhóm Tác giả & Dự án Học tập
 
-Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả thành viên đều là **Lập trình viên chính (Main Developers)**, trực tiếp tham gia viết mã nguồn và thực hiện mọi công đoạn theo **Vòng đời phát triển phần mềm (SDLC)**. Mỗi bạn đảm nhận vai trò Lead (chịu trách nhiệm đầu mối) cho một mảng chuyên môn và cùng chia sẻ các task lập trình cụ thể:
+Dự án được thực hiện bởi nhóm sinh viên như một đồ án / sản phẩm cá nhân phục vụ học tập và nghiên cứu công nghệ Fullstack:
 
-| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án | Bảng Task Cá Nhân |
-| :--- | :---: | :--- | :--- | :---: |
-| **PM Leader (AI Lead)** | — | Quản lý dự án & Kiến trúc | Lập kế hoạch SDLC, giao task trực tiếp vào Markdown, review code/docs, đồng bộ mã nguồn GitHub. | — |
-| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Dev**<br>*(Lead BA & Tài liệu)* | Lead phân tích 54 yêu cầu (FRs) & báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/reports/Nhom13_Mohinhhoayeucau.docx)); trực tiếp code Backend UserPreference/Admin và UI Khảo sát tiêu chí/Profile. | [**TASKS_QUOC_HUY.md**](docs/tasks/TASKS_QUOC_HUY.md) |
-| **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. | [**TASKS_QUANG_HUY.md**](docs/tasks/TASKS_QUANG_HUY.md) |
-| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL PostgreSQL/Supabase & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. | [**TASKS_TIEN_DAT.md**](docs/tasks/TASKS_TIEN_DAT.md) |
-
-> 📌 Toàn bộ bảng phân công chi tiết theo 6 giai đoạn (Yêu cầu -> CSDL & Thiết kế -> Backend -> Frontend -> Tích hợp/QA -> Release), cùng lộ trình Master Schedule (Hạn chót toàn diện: **18:00 ngày 23/09/2026**) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](docs/tasks/TASK_ASSIGNMENTS.md)**.  
-> 📖 Hướng dẫn phối hợp nhóm qua Git & quy trình giải quyết xung đột (Conflict resolution): **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)**.
+| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án |
+| :--- | :---: | :--- | :--- |
+| **Phạm Quốc Huy** | **24110226** | **Fullstack Developer** | Phân tích yêu cầu, khảo sát tiêu chí UserPreference, phân hệ Admin Dashboard & Báo cáo vi phạm. |
+| **Trần Quang Huy** | **24110228** | **Fullstack Developer** | Kiến trúc hệ thống, Spring Boot 3 Security/Auth, Matching Engine thuật toán độ tương thích & UI Khám phá. |
+| **Phan Tiến Đạt** | **24110195** | **Fullstack Developer** | Thiết kế CSDL PostgreSQL/Supabase, quản lý bài đăng phòng trọ (RoomPost), lịch hẹn xem phòng & kiểm thử. |
 
 ---
 
