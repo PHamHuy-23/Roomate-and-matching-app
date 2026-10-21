@@ -17,4 +17,6 @@ public class MatchRecommendationDTO {
     private String bioDescription;
     private Double totalScore;                     // Tổng điểm % tương thích
     private MatchCriteriaDetailDTO criteriaDetail; // Điểm chi tiết từng tiêu chí
+    private Boolean hasRoom;                       // Đã có phòng sẵn hay chưa
+    private Long roomId;                           // ID phòng đang có (nếu có)
 }

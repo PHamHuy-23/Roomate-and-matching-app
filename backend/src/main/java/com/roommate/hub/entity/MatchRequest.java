@@ -34,13 +34,19 @@ public class MatchRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private MatchStatus status; // PENDING, ACCEPTED, REJECTED
+    private MatchStatus status; // PENDING, ACCEPTED, REJECTED, EXPIRED
+
+    @Column(length = 250)
+    private String message;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column
     private LocalDateTime createdAt;
 
+    @Version
+    private Long version;
+
     public enum MatchStatus {
-        PENDING, ACCEPTED, REJECTED
+        PENDING, ACCEPTED, REJECTED, EXPIRED
     }
 }

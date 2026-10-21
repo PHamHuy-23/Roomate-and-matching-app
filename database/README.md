@@ -1,66 +1,52 @@
-# Roommate Hub - Hướng dẫn Cài đặt Cơ sở dữ liệu (Database)
+# Roommate Hub — PostgreSQL / Supabase
 
-Thư mục này chứa toàn bộ các script SQL để thiết kế bảng và nạp dữ liệu mẫu cho hệ thống Roommate Hub (MySQL 8.0+).
+`01_schema.sql` và `02_seed_data.sql` dùng cú pháp PostgreSQL 15+ và có thể chạy trực tiếp trong Supabase SQL Editor.
 
-## Cấu trúc thư mục
+## Khởi tạo Supabase
 
-- `01_schema.sql`: Chứa mã DDL tạo Database `roommate_hub`, 4 bảng chính (`users`, `user_preferences`, `room_posts`, `match_requests`), các ràng buộc khóa ngoại (Foreign Keys) và chỉ mục (Indexes).
-- `02_seed_data.sql`: Chứa mã DML nạp dữ liệu mẫu bao gồm tài khoản Admin, tài khoản sinh viên, khảo sát phong cách sống, bài đăng tìm phòng trọ và yêu cầu kết nối ghép đôi.
-- `migrations/20260916_add_user_academic_profile.sql`: Migration một lần cho database cũ, bổ sung ngày sinh và trường đại học vào hồ sơ người dùng.
-- `roommate_hub.sql`: File SQL trọn gói (gồm cả Schema và Seed Data) giúp khởi tạo CSDL hoàn chỉnh chỉ với 1 lần thực thi.
+1. Tạo project Supabase.
+2. Mở **SQL Editor**, chạy `01_schema.sql`.
+3. Chạy `02_seed_data.sql` nếu cần tài khoản demo.
+4. Trong **Connect**, chọn **Session pooler** nếu backend chạy trên mạng IPv4.
+5. Chép host, username và database password vào `backend/.env`.
 
----
-
-## Danh sách tài khoản thử nghiệm (Test Credentials)
-
-Tất cả tài khoản mẫu bên dưới đều sử dụng chung mật khẩu đăng nhập: **`123456`**
-
-| Vai trò | Họ và tên | Email đăng nhập | Mật khẩu | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- |
-| **Admin** | Quản Trị Viên | `admin@roommatehub.com` | `123456` | `ACTIVE` |
-| **User** | Quang Huy | `huy@gmail.com` | `123456` | `ACTIVE` |
-| **User** | Văn Nam | `nam@gmail.com` | `123456` | `ACTIVE` |
-| **User** | Minh Hoàng | `hoang@gmail.com` | `123456` | `ACTIVE` |
-
----
-
-## Hướng dẫn Import vào MySQL
-
-### Cách 1: Sử dụng MySQL Command Line (Khuyến nghị)
-Mở Terminal hoặc Command Prompt và chạy lệnh sau (nhập mật khẩu MySQL root khi được yêu cầu):
-
-```bash
-mysql -u root -p < database/roommate_hub.sql
-```
-
-Hoặc chạy tuần tự 2 file:
-```bash
-mysql -u root -p < database/01_schema.sql
-mysql -u root -p < database/02_seed_data.sql
-```
-
-Nếu database đã tồn tại từ phiên bản cũ, chạy migration trước khi dùng Discovery Feed:
-```bash
-mysql -u root -p < database/migrations/20260916_add_user_academic_profile.sql
-```
-
-### Cách 2: Sử dụng DBeaver / MySQL Workbench / phpMyAdmin
-1. Mở công cụ quản lý CSDL (DBeaver hoặc MySQL Workbench).
-2. Tạo một kết nối mới tới MySQL Server của bạn (port mặc định `3306`).
-3. Mở file `database/roommate_hub.sql` (File -> Open File...).
-4. Chọn **Execute SQL Script** (hoặc tổ hợp phím `Ctrl + Alt + X` trên DBeaver, `Ctrl + Shift + Enter` trên Workbench).
-5. Refresh lại danh sách Database, bạn sẽ thấy CSDL `roommate_hub` cùng 4 bảng và dữ liệu mẫu đầy đủ.
-
----
-
-## Cấu hình kết nối trên Backend (Spring Boot)
-
-Copy `backend/.env.example` thành `backend/.env`, sau đó điều chỉnh thông số phù hợp với máy tính của bạn:
+Ví dụ JDBC:
 
 ```properties
-DB_URL=jdbc:mysql://127.0.0.1:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
-DB_USERNAME=root
-DB_PASSWORD=your_mysql_password
+DB_URL=jdbc:postgresql://YOUR_POOLER_HOST:5432/postgres?sslmode=require
+DB_USERNAME=postgres.YOUR_PROJECT_REF
+DB_PASSWORD=YOUR_SUPABASE_DATABASE_PASSWORD
 ```
 
-`backend/.env` chỉ dùng trên máy local và không được commit lên Git.
+Không đưa database password hoặc Supabase service-role key vào Flutter.
+
+## Tài khoản demo
+
+Mật khẩu chung: `123456`.
+
+| Vai trò | Email |
+|---|---|
+| Admin | `admin@roommatehub.com` |
+| User | `huy@gmail.com` |
+| User | `nam@gmail.com` |
+| User | `hoang@gmail.com` |
+
+## Lưu ý migration
+
+`01_schema.sql` dùng để tạo database mới và sẽ xóa dữ liệu cũ trước khi tạo lại bảng. Với project Supabase đã có dữ liệu, **không chạy lại** `01_schema.sql` hoặc `02_seed_data.sql`; chỉ chạy các migration PostgreSQL cần thiết theo thứ tự:
+
+1. `migrations/20260930_moderation_reason.sql` nếu chưa chạy: bổ sung trạng thái tìm kiếm, tiêu chí ghép đôi, lý do kiểm duyệt, ảnh bằng chứng và danh sách tin đã lưu.
+2. `migrations/20261001_match_request_version.sql`: bổ sung cột `match_requests.version` cho cơ chế khóa lạc quan (`@Version`) của backend. Migration điền `0` cho các dòng thiếu version, giữ nguyên version khác `NULL`, đặt mặc định `0` và không cho phép `NULL`. Có thể chạy lại migration này mà không đặt lại version hoặc xóa lời mời hiện có.
+3. `migrations/20261002_survey_preferences.sql`: bổ sung `move_in_date`, `room_type`, `work_schedule`, `personal_value` vào `user_preferences` để lưu các lựa chọn khảo sát trước đây chỉ có trên giao diện. Các cột cho phép `NULL`, không gán ngày hoặc lựa chọn giả cho bản ghi cũ. Migration chỉ bổ sung cấu trúc/ràng buộc, không xóa dữ liệu và có thể chạy lại. Chạy trước khi khởi động backend phiên bản nhóm 6. Backend/Flutter cũ không gửi các trường mới sẽ giữ nguyên giá trị đã lưu; `NULL` cũng được hiểu là không cập nhật, không phải yêu cầu xóa.
+4. `migrations/20261005_room_appointment_versions.sql` (đợt sửa mới — nhóm 2): thêm `version BIGINT NOT NULL DEFAULT 0` vào `room_posts` và `viewing_appointments`. Chỉ điền `0` cho dòng chưa có version, giữ version khác `NULL` và toàn bộ nội dung/trạng thái hiện có. Có thể chạy lại, không đặt lại version. Dừng **tất cả** backend cũ trước khi chạy migration và chỉ khởi động bản backend mới sau khi thành công; backend cũ không tham gia khóa phiên bản nên không được chạy song song.
+5. `migrations/20261006_room_posts_multi_images.sql`: mở rộng độ dài cột `room_posts.image_url` lên `VARCHAR(1000)` để hỗ trợ lưu nhiều URL ảnh thực tế (phân cách bởi dấu phẩy `,`), đồng thời cập nhật đúng 4 ảnh nội thất Unsplash thực tế cho các bài đăng phòng ID 1-8. An toàn chạy lại và không làm mất dữ liệu bài đăng khác.
+
+Trước khi nâng cấp, sao lưu dữ liệu và dừng backend. Mở **SQL Editor**, dán toàn bộ nội dung từng migration rồi **Run**; chỉ chuyển sang file tiếp theo khi file trước đã thành công. Khởi động lại backend sau khi migration hoàn tất. Không cần tạo lại project Supabase.
+
+Database mới tạo bằng `01_schema.sql` hiện tại đã có cột version, không cần chạy riêng migration version. Không dựa vào `JPA_DDL_AUTO=update` để sửa dữ liệu version của các dòng cũ. File `20260916_add_user_academic_profile.sql` là migration MySQL cũ, **không chạy trên Supabase**.
+
+Database mới tạo bằng `01_schema.sql` hiện tại cũng đã có bốn cột khảo sát, không cần chạy riêng migration `20261002_survey_preferences.sql`. Project Supabase hiện có chỉ chạy migration mới nếu các migration trước đã chạy thành công; không chạy lại schema/seed.
+
+Database mới tạo bằng `01_schema.sql` hiện tại đã có cả hai cột version của nhóm 2. Với database đang dùng, chạy riêng `20261005_room_appointment_versions.sql` sau các migration còn thiếu. Không dựa vào `JPA_DDL_AUTO=update` để nâng cấp dữ liệu cũ. Sau nâng cấp backend, cập nhật/rebuild Flutter admin: API kiểm duyệt bắt buộc gửi `expectedVersion` của nội dung đã xem; client cũ thiếu tham số bị trả `400` và không duyệt tin. Không tự chạy lại lệnh duyệt sau `409`: tải lại, xem bản mới rồi quyết định lại.
+
+Nếu cần chuyển dữ liệu thật từ hệ thống khác, export dữ liệu thành CSV rồi import theo thứ tự: `users`, `user_preferences`, `room_posts`, `match_requests`.

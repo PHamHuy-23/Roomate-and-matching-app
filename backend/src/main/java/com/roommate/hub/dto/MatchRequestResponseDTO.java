@@ -15,8 +15,10 @@ public class MatchRequestResponseDTO {
     private Double matchScore;
     private String status;
     private LocalDateTime createdAt;
+    private String message;
 
     // Các trường chỉ hiển thị khi ACCEPTED (QĐ 2)
     private String contactPhone;
     private String contactEmail;
+    private String contactZalo;
 }

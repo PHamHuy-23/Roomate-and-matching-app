@@ -1,0 +1,46 @@
+name: Daily Supabase Database Backup
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC (07:00 AM VN time)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  backup:
+    name: Backup Supabase PostgreSQL
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create Backup Directory
+        run: mkdir -p backups
+
+      - name: Perform Database Backup (pg_dump)
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          DB_NAME: ${{ secrets.SUPABASE_DB_NAME || 'postgres' }}
+          DB_PORT: ${{ secrets.SUPABASE_DB_PORT || '5432' }}
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          BACKUP_FILE="backups/supabase_backup_${TIMESTAMP}.sql.gz"
+          echo "Starting backup at $(date)..."
+          pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" --no-owner --no-privileges --clean --if-exists | gzip > "$BACKUP_FILE"
+          echo "Backup created successfully: $BACKUP_FILE"
+          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
+
+      - name: Upload Backup Artifact (Kept for 30 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-daily-backup
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30

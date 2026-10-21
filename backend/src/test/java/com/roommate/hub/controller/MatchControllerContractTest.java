@@ -9,6 +9,8 @@ import com.roommate.hub.service.MatchingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +35,7 @@ class MatchControllerContractTest {
         );
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        User currentUser = User.builder().id(1L).gender("MALE").build();
+        User currentUser = User.builder().id(1L).email("user@example.com").gender("MALE").build();
         MatchRecommendationDTO recommendation = MatchRecommendationDTO.builder()
                 .userId(2L)
                 .fullName("Văn Nam")
@@ -52,12 +54,20 @@ class MatchControllerContractTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(currentUser));
         when(matchingService.getRecommendations(currentUser)).thenReturn(List.of(recommendation));
 
-        mockMvc.perform(get("/api/v1/matches/recommendations/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].age").value(22))
-                .andExpect(jsonPath("$[0].university")
-                        .value("Đại học Sư phạm Kỹ thuật TP.HCM"));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("user@example.com", null, List.of()));
+
+        try {
+            mockMvc.perform(get("/api/v1/matches/recommendations/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].age").value(22))
+                    .andExpect(jsonPath("$[0].university")
+                            .value("Đại học Sư phạm Kỹ thuật TP.HCM"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 }

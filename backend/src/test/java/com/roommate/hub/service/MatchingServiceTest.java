@@ -18,7 +18,18 @@ import static org.mockito.Mockito.when;
 class MatchingServiceTest {
 
     private final UserPreferenceRepository preferenceRepository = mock(UserPreferenceRepository.class);
-    private final MatchingService matchingService = new MatchingService(preferenceRepository);
+    private final com.roommate.hub.repository.BlockedUserRepository blockedUserRepository = mock(com.roommate.hub.repository.BlockedUserRepository.class);
+    private final com.roommate.hub.repository.RoomPostRepository roomPostRepository = mock(com.roommate.hub.repository.RoomPostRepository.class);
+    private final MatchingService matchingService = new MatchingService(preferenceRepository, blockedUserRepository, roomPostRepository);
+
+    @Test
+    void returnsEmptyListWhenUserHasNoPreference() {
+        User currentUser = User.builder().id(99L).gender("MALE").build();
+        when(preferenceRepository.findByUserId(99L)).thenReturn(Optional.empty());
+
+        List<MatchRecommendationDTO> recommendations = matchingService.getRecommendations(currentUser);
+        assertThat(recommendations).isEmpty();
+    }
 
     @Test
     void mapsPersistedAcademicProfileIntoRecommendations() {
@@ -39,8 +50,10 @@ class MatchingServiceTest {
         UserPreference candidatePreference = preference(candidate, 2_100_000.0);
 
         when(preferenceRepository.findByUserId(1L)).thenReturn(Optional.of(currentPreference));
-        when(preferenceRepository.findCandidates(1L, "MALE", "Thu Duc"))
+        when(preferenceRepository.findCandidatesByGender(1L, "MALE"))
                 .thenReturn(List.of(candidatePreference));
+        when(blockedUserRepository.findByUserId(1L)).thenReturn(List.of());
+        when(blockedUserRepository.findByBlockedUserId(1L)).thenReturn(List.of());
 
         List<MatchRecommendationDTO> recommendations = matchingService.getRecommendations(currentUser);
 

@@ -1,11 +1,25 @@
-# Roommate Hub Project
+# Roommate Hub - Ứng dụng Tìm Bạn Ở Ghép & Phòng Trọ
 
-> ⚠️ **TRẠNG THÁI DỰ ÁN: PROTOTYPE (BẢN MẪU THỬ NGHIỆM - WORK IN PROGRESS)**
+> 🎓 **DỰ ÁN HỌC TẬP & DANH MỤC CÁ NHÂN (PORTFOLIO PROJECT)**
 >
-> Dự án hiện đang trong giai đoạn **Prototype / Thử nghiệm kỹ thuật**, phục vụ mục đích nghiên cứu và phát triển tính năng tìm bạn ở ghép phòng trọ. Các phân hệ Backend và Frontend đang tiếp tục được hoàn thiện và tích hợp.
+> ⏸️ **Trạng thái dự án: Tạm dừng phát triển (Paused / Archived)**  
+> Dự án được xây dựng và phát triển như một sản phẩm học tập / đồ án cá nhân nhằm áp dụng và thực nghiệm kiến trúc ứng dụng di động Fullstack (Flutter + Spring Boot 3 + PostgreSQL + Cloudflare R2). Hiện tại dự án đã hoàn thành các mục tiêu thử nghiệm tính năng chính và được đưa lên GitHub để lưu trữ mã nguồn, phục vụ mục đích học hỏi, tham khảo kỹ thuật và hoàn thiện portfolio cá nhân.
 
-Ứng dụng kết nối và tìm bạn ở ghép phòng trọ thông minh dành cho sinh viên và người đi làm.
-Hệ thống được thiết kế theo kiến trúc chuẩn gồm **Frontend (Flutter)** và **Backend (Java Spring Boot REST API)**, kết hợp cơ sở dữ liệu **MySQL**.
+Ứng dụng kết nối và tìm bạn ở ghép phòng trọ thông minh dành cho sinh viên và người đi làm, tích hợp thuật toán gợi ý độ tương thích lối sống, bản đồ phòng trọ trực quan, quy trình hẹn xem phòng tương tác và phân hệ quản trị viên (Admin Portal).
+
+---
+
+## ✨ Điểm nổi bật & Tính năng chính
+
+- 🎯 **Thuật toán Matching bạn trọ**: Phân tích độ tương thích lối sống theo 3 thang màu trực quan (xanh/vàng/đỏ) dựa trên khảo sát sinh hoạt (ngân sách, giờ giấc, độ sạch sẽ, hút thuốc, nuôi thú cưng...).
+- 🗂️ **So sánh ứng viên song song**: Đặt cạnh nhau 2–3 hồ sơ bạn trọ tiềm năng để đối sánh tiêu chí trước khi gửi lời mời kết nối.
+- 🗺️ **Bản đồ phòng trọ tương tác**: Tích hợp OpenStreetMap và chỉ đường Google Maps nhanh chóng, không bị phụ thuộc API key trả phí.
+- 📅 **Lịch hẹn xem phòng linh hoạt**: Đặt lịch, đề xuất dời lịch (reschedule proposal), nhắc hẹn tự động và tự động cập nhật số người khi chốt phòng thành công.
+- 🔒 **Quyền riêng tư & Bảo mật**: 
+  - Chỉ chia sẻ số điện thoại / Zalo khi cả hai bên đồng thuận kết nối.
+  - Ảnh tin nhắn & minh chứng báo cáo lưu trữ trên bucket **Cloudflare R2 private** với Presigned GET URL ngắn hạn (2 phút).
+  - Cơ chế phòng chống brute-force đăng nhập và bảo vệ tài khoản bằng OTP qua email.
+- 📊 **Cổng Quản trị (Admin Portal)**: Bảng thống kê kết nối thực tế, duyệt/từ chối bài đăng phòng, xử lý báo cáo vi phạm, khóa tài khoản và trích xuất Audit Logs ra Excel/CSV.
 
 ---
 
@@ -15,7 +29,7 @@ Hệ thống được thiết kế theo kiến trúc chuẩn gồm **Frontend (F
 Roomate-and-matching-app/
 ├── backend/          # RESTful API viết bằng Java Spring Boot 3 + Maven (JDK 21)
 ├── frontend/         # Ứng dụng Mobile & Web đa nền tảng viết bằng Flutter (Dart)
-├── database/         # Toàn bộ SQL Scripts thiết kế CSDL và dữ liệu mẫu (MySQL)
+├── database/         # PostgreSQL schema và dữ liệu mẫu cho Supabase
 │   ├── 01_schema.sql         # DDL: Định nghĩa database, các bảng và khóa ngoại
 │   ├── 02_seed_data.sql      # DML: Nạp dữ liệu mẫu (users, preferences, posts...)
 │   ├── roommate_hub.sql      # File tổng hợp (Schema + Data) chạy 1 bước
@@ -32,23 +46,19 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt các c�
 
 1. **Java Development Kit (JDK) 21** (Ví dụ: Microsoft OpenJDK 21 hoặc Oracle JDK 21).
 2. **Flutter SDK** (Phiên bản `>= 3.20.0`) và **Dart SDK**.
-3. **MySQL Server 8.0+** (kèm công cụ như DBeaver, MySQL Workbench, hoặc CLI).
+3. **Supabase project** hoặc PostgreSQL 15+.
 4. **Android Studio / VS Code** (kèm Flutter & Dart extension).
+5. **Cloudflare R2 bucket**, API token và public/custom domain để hiển thị ảnh.
 
 ---
 
 ## 🚀 Hướng dẫn Cài đặt và Chạy hệ thống
 
-### Bước 1: Khởi tạo Cơ sở dữ liệu (MySQL)
+### Bước 1: Khởi tạo PostgreSQL trên Supabase
 
-1. Khởi động dịch vụ MySQL trên máy tính của bạn.
-2. Mở terminal hoặc công cụ quản lý CSDL (DBeaver / Workbench) và chạy file SQL khởi tạo:
-   - **Cách nhanh qua Command Line**:
-     ```bash
-     mysql -u root -p < database/roommate_hub.sql
-     ```
-   - **Hoặc qua DBeaver / Workbench**: Mở file `database/roommate_hub.sql` và thực thi toàn bộ script (`Ctrl + Alt + X` hoặc `Ctrl + Shift + Enter`).
-3. Tạo cấu hình MySQL riêng cho máy local:
+1. Tạo project Supabase và mở **SQL Editor**.
+2. Chạy lần lượt `database/01_schema.sql` và `database/02_seed_data.sql`.
+3. Tạo cấu hình local:
 
    ```bash
    cd backend
@@ -58,12 +68,34 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt các c�
    Trên Windows PowerShell, dùng `Copy-Item .env.example .env`. Sau đó chỉnh các giá trị trong `backend/.env`:
 
    ```properties
-   DB_URL=jdbc:mysql://127.0.0.1:3306/roommate_hub?createDatabaseIfNotExists=true&useSSL=false&serverTimezone=UTC
-   DB_USERNAME=root
-   DB_PASSWORD=your_mysql_password
+   DB_URL=jdbc:postgresql://YOUR_POOLER_HOST:5432/postgres?sslmode=require
+   DB_USERNAME=postgres.YOUR_PROJECT_REF
+   DB_PASSWORD=YOUR_SUPABASE_DATABASE_PASSWORD
+   JWT_SECRET=REPLACE_WITH_A_LONG_RANDOM_SECRET
    ```
 
-   File `.env` đã được Git ignore nên mỗi thành viên có thể dùng thông tin MySQL khác nhau. Chỉ `.env.example` được commit làm mẫu.
+   Dùng **Session pooler** cho máy IPv4. File `.env` đã được Git ignore; chỉ `.env.example` được commit.
+
+### Bước 2: Cấu hình Cloudflare R2
+
+1. Tạo **hai bucket khác nhau**: `roommate-hub` cho avatar/ảnh phòng công khai, và `roommate-hub-private` cho ảnh chat/minh chứng báo cáo.
+2. Tạo R2 API token có quyền đọc/ghi object, chỉ giới hạn trên hai bucket này. Token cũ chỉ cấp quyền bucket public cần được thay/cập nhật quyền phù hợp.
+3. Chỉ bật Public Development URL hoặc gắn custom domain cho bucket public để lấy `R2_PUBLIC_URL`. Bucket private phải **tắt cả Public Development URL (`r2.dev`) và mọi custom domain công khai**.
+4. Áp dụng CORS mẫu tại `docs/cloudflare-r2-cors.json` cho cả hai bucket nếu chạy Flutter Web; thay origin mẫu bằng origin web thực tế.
+5. Điền `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` và `R2_PUBLIC_URL` trong `backend/.env`, đồng thời thêm:
+
+   ```properties
+   R2_PRIVATE_BUCKET_NAME=roommate-hub-private
+   R2_PRIVATE_READ_DURATION_MINUTES=2
+   ```
+
+6. Khởi động lại backend và chạy/build lại Flutter để dùng cùng API mới. Không cần migration SQL cho thay đổi R2 này.
+
+R2 secret chỉ nằm ở backend. Flutter xin presigned PUT URL rồi upload trực tiếp lên R2. Với chat/báo cáo, ticket không có URL public: Flutter gửi object key, backend lưu key trong cột ảnh hiện có và chỉ cấp GET URL ngắn hạn sau khi kiểm tra quyền. Chat: đúng hai người tham gia, tài khoản còn hoạt động và không chặn nhau; minh chứng báo cáo: admin đang hoạt động. GET mặc định 2 phút, giới hạn 1–5 phút; hết hạn thì tải lại chat/danh sách báo cáo để lấy URL mới.
+
+Thiếu hoặc dùng trùng bucket private/public thì thao tác ảnh private trả `503`, không chuyển ảnh sang bucket public. Avatar/ảnh phòng vẫn hoạt động nếu cấu hình public hợp lệ. Backend không tự kiểm tra được trạng thái public thực tế của bucket; cần kiểm tra Settings trên Cloudflare trước khi sử dụng.
+
+**Ảnh cũ:** URL public cũ của chat/báo cáo không còn được trả bởi API, nhưng object cũ trên bucket public vẫn có thể truy cập bằng URL đã biết. Cần chuyển/re-upload sang private và cập nhật tham chiếu đúng object key, hoặc gỡ object công khai cũ theo kế hoạch riêng; bản cập nhật không tự di chuyển/xóa dữ liệu R2. URL đã cấp là bearer URL, vẫn dùng được đến hết hạn kể cả sau khi chặn/khóa; không thu hồi được bản ảnh đã tải xuống. Xem [Cloudflare: public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/) và [presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
 
 #### 🔑 Tài khoản mẫu thử nghiệm (Test Accounts)
 Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
@@ -77,7 +109,7 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
 
 ---
 
-### Bước 2: Chạy Backend (Spring Boot API)
+### Bước 3: Chạy Backend (Spring Boot API)
 
 1. Mở một cửa sổ Terminal mới tại thư mục gốc của dự án.
 2. Di chuyển vào thư mục backend:
@@ -98,7 +130,7 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
 
 ---
 
-### Bước 3: Chạy Frontend (Flutter)
+### Bước 4: Chạy Frontend (Flutter)
 
 1. Mở một cửa sổ Terminal khác và di chuyển vào thư mục frontend:
    ```bash
@@ -108,8 +140,8 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
    ```bash
    flutter pub get
    ```
-3. **Cấu hình IP Backend (`baseUrl`)**:
-   Mở file `frontend/lib/services/api_service.dart` và kiểm tra cấu hình địa chỉ API phù hợp với môi trường chạy:
+3. **Cấu hình IP Backend (`API_BASE_URL`)**:
+   Truyền địa chỉ API bằng `--dart-define`; không sửa hoặc hard-code IP trong source:
    - **Chạy Web hoặc Windows Desktop**: `http://localhost:8080/api/v1`
    - **Chạy máy ảo Android Emulator**: `http://10.0.2.2:8080/api/v1`
    - **Chạy trên điện thoại thật (cùng mạng Wi-Fi)**: `http://<IP_LAN_MAY_TINH>:8080/api/v1` (VD: `http://192.168.1.10:8080/api/v1`)
@@ -121,25 +153,37 @@ Tất cả các tài khoản mặc định có mật khẩu là: **`123456`**
      flutter run -d chrome
      ```
    - **Chạy trên thiết bị di động (Android Emulator hoặc máy thật)**:
-     ```bash
-     flutter run
+     ```powershell
+     # Android Emulator
+     flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
+
+     # Điện thoại thật cùng Wi-Fi với máy chạy backend
+     flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api/v1
      ```
+
+5. **Tải bản cài đặt sẵn (GitHub Releases) hoặc Build APK**:
+   - Tải file APK Android cài đặt sẵn tại mục [Releases](https://github.com/PHamHuy-23/Roomate-and-matching-app/releases) trên GitHub mà không cần cài đặt Flutter SDK.
+   - Hoặc tự build từ mã nguồn:
+     ```powershell
+     # APK dành cho Android Emulator
+     flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
+
+     # APK cài trên điện thoại thật; thay IP bằng IP LAN của máy chạy backend
+     flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.10:8080/api/v1
+     ```
+     APK được tạo tại `frontend/build/app/outputs/flutter-apk/app-release.apk`. Backend phải đang chạy, cổng `8080` phải truy cập được từ thiết bị và điện thoại phải cùng mạng với máy chủ.
 
 ---
 
-## 👥 Tổ chức Dự án & Phân công Nhiệm vụ (All-Dev Core Team)
+## 👥 Nhóm Tác giả & Dự án Học tập
 
-Dự án được triển khai theo mô hình **All-Dev Core Team**: Tất cả thành viên đều là **Lập trình viên chính (Main Developers)**, trực tiếp tham gia viết mã nguồn và thực hiện mọi công đoạn theo **Vòng đời phát triển phần mềm (SDLC)**. Mỗi bạn đảm nhận vai trò Lead (chịu trách nhiệm đầu mối) cho một mảng chuyên môn và cùng chia sẻ các task lập trình cụ thể:
+Dự án được thực hiện bởi nhóm sinh viên như một đồ án / sản phẩm cá nhân phục vụ học tập và nghiên cứu công nghệ Fullstack:
 
-| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án | Bảng Task Cá Nhân |
-| :--- | :---: | :--- | :--- | :---: |
-| **PM Leader (AI Lead)** | — | Quản lý dự án & Kiến trúc | Lập kế hoạch SDLC, giao task trực tiếp vào Markdown, review code/docs, đồng bộ mã nguồn GitHub. | — |
-| **Phạm Quốc Huy** | **24110226** | **Main Fullstack Dev**<br>*(Lead BA & Tài liệu)* | Lead phân tích 54 yêu cầu (FRs) & báo cáo học thuật ([Nhom13_Mohinhhoayeucau.docx](docs/Nhom13_Mohinhhoayeucau.docx)); trực tiếp code Backend UserPreference/Admin và UI Khảo sát tiêu chí/Profile. | [**TASKS_QUOC_HUY.md**](TASKS_QUOC_HUY.md) |
-| **Trần Quang Huy** | **24110228** | **Main Fullstack Dev**<br>*(Lead Technical & Prototype)* | Lead kiến trúc hệ thống, cấu hình Spring Boot 3 & Flutter; trực tiếp code Backend Auth/JWT/Matching Engine và UI Auth/Khám phá gợi ý bạn trọ. | [**TASKS_QUANG_HUY.md**](TASKS_QUANG_HUY.md) |
-| **Phan Tiến Đạt** | **24110195** | **Main Fullstack Dev**<br>*(Lead Database & QA)* | Lead mô hình hóa CSDL MySQL & kế hoạch kiểm thử; trực tiếp code Backend RoomPost/MatchRequest/Lịch hẹn và UI Bài đăng phòng trọ/Lịch hẹn xem phòng. | [**TASKS_TIEN_DAT.md**](TASKS_TIEN_DAT.md) |
-
-> 📌 Toàn bộ bảng phân công chi tiết theo 6 giai đoạn (Yêu cầu -> CSDL & Thiết kế -> Backend -> Frontend -> Tích hợp/QA -> Release), cùng lộ trình Master Schedule (Hạn chót toàn diện: **18:00 ngày 23/09/2026**) được quản lý minh bạch tại: **[TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)**.  
-> 📖 Hướng dẫn phối hợp nhóm qua Git & quy trình giải quyết xung đột (Conflict resolution): **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)**.
+| Thành viên | MSSV | Vai trò Kỹ thuật | Trách nhiệm chính trong dự án |
+| :--- | :---: | :--- | :--- |
+| **Phạm Quốc Huy** | **24110226** | **Fullstack Developer** | Phân tích yêu cầu, khảo sát tiêu chí UserPreference, phân hệ Admin Dashboard & Báo cáo vi phạm. |
+| **Trần Quang Huy** | **24110228** | **Fullstack Developer** | Kiến trúc hệ thống, Spring Boot 3 Security/Auth, Matching Engine thuật toán độ tương thích & UI Khám phá. |
+| **Phan Tiến Đạt** | **24110195** | **Fullstack Developer** | Thiết kế CSDL PostgreSQL/Supabase, quản lý bài đăng phòng trọ (RoomPost), lịch hẹn xem phòng & kiểm thử. |
 
 ---
 
